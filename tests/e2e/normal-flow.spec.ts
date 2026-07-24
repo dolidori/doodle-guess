@@ -16,6 +16,22 @@ test('모바일에서 공개 추측 채팅이 캔버스 오른쪽에 나란히 �
   expect(feedBox).not.toBeNull();
   expect(feedBox!.x).toBeGreaterThanOrEqual(canvasBox!.x + canvasBox!.width - 1);
   expect(Math.abs(feedBox!.y - canvasBox!.y)).toBeLessThanOrEqual(2);
+
+  if ((page.viewportSize()?.width ?? 0) <= 640) {
+    const canvasColumnBox = await page.locator('.canvas-column').boundingBox();
+    const playerPanelBox = await page.locator('.player-panel').boundingBox();
+    const controlColumnBox = await page.locator('.control-column').boundingBox();
+
+    expect(canvasColumnBox).not.toBeNull();
+    expect(playerPanelBox).not.toBeNull();
+    expect(controlColumnBox).not.toBeNull();
+    expect(playerPanelBox!.y).toBeGreaterThanOrEqual(
+      canvasColumnBox!.y + canvasColumnBox!.height - 1
+    );
+    expect(controlColumnBox!.y).toBeGreaterThanOrEqual(
+      playerPanelBox!.y + playerPanelBox!.height - 1
+    );
+  }
 });
 
 test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 진행된다', async ({ browser }) => {

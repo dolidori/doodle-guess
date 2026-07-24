@@ -107,13 +107,8 @@
   }
 
   .room-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "canvas"
-      "players"
-      "controls";
-    align-content: start;
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
     padding-bottom: calc(
       var(--space-5) + max(var(--space-4), var(--safe-bottom))
@@ -124,11 +119,14 @@
   }
 
   .player-panel {
+    order: 2;
     flex: none;
     max-height: 12rem;
   }
 
   .canvas-column {
+    order: 1;
+    flex: none;
     min-height: 0;
   }
 
@@ -159,18 +157,16 @@
   }
 
   .control-column {
-    display: contents;
+    order: 3;
+    flex: none;
+    min-height: auto;
+    display: flex;
   }
 
-  .control-panel {
-    grid-area: controls;
-    height: max-content;
-    min-height: max-content;
+  .control-column > .control-panel {
+    flex: none;
+    min-height: auto;
     overflow: visible;
-  }
-
-  .control-panel > * {
-    flex-shrink: 0;
   }
 
   .guess-input input {
@@ -239,6 +235,11 @@
   .control-column {
     display: flex;
     grid-area: controls;
+  }
+
+  .control-column > .control-panel {
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   .control-column > .desktop-guess-feed {
