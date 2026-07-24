@@ -9,6 +9,7 @@
     "dev:client": "vite --config client/vite.config.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
+    "backup": "node backup-and-push.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
