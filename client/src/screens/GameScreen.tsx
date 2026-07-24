@@ -296,95 +296,97 @@ export const GameScreen = ({
           )}
           <GuessInput />
         </section>
-        <aside className="control-panel">
-          <section className="answer-mode-panel panel-section">
-            <h3>정답 판정 모드</h3>
-            {actions.has('SET_ANSWER_MODE') ? (
-              <fieldset>
-                <legend className="visually-hidden">정답 판정 모드 선택</legend>
-                <label>
-                  <input
-                    type="radio"
-                    name="answer-mode"
-                    checked={publicState.answerMode === 'UNTIL_TIMER'}
-                    onChange={() => send('SET_ANSWER_MODE', { answerMode: 'UNTIL_TIMER' })}
-                  />
-                  타이머까지 계속
-                </label>
-                <label>
-                  <input
-                    type="radio"
-                    name="answer-mode"
-                    checked={publicState.answerMode === 'FIRST_CORRECT'}
-                    onChange={() => send('SET_ANSWER_MODE', { answerMode: 'FIRST_CORRECT' })}
-                  />
-                  선착순 종료
-                </label>
-              </fieldset>
-            ) : (
-              <>
-                <p>{answerModeLabel}</p>
-                {round.status === 'DRAWING_AND_GUESSING' &&
-                  <small>라운드 진행 중에는 모드를 바꿀 수 없습니다.</small>}
-              </>
-            )}
-            <small>
-              {publicState.answerMode === 'FIRST_CORRECT'
-                ? '첫 정답이 나오면 바로 라운드가 끝납니다.'
-                : '정답은 가려지고, 정답자는 1점씩·그림 담당자는 최대 1점을 받습니다.'}
-            </small>
-          </section>
-          {actions.has('SET_ROUND_DURATION') ? (
-            <section className="duration-panel panel-section">
-              <label htmlFor="round-duration">제한 시간</label>
-              <input
-                id="round-duration"
-                type="range"
-                min="20"
-                max="180"
-                step="5"
-                value={duration}
-                aria-valuetext={durationText(duration)}
-                onChange={(event) => setDurationDraft(Number(event.target.value))}
-                onPointerUp={() => {
-                  send('SET_ROUND_DURATION', { durationSeconds: duration });
-                  setDurationDraft(null);
-                }}
-                onBlur={() => {
-                  if (duration !== round.durationSeconds) {
+        <aside className="control-column">
+          <div className="control-panel">
+            <section className="answer-mode-panel panel-section">
+              <h3>정답 판정 모드</h3>
+              {actions.has('SET_ANSWER_MODE') ? (
+                <fieldset>
+                  <legend className="visually-hidden">정답 판정 모드 선택</legend>
+                  <label>
+                    <input
+                      type="radio"
+                      name="answer-mode"
+                      checked={publicState.answerMode === 'UNTIL_TIMER'}
+                      onChange={() => send('SET_ANSWER_MODE', { answerMode: 'UNTIL_TIMER' })}
+                    />
+                    타이머까지 계속
+                  </label>
+                  <label>
+                    <input
+                      type="radio"
+                      name="answer-mode"
+                      checked={publicState.answerMode === 'FIRST_CORRECT'}
+                      onChange={() => send('SET_ANSWER_MODE', { answerMode: 'FIRST_CORRECT' })}
+                    />
+                    선착순 종료
+                  </label>
+                </fieldset>
+              ) : (
+                <>
+                  <p>{answerModeLabel}</p>
+                  {round.status === 'DRAWING_AND_GUESSING' &&
+                    <small>라운드 진행 중에는 모드를 바꿀 수 없습니다.</small>}
+                </>
+              )}
+              <small>
+                {publicState.answerMode === 'FIRST_CORRECT'
+                  ? '첫 정답이 나오면 바로 라운드가 끝납니다.'
+                  : '정답은 가려지고, 정답자는 1점씩·그림 담당자는 최대 1점을 받습니다.'}
+              </small>
+            </section>
+            {actions.has('SET_ROUND_DURATION') ? (
+              <section className="duration-panel panel-section">
+                <label htmlFor="round-duration">제한 시간</label>
+                <input
+                  id="round-duration"
+                  type="range"
+                  min="20"
+                  max="180"
+                  step="5"
+                  value={duration}
+                  aria-valuetext={durationText(duration)}
+                  onChange={(event) => setDurationDraft(Number(event.target.value))}
+                  onPointerUp={() => {
                     send('SET_ROUND_DURATION', { durationSeconds: duration });
-                  }
-                  setDurationDraft(null);
-                }}
-              />
-              <output htmlFor="round-duration">{durationText(duration)}</output>
-            </section>
-          ) : (
-            <section className="duration-panel panel-section">
-              <h3>제한 시간</h3>
-              <p>{durationText(round.durationSeconds)}</p>
-              {round.status === 'DRAWING_AND_GUESSING' &&
-                <small>라운드 진행 중에는 제한 시간을 바꿀 수 없습니다.</small>}
-            </section>
-          )}
-          <KeywordPanel />
-          {actions.has('RECLAIM_DRAWER') && (
-            <section className="panel-section">
-              <p>기존 그림과 제시어를 유지한 채 그리기 권한을 가져옵니다.</p>
-              <button type="button" className="secondary" onClick={() => send('RECLAIM_DRAWER', {})}>
-                그리기 권한 가져오기
+                    setDurationDraft(null);
+                  }}
+                  onBlur={() => {
+                    if (duration !== round.durationSeconds) {
+                      send('SET_ROUND_DURATION', { durationSeconds: duration });
+                    }
+                    setDurationDraft(null);
+                  }}
+                />
+                <output htmlFor="round-duration">{durationText(duration)}</output>
+              </section>
+            ) : (
+              <section className="duration-panel panel-section">
+                <h3>제한 시간</h3>
+                <p>{durationText(round.durationSeconds)}</p>
+                {round.status === 'DRAWING_AND_GUESSING' &&
+                  <small>라운드 진행 중에는 제한 시간을 바꿀 수 없습니다.</small>}
+              </section>
+            )}
+            <KeywordPanel />
+            {actions.has('RECLAIM_DRAWER') && (
+              <section className="panel-section">
+                <p>기존 그림과 제시어를 유지한 채 그리기 권한을 가져옵니다.</p>
+                <button type="button" className="secondary" onClick={() => send('RECLAIM_DRAWER', {})}>
+                  그리기 권한 가져오기
+                </button>
+              </section>
+            )}
+            {actions.has('RETURN_TO_WAITING') && (
+              <button
+                type="button"
+                className="secondary next-round"
+                onClick={() => setConfirmation('RETURN_TO_WAITING')}
+              >
+                대기실로 돌아가기
               </button>
-            </section>
-          )}
-          {actions.has('RETURN_TO_WAITING') && (
-            <button
-              type="button"
-              className="secondary next-round"
-              onClick={() => setConfirmation('RETURN_TO_WAITING')}
-            >
-              대기실로 돌아가기
-            </button>
-          )}
+            )}
+          </div>
           <GuessFeed />
         </aside>
       </div>

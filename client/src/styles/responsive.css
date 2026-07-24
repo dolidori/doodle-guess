@@ -15,7 +15,7 @@
     grid-area: canvas;
   }
 
-  .control-panel {
+  .control-column {
     grid-area: controls;
   }
 }
@@ -90,8 +90,13 @@
   }
 
   .room-layout {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: minmax(0, 1.75fr) minmax(8rem, 1fr);
+    grid-template-areas:
+      "canvas chat"
+      "players players"
+      "controls controls";
+    align-content: start;
     overflow-y: auto;
     padding-bottom: max(var(--space-3), var(--safe-bottom));
   }
@@ -102,7 +107,6 @@
   }
 
   .canvas-column {
-    flex: none;
     min-height: min(56dvh, 29rem);
   }
 
@@ -110,9 +114,23 @@
     min-height: 18rem;
   }
 
+  .control-column {
+    display: contents;
+  }
+
   .control-panel {
-    flex: none;
+    grid-area: controls;
     overflow: visible;
+  }
+
+  .control-column > .guess-feed {
+    grid-area: chat;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .guess-input input {
+    min-width: 0;
   }
 
   .guess-input {
@@ -167,5 +185,15 @@
 
   .control-panel {
     overflow-y: auto;
+  }
+
+  .control-column {
+    display: flex;
+    grid-area: controls;
+  }
+
+  .control-column > .guess-feed {
+    order: -1;
+    min-height: 8rem;
   }
 }

@@ -598,6 +598,23 @@ h3 {
   gap: var(--space-2);
 }
 
+.control-column {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.control-column > .control-panel {
+  flex: 1 1 auto;
+}
+
+.control-column > .guess-feed {
+  flex: 1 1 10rem;
+  min-height: 8rem;
+}
+
 .duration-panel input[type="range"] {
   min-height: 44px;
   padding: 0;

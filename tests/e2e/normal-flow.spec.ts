@@ -1,5 +1,23 @@
 import { expect, test } from '@playwright/test';
 
+test('모바일에서 공개 추측 채팅이 캔버스 오른쪽에 나란히 배치된다', async ({
+  page
+}, testInfo) => {
+  test.skip(!testInfo.project.name.startsWith('chromium-mobile'), '모바일 전용 레이아웃 검증');
+
+  await page.goto('/');
+  await page.getByLabel('닉네임').fill('모바일방장');
+  await page.getByRole('button', { name: '방 만들기' }).click();
+
+  const canvasBox = await page.locator('.canvas-stage').boundingBox();
+  const feedBox = await page.locator('.guess-feed').boundingBox();
+
+  expect(canvasBox).not.toBeNull();
+  expect(feedBox).not.toBeNull();
+  expect(feedBox!.x).toBeGreaterThanOrEqual(canvasBox!.x + canvasBox!.width - 1);
+  expect(Math.abs(feedBox!.y - canvasBox!.y)).toBeLessThanOrEqual(2);
+});
+
 test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 진행된다', async ({ browser }) => {
   const hostContext = await browser.newContext();
   const guestContext = await browser.newContext();
