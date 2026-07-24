@@ -27,6 +27,10 @@ import {
   syncServerClock,
   type ClockAnchor
 } from '../realtime/serverClock.js';
+import {
+  advanceDrawingSequence,
+  cursorFromDrawing
+} from '../realtime/drawingSequence.js';
 import { openWebSocket } from '../realtime/websocketClient.js';
 import {
   gameReducer,
@@ -103,11 +107,21 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const assemblerRef = useRef(new SnapshotAssembler());
   const clockRef = useRef<ClockAnchor | null>(null);
   const warnedRoundRef = useRef<string | null>(null);
+  const drawingSequenceRef = useRef(cursorFromDrawing(initialState.drawing));
   const snapshotActiveRef = useRef(false);
   const pendingSnapshotDeltasRef = useRef<StrokeBatchEvent[]>([]);
   const snapshotTimerRef = useRef<number | null>(null);
   useEffect(() => {
     stateRef.current = state;
+    const current = drawingSequenceRef.current;
+    const rendered = cursorFromDrawing(state.drawing);
+    if (
+      current.roundId !== rendered.roundId ||
+      current.drawingRevision !== rendered.drawingRevision ||
+      rendered.drawingSeq > current.drawingSeq
+    ) {
+      drawingSequenceRef.current = rendered;
+    }
   }, [state]);
 
   const toast = useCallback((message: string, kind: 'info' | 'error' = 'info') => {
@@ -165,17 +179,28 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           pendingSnapshotDeltasRef.current.push(stroke);
           break;
         }
-        const drawing = stateRef.current.drawing;
-        if (drawing.roundId === stroke.roundId &&
-            drawing.drawingRevision === stroke.drawingRevision &&
-            stroke.drawingSeq > drawing.drawingSeq + 1) {
+        const sequence = advanceDrawingSequence(drawingSequenceRef.current, stroke);
+        if (sequence.status === 'GAP') {
           socketRef.current?.close(4000, '그림 동기화가 필요합니다.');
           break;
         }
+        if (sequence.status === 'IGNORE') break;
+        drawingSequenceRef.current = sequence.cursor;
         dispatch({ type: 'STROKE_BATCH', event: stroke });
         break;
       }
-      case 'STROKE_UNDONE':
+      case 'STROKE_UNDONE': {
+        const sequence = advanceDrawingSequence(drawingSequenceRef.current, {
+          roundId: event.payload.roundId as string,
+          drawingRevision: event.payload.drawingRevision as number,
+          drawingSeq: event.payload.drawingSeq as number
+        });
+        if (sequence.status === 'GAP') {
+          socketRef.current?.close(4000, '그림 동기화가 필요합니다.');
+          break;
+        }
+        if (sequence.status === 'IGNORE') break;
+        drawingSequenceRef.current = sequence.cursor;
         dispatch({
           type: 'STROKE_UNDONE',
           roundId: event.payload.roundId as string,
@@ -184,6 +209,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           drawingSeq: event.payload.drawingSeq as number
         });
         break;
+      }
       case 'DRAWING_CLEARED':
         assemblerRef.current.clear();
         snapshotActiveRef.current = false;
@@ -192,6 +218,11 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
           clearTimeout(snapshotTimerRef.current);
           snapshotTimerRef.current = null;
         }
+        drawingSequenceRef.current = {
+          roundId: event.payload.roundId as string,
+          drawingRevision: event.payload.drawingRevision as number,
+          drawingSeq: 0
+        };
         dispatch({
           type: 'DRAWING_CLEARED',
           roundId: event.payload.roundId as string,
@@ -216,6 +247,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
               clearTimeout(snapshotTimerRef.current);
               snapshotTimerRef.current = null;
             }
+            drawingSequenceRef.current = cursorFromDrawing(drawing);
             dispatch({ type: 'DRAWING_SNAPSHOT', drawing });
             for (const delta of pendingSnapshotDeltasRef.current
               .filter((item) =>
@@ -224,6 +256,9 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
                 item.drawingSeq > drawing.drawingSeq
               )
               .sort((a, b) => a.drawingSeq - b.drawingSeq)) {
+              const sequence = advanceDrawingSequence(drawingSequenceRef.current, delta);
+              if (sequence.status !== 'APPLY') continue;
+              drawingSequenceRef.current = sequence.cursor;
               dispatch({ type: 'STROKE_BATCH', event: delta });
             }
             pendingSnapshotDeltasRef.current = [];
