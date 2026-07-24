@@ -115,7 +115,12 @@
       "controls controls";
     align-content: start;
     overflow-y: auto;
-    padding-bottom: max(var(--space-3), var(--safe-bottom));
+    padding-bottom: calc(
+      var(--space-5) + max(var(--space-4), var(--safe-bottom))
+    );
+    scroll-padding-bottom: calc(
+      var(--space-5) + max(var(--space-4), var(--safe-bottom))
+    );
   }
 
   .player-panel {
@@ -137,7 +142,13 @@
 
   .control-panel {
     grid-area: controls;
+    height: max-content;
+    min-height: max-content;
     overflow: visible;
+  }
+
+  .control-panel > * {
+    flex-shrink: 0;
   }
 
   .control-column > .guess-feed {
@@ -204,7 +215,10 @@
   }
 
   .control-panel {
+    height: auto;
+    min-height: 0;
     overflow-y: auto;
+    padding-bottom: max(var(--space-4), var(--safe-bottom));
   }
 
   .control-column {
