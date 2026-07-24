@@ -10,7 +10,7 @@ test('모바일에서 공개 추측 채팅이 캔버스 오른쪽에 나란히 �
   await page.getByRole('button', { name: '방 만들기' }).click();
 
   const canvasBox = await page.locator('.canvas-stage').boundingBox();
-  const feedBox = await page.locator('.guess-feed').boundingBox();
+  const feedBox = await page.locator('.guess-feed:visible').boundingBox();
 
   expect(canvasBox).not.toBeNull();
   expect(feedBox).not.toBeNull();

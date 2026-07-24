@@ -521,6 +521,10 @@ h3 {
   gap: var(--space-2);
 }
 
+.canvas-and-chat {
+  display: contents;
+}
+
 .canvas-stage {
   position: relative;
   flex: 1;
@@ -611,7 +615,7 @@ h3 {
   flex: 1 1 auto;
 }
 
-.control-column > .guess-feed {
+.control-column > .desktop-guess-feed {
   flex: 1 1 10rem;
   min-height: 8rem;
 }
@@ -777,6 +781,10 @@ h3 {
   min-height: 10rem;
   display: flex;
   flex-direction: column;
+}
+
+.guess-feed.mobile-guess-feed {
+  display: none;
 }
 
 .guess-feed ol {

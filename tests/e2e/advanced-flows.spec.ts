@@ -230,9 +230,9 @@ test('서로 다른 두 방의 그림과 추측이 브라우저에서도 교차�
 
   await guestA.page.getByLabel('정답 추측').fill('가방에만 보이는 오답');
   await guestA.page.getByRole('button', { name: '제출' }).click();
-  await expect(hostA.page.locator('.guess-feed')).toContainText('가방에만 보이는 오답');
-  await expect(hostB.page.locator('.guess-feed')).not.toContainText('가방에만 보이는 오답');
-  await expect(guestB.page.locator('.guess-feed')).not.toContainText('가방에만 보이는 오답');
+  await expect(hostA.page.locator('.guess-feed:visible')).toContainText('가방에만 보이는 오답');
+  await expect(hostB.page.locator('.guess-feed:visible')).not.toContainText('가방에만 보이는 오답');
+  await expect(guestB.page.locator('.guess-feed:visible')).not.toContainText('가방에만 보이는 오답');
 
   await Promise.all([
     hostA.context.close(),

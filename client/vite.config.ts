@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       devOptions: { enabled: true },
       includeAssets: [
         'images/icon/icon-192.png',
@@ -40,6 +40,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,webp,woff2}'],
         navigateFallbackDenylist: [/^\/api\//, /^\/health\//, /^\/ws/],
+        clientsClaim: true,
+        skipWaiting: true,
         runtimeCaching: []
       }
     })

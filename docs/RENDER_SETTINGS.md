@@ -17,4 +17,4 @@
 | 환경 변수 | 값 |
 |---|---|
 | `NODE_ENV` | `production` |
-| `ALLOWED_ORIGINS` | `https://doodle-guess.onrender.com` |
+| `ALLOWED_ORIGINS` | `https://doodle-guess-9m52.onrender.com` |

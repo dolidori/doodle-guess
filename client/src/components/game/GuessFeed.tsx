@@ -1,7 +1,15 @@
 import { useLayoutEffect, useRef } from 'react';
 import { useGame } from '../../state/GameContext.js';
 
-export const GuessFeed = () => {
+type GuessFeedProps = {
+  className?: string;
+  titleId?: string;
+};
+
+export const GuessFeed = ({
+  className = '',
+  titleId = 'guess-feed-title'
+}: GuessFeedProps = {}) => {
   const { state } = useGame();
   const feed = state.publicState?.guessFeed ?? [];
   const playerId = state.session?.playerId;
@@ -16,8 +24,11 @@ export const GuessFeed = () => {
   }, [latestGuessKey]);
 
   return (
-    <section className="guess-feed panel-section" aria-labelledby="guess-feed-title">
-      <h3 id="guess-feed-title">공개 추측</h3>
+    <section
+      className={['guess-feed', 'panel-section', className].filter(Boolean).join(' ')}
+      aria-labelledby={titleId}
+    >
+      <h3 id={titleId}>공개 추측</h3>
       <ol ref={listRef} aria-live="polite">
         {feed.length === 0 && <li className="empty">아직 추측이 없습니다.</li>}
         {feed.map((guess) => (

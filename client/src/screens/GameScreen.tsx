@@ -279,7 +279,13 @@ export const GameScreen = ({
       <div className="room-layout">
         <PlayerList />
         <section className="canvas-column">
-          <DrawingCanvas enabled={canDraw} settings={settings} />
+          <div className="canvas-and-chat">
+            <DrawingCanvas enabled={canDraw} settings={settings} />
+            <GuessFeed
+              className="mobile-guess-feed"
+              titleId="mobile-guess-feed-title"
+            />
+          </div>
           {canDraw && (
             <DrawingToolbar
               settings={settings}
@@ -387,7 +393,10 @@ export const GameScreen = ({
               </button>
             )}
           </div>
-          <GuessFeed />
+          <GuessFeed
+            className="desktop-guess-feed"
+            titleId="desktop-guess-feed-title"
+          />
         </aside>
       </div>
     </main>

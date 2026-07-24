@@ -108,11 +108,11 @@
 
   .room-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.75fr) minmax(8rem, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "canvas chat"
-      "players players"
-      "controls controls";
+      "canvas"
+      "players"
+      "controls";
     align-content: start;
     overflow-y: auto;
     padding-bottom: calc(
@@ -129,11 +129,33 @@
   }
 
   .canvas-column {
-    min-height: min(56dvh, 29rem);
+    min-height: 0;
+  }
+
+  .canvas-and-chat {
+    min-height: 18rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1.75fr) minmax(7.5rem, 0.9fr);
+    gap: var(--space-2);
   }
 
   .canvas-stage {
     min-height: 18rem;
+  }
+
+  .guess-feed.mobile-guess-feed {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    padding: var(--space-2);
+  }
+
+  .mobile-guess-feed h3 {
+    font-size: 0.9rem;
+  }
+
+  .desktop-guess-feed {
+    display: none;
   }
 
   .control-column {
@@ -151,21 +173,14 @@
     flex-shrink: 0;
   }
 
-  .control-column > .guess-feed {
-    grid-area: chat;
-    min-width: 0;
-    min-height: 0;
-  }
-
   .guess-input input {
     min-width: 0;
   }
 
   .guess-input {
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
-    padding-bottom: max(var(--space-2), var(--safe-bottom));
+    position: static;
+    z-index: auto;
+    padding-bottom: var(--space-2);
   }
 
   .lobby-card {
@@ -226,7 +241,7 @@
     grid-area: controls;
   }
 
-  .control-column > .guess-feed {
+  .control-column > .desktop-guess-feed {
     order: -1;
     min-height: 8rem;
   }
