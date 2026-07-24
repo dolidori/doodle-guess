@@ -38,7 +38,7 @@ export const KeywordPanel = () => {
 
   return (
     <form
-      className="keyword-panel panel-section"
+      className="keyword-panel keyword-entry-panel panel-section"
       onSubmit={(event) => {
         event.preventDefault();
         const keyword = keywordInputRef.current?.value ?? '';
@@ -61,13 +61,18 @@ export const KeywordPanel = () => {
         <button
           type="button"
           className="secondary"
+          aria-label="기본 제시어 다시 뽑기"
           onClick={() => send('SHUFFLE_KEYWORD', {})}
         >
-          기본 제시어 다시 뽑기
+          다시 뽑기
         </button>
       )}
-      <button type="submit" className="primary">
-        {continuing ? '다음 라운드 바로 시작' : '제시어 확정 및 시작'}
+      <button
+        type="submit"
+        className="primary"
+        aria-label={continuing ? '다음 라운드 바로 시작' : '제시어 확정 및 시작'}
+      >
+        {continuing ? '다음 라운드 시작' : '확정 및 시작'}
       </button>
     </form>
   );

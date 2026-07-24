@@ -643,7 +643,9 @@ h3 {
   margin-bottom: var(--space-1);
 }
 
-.mode-panel {
+.mode-panel,
+.duration-panel,
+.keyword-panel {
   position: relative;
   height: 8.5rem;
 }
@@ -772,6 +774,38 @@ h3 {
   display: block;
   text-align: center;
   font-weight: 700;
+}
+
+.keyword-entry-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-rows: auto 40px 36px;
+  align-content: start;
+  gap: var(--space-1);
+}
+
+.keyword-entry-panel > label,
+.keyword-entry-panel > input {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.keyword-entry-panel > input {
+  min-height: 40px;
+  height: 40px;
+  padding-block: 0.4rem;
+}
+
+.keyword-entry-panel > button {
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0.35rem 0.45rem;
+  white-space: nowrap;
+}
+
+.keyword-entry-panel > button.primary {
+  font-size: 0.95rem;
 }
 
 .keyword-value {

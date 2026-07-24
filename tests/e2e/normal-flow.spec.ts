@@ -153,6 +153,16 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   expect(drawerModeBox).not.toBeNull();
   expect(answerModeBox).not.toBeNull();
   expect(Math.abs(drawerModeBox!.height - answerModeBox!.height)).toBeLessThanOrEqual(1);
+  const compactPanels = await host.locator(
+    '.control-panel > .mode-panel, .control-panel > .duration-panel, .control-panel > .keyword-panel'
+  ).evaluateAll((panels) => panels.map((panel) => ({
+    clientHeight: panel.clientHeight,
+    scrollHeight: panel.scrollHeight
+  })));
+  expect(new Set(compactPanels.map((panel) => panel.clientHeight)).size).toBe(1);
+  for (const panel of compactPanels) {
+    expect(panel.scrollHeight).toBeLessThanOrEqual(panel.clientHeight + 1);
+  }
 
   await host.getByRole('button', { name: '그리기 순서' }).click();
   await expect(host.getByRole('tooltip')).toContainText('정한 바퀴 수만큼');
