@@ -112,6 +112,7 @@ export class DrawingService {
       roomVersion: room.roomVersion,
       roundId: room.round.roundId
     }), true);
+    if (payload.isFinal) this.roomService.publishState(room);
   }
 
   undo(

@@ -27,6 +27,7 @@ describe('DrawingToolbar', () => {
     );
     expect(screen.getByRole('button', { name: '굵은 굵기' })).toBeEnabled();
     expect(screen.getByRole('button', { name: '되돌리기' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: '되돌리기' })).toHaveTextContent('↩');
 
     fireEvent.click(screen.getByRole('button', { name: '지우개' }));
     expect(onChange).toHaveBeenCalledWith({

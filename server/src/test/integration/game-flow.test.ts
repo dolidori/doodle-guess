@@ -98,8 +98,13 @@ describe('실제 WebSocket 핵심 게임 흐름', () => {
     const hostToken = hostSession.payload.sessionToken as string;
     expect(roomCode).toMatch(/^[1-9][0-9]{2}$/);
     expect(initialState.payload.players).toHaveLength(1);
+    expect(initialState.payload.answerMode).toBe('UNTIL_TIMER');
     await host.next('PRIVATE_STATE');
     await host.next('DRAWING_SNAPSHOT');
+
+    host.send('SET_ANSWER_MODE', { answerMode: 'FIRST_CORRECT' });
+    await host.next('PUBLIC_STATE', (message) => message.payload.answerMode === 'FIRST_CORRECT');
+    await host.next('PRIVATE_STATE');
 
     guest.send('JOIN_ROOM', { roomCode, nickname: '참가자' });
     await guest.next('ROOM_SESSION');
@@ -589,7 +594,7 @@ describe('실제 WebSocket 핵심 게임 흐름', () => {
     expect(Object.fromEntries(changed.payload.players.map(
       (player: any) => [player.nickname, player.score]
     ))).toEqual(scores);
-    expect(ready.payload.answerMode).toBe('FIRST_CORRECT');
+    expect(ready.payload.answerMode).toBe('UNTIL_TIMER');
   });
 
   it('서버 재시작 후 이전 메모리 방은 ROOM_NOT_FOUND를 반환한다', async () => {

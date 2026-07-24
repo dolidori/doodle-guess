@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DrawingCanvas } from '../components/canvas/DrawingCanvas.js';
 import {
   DrawingToolbar,
@@ -9,6 +9,7 @@ import { GuessFeed } from '../components/game/GuessFeed.js';
 import { GuessInput } from '../components/game/GuessInput.js';
 import { PlayerList } from '../components/game/PlayerList.js';
 import { RoundStatus } from '../components/game/RoundStatus.js';
+import { ConfirmationModal } from '../components/feedback/ConfirmationModal.js';
 import { useGame } from '../state/GameContext.js';
 
 const durationText = (seconds: number): string => {
@@ -24,6 +25,30 @@ const formatCountdown = (seconds: number | null): string => {
   return `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${
     String(seconds % 60).padStart(2, '0')
   }`;
+};
+
+type ConfirmationKind = 'LEAVE' | 'CLEAR' | 'RETURN_TO_WAITING';
+
+const CONFIRMATION_COPY: Record<ConfirmationKind, {
+  title: string;
+  message: string;
+  confirmLabel: string;
+}> = {
+  LEAVE: {
+    title: '방 나가기',
+    message: '방을 나가시겠습니까?',
+    confirmLabel: '나가기'
+  },
+  CLEAR: {
+    title: '그림 전체 지우기',
+    message: '현재 그림을 모두 지우시겠습니까?',
+    confirmLabel: '전체 지우기'
+  },
+  RETURN_TO_WAITING: {
+    title: '대기실로 돌아가기',
+    message: '현재 라운드를 끝내고 대기실로 돌아가시겠습니까? 누적 점수는 유지됩니다.',
+    confirmLabel: '대기실로 돌아가기'
+  }
 };
 
 export const GameScreen = ({
@@ -44,9 +69,11 @@ export const GameScreen = ({
   const [durationDraft, setDurationDraft] = useState<number | null>(null);
   const [bgmControlOpen, setBgmControlOpen] = useState(false);
   const [roomCodeOpen, setRoomCodeOpen] = useState(false);
+  const [confirmation, setConfirmation] = useState<ConfirmationKind | null>(null);
   const bgmControlRef = useRef<HTMLDivElement>(null);
   const roomCodeButtonRef = useRef<HTMLButtonElement>(null);
   const roomCodeCloseRef = useRef<HTMLButtonElement>(null);
+  const closeConfirmation = useCallback(() => setConfirmation(null), []);
   useEffect(() => {
     if (!bgmControlOpen) return;
     const closeOutside = (event: PointerEvent): void => {
@@ -84,6 +111,8 @@ export const GameScreen = ({
   const me = publicState.players.find((player) => player.playerId === session.playerId);
   const actions = new Set(state.privateState?.allowedActions ?? []);
   const canDraw = actions.has('DRAW_STROKE_BATCH');
+  const canUndo = actions.has('UNDO_LAST_STROKE') &&
+    state.drawing.strokes.some((stroke) => stroke.finalized && !stroke.undone);
   const round = publicState.round;
   const duration = durationDraft ?? round.durationSeconds;
   const hostAbsent = publicState.hostDisconnectedAt !== null;
@@ -95,12 +124,10 @@ export const GameScreen = ({
   ].filter(Boolean);
 
   const leave = (): void => {
-    if (!window.confirm('방을 나가시겠습니까?')) return;
     if (!send('LEAVE_ROOM', {})) return;
     if (!me?.isHost) resetToLobby();
   };
   const clear = (): void => {
-    if (!window.confirm('현재 그림을 모두 지우시겠습니까?')) return;
     send('CLEAR_DRAWING', {
       roundId: round.roundId,
       drawingRevision: publicState.drawing.drawingRevision,
@@ -108,8 +135,14 @@ export const GameScreen = ({
     });
   };
   const returnToWaiting = (): void => {
-    if (!window.confirm('현재 라운드를 끝내고 대기실로 돌아가시겠습니까? 누적 점수는 유지됩니다.')) return;
     send('RETURN_TO_WAITING', { roundId: round.roundId });
+  };
+  const confirmAction = (): void => {
+    const action = confirmation;
+    setConfirmation(null);
+    if (action === 'LEAVE') leave();
+    if (action === 'CLEAR') clear();
+    if (action === 'RETURN_TO_WAITING') returnToWaiting();
   };
   const answerModeLabel = publicState.answerMode === 'FIRST_CORRECT'
     ? '선착순 종료'
@@ -168,7 +201,9 @@ export const GameScreen = ({
             )}
           </div>
         )}
-        <button type="button" className="danger" onClick={leave}>나가기</button>
+        <button type="button" className="danger" onClick={() => setConfirmation('LEAVE')}>
+          나가기
+        </button>
       </header>
 
       {roomCodeOpen && (
@@ -198,6 +233,14 @@ export const GameScreen = ({
             </button>
           </section>
         </div>
+      )}
+
+      {confirmation && (
+        <ConfirmationModal
+          {...CONFIRMATION_COPY[confirmation]}
+          onConfirm={confirmAction}
+          onCancel={closeConfirmation}
+        />
       )}
 
       {hostAbsent && (
@@ -233,13 +276,13 @@ export const GameScreen = ({
               settings={settings}
               onChange={setSettings}
               disabled={!canDraw}
-              canUndo={actions.has('UNDO_LAST_STROKE')}
+              canUndo={canUndo}
               onUndo={() => send('UNDO_LAST_STROKE', {
                 roundId: round.roundId,
                 drawingRevision: publicState.drawing.drawingRevision,
                 drawerEpoch: publicState.drawerEpoch
               })}
-              onClear={clear}
+              onClear={() => setConfirmation('CLEAR')}
             />
           )}
           <GuessInput />
@@ -254,19 +297,19 @@ export const GameScreen = ({
                   <input
                     type="radio"
                     name="answer-mode"
-                    checked={publicState.answerMode === 'FIRST_CORRECT'}
-                    onChange={() => send('SET_ANSWER_MODE', { answerMode: 'FIRST_CORRECT' })}
+                    checked={publicState.answerMode === 'UNTIL_TIMER'}
+                    onChange={() => send('SET_ANSWER_MODE', { answerMode: 'UNTIL_TIMER' })}
                   />
-                  선착순 종료
+                  타이머까지 계속
                 </label>
                 <label>
                   <input
                     type="radio"
                     name="answer-mode"
-                    checked={publicState.answerMode === 'UNTIL_TIMER'}
-                    onChange={() => send('SET_ANSWER_MODE', { answerMode: 'UNTIL_TIMER' })}
+                    checked={publicState.answerMode === 'FIRST_CORRECT'}
+                    onChange={() => send('SET_ANSWER_MODE', { answerMode: 'FIRST_CORRECT' })}
                   />
-                  타이머까지 계속
+                  선착순 종료
                 </label>
               </fieldset>
             ) : (
@@ -328,7 +371,7 @@ export const GameScreen = ({
             <button
               type="button"
               className="secondary next-round"
-              onClick={returnToWaiting}
+              onClick={() => setConfirmation('RETURN_TO_WAITING')}
             >
               대기실로 돌아가기
             </button>

@@ -513,6 +513,10 @@ h3 {
   cursor: crosshair;
 }
 
+.canvas-stage.eraser-active {
+  cursor: none;
+}
+
 .canvas-stage canvas {
   position: absolute;
   inset: 0;
@@ -522,6 +526,17 @@ h3 {
 
 .preview-canvas {
   pointer-events: none;
+}
+
+.eraser-cursor {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  pointer-events: none;
+  border: 1px solid rgb(17 24 39 / 0.9);
+  border-radius: 50%;
+  outline: 1px solid rgb(255 255 255 / 0.9);
+  transform: translate(-50%, -50%);
 }
 
 .canvas-lock-label {
@@ -833,6 +848,13 @@ h3 {
   line-height: 1;
   letter-spacing: 0.08em;
   font-variant-numeric: tabular-nums;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
 }
 
 .room-loading {

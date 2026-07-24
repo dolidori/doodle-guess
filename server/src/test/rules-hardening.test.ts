@@ -63,6 +63,7 @@ const setupRoom = (mode: 'NORMAL' | 'MODERATOR' = 'NORMAL') => {
     mode === 'MODERATOR'
   );
   const room = registry.create(mode, host);
+  room.answerMode = 'FIRST_CORRECT';
   const hostConnection = fakeConnection('host');
   hostConnection.roomCode = room.roomCode;
   hostConnection.playerId = host.playerId;
@@ -71,6 +72,14 @@ const setupRoom = (mode: 'NORMAL' | 'MODERATOR' = 'NORMAL') => {
 };
 
 describe('방·세션·권한 강화 검증', () => {
+  it('새 방의 기본 정답 모드는 타이머 종료 시까지다', () => {
+    const registry = new RoomRegistry();
+    const token = generateSessionToken();
+    const host = createPlayer('호스트', hashSessionToken(token), true, false);
+
+    expect(registry.create('NORMAL', host).answerMode).toBe('UNTIL_TIMER');
+  });
+
   it('준비·진행·종료 상태에서 allowedActions를 역할별로 제한한다', () => {
     const { room, gameService, host } = setupRoom();
     const guest = attachPlayer(room, '참가자', 'guest').player;

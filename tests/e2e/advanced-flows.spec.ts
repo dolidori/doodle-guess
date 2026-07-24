@@ -116,7 +116,7 @@ test('20초 deadline 만료 후 그림·추측을 잠그고 다음 라운드로 
   await host.page.getByLabel('제시어', { exact: true }).fill('만료');
   await host.page.getByRole('button', { name: '제시어 확정 및 시작' }).click();
 
-  await expect(host.page.getByRole('dialog')).toContainText('제한 시간이 끝났습니다.', {
+  await expect(host.page.getByRole('dialog')).toContainText('이번 라운드에는 정답자가 없습니다.', {
     timeout: 25_000
   });
   await expect(host.page.getByRole('dialog').getByRole('button', { name: '확인' })).toBeFocused();
@@ -128,8 +128,9 @@ test('20초 deadline 만료 후 그림·추측을 잠그고 다음 라운드로 
   await expect(host.page.locator('.canvas-stage')).toHaveClass(/locked/);
   expect(await host.page.evaluate(() => (window as any).__warningCount)).toBe(1);
 
-  host.page.once('dialog', (dialog) => dialog.accept());
   await host.page.getByRole('button', { name: '대기실로 돌아가기' }).click();
+  await host.page.getByRole('dialog', { name: '대기실로 돌아가기' })
+    .getByRole('button', { name: '대기실로 돌아가기' }).click();
   await expect(host.page.getByRole('button', { name: '제시어 확정 및 시작' })).toBeVisible();
   await Promise.all([host.context.close(), guest.context.close()]);
 });
@@ -172,8 +173,9 @@ test('호스트 연결이 끊겨도 이양하지 않고 원래 nickname으로 �
   await expect(recovered.page.locator('.identity')).toContainText('호스트');
   await expect(guest.page.locator('.warning-banner')).toHaveCount(0);
 
-  recovered.page.once('dialog', (dialog) => dialog.accept());
   await recovered.page.getByRole('button', { name: '나가기' }).click();
+  await recovered.page.getByRole('dialog', { name: '방 나가기' })
+    .getByRole('button', { name: '나가기' }).click();
   await expect(guest.page.getByRole('alertdialog')).toContainText('호스트가 나가 방이 종료되었습니다.');
   await Promise.all([
     host.context.close(),

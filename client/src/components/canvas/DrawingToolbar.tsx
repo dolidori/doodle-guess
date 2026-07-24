@@ -100,7 +100,7 @@ export const DrawingToolbar = ({
         disabled={disabled || !canUndo}
         onClick={onUndo}
       >
-        <span className="undo-icon" aria-hidden="true">↶</span>
+        <span className="undo-icon" aria-hidden="true">↩</span>
       </button>
       <button type="button" className="danger clear-button" disabled={disabled} onClick={onClear}>
         전체 지우기

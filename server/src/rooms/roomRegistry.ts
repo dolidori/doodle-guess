@@ -66,7 +66,7 @@ export class RoomRegistry {
     const room: RoomRuntime = {
       roomCode,
       mode,
-      answerMode: 'FIRST_CORRECT',
+      answerMode: 'UNTIL_TIMER',
       status: 'WAITING',
       roomVersion: 1,
       eventSeq: 0,

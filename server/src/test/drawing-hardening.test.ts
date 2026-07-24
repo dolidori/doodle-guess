@@ -129,12 +129,23 @@ describe('그림 상한·순서·권한', () => {
       batchSeq: 1,
       isFinal: true
     }), hostConnection);
+    const afterDraw = vi.mocked(hostConnection.ws.send).mock.calls.map(([raw]) =>
+      JSON.parse(String(raw)) as { type: string; payload: { allowedActions?: string[] } }
+    );
+    expect(afterDraw.findLast((event) => event.type === 'PRIVATE_STATE')?.payload.allowedActions)
+      .toContain('UNDO_LAST_STROKE');
+
     drawingService.undo(room, host.playerId, {
       roundId: room.round.roundId,
       drawingRevision: room.round.drawing.drawingRevision,
       drawerEpoch: room.round.drawing.drawerEpoch
     });
     expect(room.round.drawing.strokes[0]?.undone).toBe(true);
+    const afterUndo = vi.mocked(hostConnection.ws.send).mock.calls.map(([raw]) =>
+      JSON.parse(String(raw)) as { type: string; payload: { allowedActions?: string[] } }
+    );
+    expect(afterUndo.findLast((event) => event.type === 'PRIVATE_STATE')?.payload.allowedActions)
+      .not.toContain('UNDO_LAST_STROKE');
   });
 
   it('batch gap은 snapshot을 보내고 이전 drawerEpoch packet은 거부한다', () => {

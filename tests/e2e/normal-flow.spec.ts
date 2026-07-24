@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test';
 
 test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 진행된다', async ({ browser }) => {
-  const context = await browser.newContext();
-  const host = await context.newPage();
-  const guest = await context.newPage();
+  const hostContext = await browser.newContext();
+  const guestContext = await browser.newContext();
+  const host = await hostContext.newPage();
+  const guest = await guestContext.newPage();
 
   await host.goto('/');
   await host.getByLabel('닉네임').fill('방장');
@@ -26,19 +27,35 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await guest.getByLabel('방번호').press('Enter');
   await expect(guest.locator('.identity strong')).toHaveText('참가자');
 
+  await host.getByLabel('선착순 종료').click();
+  await expect(host.getByLabel('선착순 종료')).toBeChecked();
   await host.getByLabel('제시어', { exact: true }).fill('보라색');
   await host.getByRole('button', { name: '제시어 확정 및 시작' }).click();
   await expect(host.getByText('제시어가 가려졌습니다.')).toBeVisible();
   await expect(guest.getByLabel('정답 추측')).toBeEnabled();
 
   const canvas = host.locator('.canvas-stage');
+  await host.getByRole('button', { name: '지우개' }).click();
   await canvas.scrollIntoViewIfNeeded();
-  const box = await canvas.boundingBox();
+  let box = await canvas.boundingBox();
   expect(box).not.toBeNull();
+  await host.mouse.move(box!.x + 80, box!.y + 80);
+  const eraserCursor = host.locator('.eraser-cursor');
+  await expect(eraserCursor).toBeVisible();
+  const cursorBox = await eraserCursor.boundingBox();
+  expect(cursorBox!.width).toBeCloseTo(Math.min(box!.width, box!.height) * 0.007, 0);
+
+  await host.getByRole('button', { name: '펜' }).click();
+  await canvas.scrollIntoViewIfNeeded();
+  box = await canvas.boundingBox();
   await host.mouse.move(box!.x + 40, box!.y + 40);
   await host.mouse.down();
   await host.mouse.move(box!.x + 140, box!.y + 110, { steps: 8 });
   await host.mouse.up();
+  const undoButton = host.getByRole('button', { name: '되돌리기' });
+  await expect(undoButton).toBeEnabled();
+  await undoButton.click();
+  await expect(undoButton).toBeDisabled();
   await expect(guest.locator('.canvas-stage canvas').first()).toBeVisible();
 
   await guest.getByLabel('정답 추측').fill('보 라 색');
@@ -50,19 +67,21 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await expect(host.getByText('정답 확정 · 참가자')).toBeVisible();
   await expect(guest.getByLabel('정답 추측')).toBeDisabled();
 
-  host.once('dialog', (dialog) => dialog.accept());
   await host.getByRole('button', { name: '대기실로 돌아가기' }).click();
+  await host.getByRole('dialog', { name: '대기실로 돌아가기' })
+    .getByRole('button', { name: '대기실로 돌아가기' }).click();
   await expect(host.getByRole('button', { name: '제시어 확정 및 시작' })).toBeVisible();
 
-  guest.once('dialog', (dialog) => dialog.accept());
   await guest.getByRole('button', { name: '나가기' }).click();
+  await guest.getByRole('dialog', { name: '방 나가기' })
+    .getByRole('button', { name: '나가기' }).click();
   await expect(guest.getByRole('button', { name: '방 만들기' })).toBeVisible();
   await expect(guest.getByRole('button', { name: `방 ${roomCode} · 참가자` })).toBeVisible();
   await guest.getByRole('button', {
     name: `방 ${roomCode} 참가자 최근 접속 삭제`
   }).click();
   await expect(guest.getByRole('button', { name: `방 ${roomCode} · 참가자` })).toHaveCount(0);
-  await context.close();
+  await Promise.all([hostContext.close(), guestContext.close()]);
 });
 
 test('PWA manifest와 핵심 아이콘을 제공한다', async ({ request }) => {

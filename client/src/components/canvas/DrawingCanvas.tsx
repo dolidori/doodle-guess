@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import type { Point } from '../../../../shared/src/index.js';
+import { STROKE_WIDTHS, type Point } from '../../../../shared/src/index.js';
 import { useGame } from '../../state/GameContext.js';
 import { renderPreview, renderStrokes } from './canvasRenderer.js';
 import type { ToolSettings } from './DrawingToolbar.js';
@@ -33,7 +33,9 @@ export const DrawingCanvas = ({
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const previewRef = useRef<HTMLCanvasElement>(null);
+  const eraserCursorRef = useRef<HTMLSpanElement>(null);
   const activeRef = useRef<ActiveStroke | null>(null);
+  const lastPointerRef = useRef<{ clientX: number; clientY: number } | null>(null);
   const settingsRef = useRef(settings);
   const stateRef = useRef(state);
 
@@ -43,6 +45,27 @@ export const DrawingCanvas = ({
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
+
+  const syncEraserCursor = useCallback((): void => {
+    const stage = stageRef.current;
+    const cursor = eraserCursorRef.current;
+    const pointer = lastPointerRef.current;
+    if (!stage || !cursor || !pointer || !enabled || settings.tool !== 'ERASER') {
+      if (cursor) cursor.hidden = true;
+      return;
+    }
+    const rect = stage.getBoundingClientRect();
+    const diameter = STROKE_WIDTHS[settings.width] * Math.min(rect.width, rect.height);
+    cursor.style.width = `${diameter}px`;
+    cursor.style.height = `${diameter}px`;
+    cursor.style.left = `${pointer.clientX - rect.left}px`;
+    cursor.style.top = `${pointer.clientY - rect.top}px`;
+    cursor.hidden = false;
+  }, [enabled, settings.tool, settings.width]);
+
+  useEffect(() => {
+    syncEraserCursor();
+  }, [syncEraserCursor]);
 
   const redraw = useCallback((): void => {
     if (canvasRef.current) renderStrokes(canvasRef.current, stateRef.current.drawing.strokes);
@@ -132,10 +155,16 @@ export const DrawingCanvas = ({
   return (
     <div
       ref={stageRef}
-      className={`canvas-stage ${enabled ? 'enabled' : 'locked'}`}
+      className={[
+        'canvas-stage',
+        enabled ? 'enabled' : 'locked',
+        enabled && settings.tool === 'ERASER' ? 'eraser-active' : ''
+      ].filter(Boolean).join(' ')}
       aria-label={enabled ? '그림을 그릴 수 있는 캔버스' : '그림 보기 캔버스'}
       onPointerDown={(event) => {
         if (!enabled || !stageRef.current) return;
+        lastPointerRef.current = { clientX: event.clientX, clientY: event.clientY };
+        syncEraserCursor();
         const point = normalizedPoint(event, stageRef.current);
         if (!point) return;
         stageRef.current.setPointerCapture(event.pointerId);
@@ -150,12 +179,25 @@ export const DrawingCanvas = ({
         };
         redraw();
       }}
-      onPointerMove={(event) => addPoint(event)}
+      onPointerEnter={(event) => {
+        lastPointerRef.current = { clientX: event.clientX, clientY: event.clientY };
+        syncEraserCursor();
+      }}
+      onPointerMove={(event) => {
+        lastPointerRef.current = { clientX: event.clientX, clientY: event.clientY };
+        syncEraserCursor();
+        addPoint(event);
+      }}
+      onPointerLeave={() => {
+        lastPointerRef.current = null;
+        if (eraserCursorRef.current) eraserCursorRef.current.hidden = true;
+      }}
       onPointerUp={finish}
       onPointerCancel={finish}
     >
       <canvas ref={canvasRef} />
       <canvas ref={previewRef} className="preview-canvas" />
+      <span ref={eraserCursorRef} className="eraser-cursor" hidden aria-hidden="true" />
       {!enabled && <span className="canvas-lock-label">보기 전용</span>}
     </div>
   );
