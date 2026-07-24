@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useRef } from 'react';
 import { useGame } from '../../state/GameContext.js';
 
 export const KeywordPanel = () => {
   const { state, send, dispatch } = useGame();
-  const [keyword, setKeyword] = useState('');
+  const keywordInputRef = useRef<HTMLInputElement>(null);
   const mayStart = state.privateState?.allowedActions.includes('SET_KEYWORD_AND_START') ?? false;
   const privateKeyword = state.privateState?.keyword;
+  const suggestedKeyword = state.privateState?.suggestedKeyword;
   const roundId = state.publicState?.round.roundId;
   const continuing = state.publicState?.round.status === 'SOLVED' ||
     state.publicState?.round.status === 'EXPIRED';
@@ -40,19 +41,32 @@ export const KeywordPanel = () => {
       className="keyword-panel panel-section"
       onSubmit={(event) => {
         event.preventDefault();
+        const keyword = keywordInputRef.current?.value ?? '';
         if (!roundId || !keyword.trim()) return;
-        if (send('SET_KEYWORD_AND_START', { roundId, keyword })) setKeyword('');
+        if (send('SET_KEYWORD_AND_START', { roundId, keyword }) && keywordInputRef.current) {
+          keywordInputRef.current.value = '';
+        }
       }}
     >
       <label htmlFor="keyword">{continuing ? '다음 라운드 제시어' : '제시어'}</label>
       <input
+        key={suggestedKeyword}
+        ref={keywordInputRef}
         id="keyword"
-        value={keyword}
+        defaultValue={suggestedKeyword ?? ''}
         maxLength={50}
         autoComplete="off"
-        onChange={(event) => setKeyword(event.target.value)}
       />
-      <button type="submit" className="primary" disabled={!keyword.trim()}>
+      {state.privateState?.allowedActions.includes('SHUFFLE_KEYWORD') && (
+        <button
+          type="button"
+          className="secondary"
+          onClick={() => send('SHUFFLE_KEYWORD', {})}
+        >
+          기본 제시어 다시 뽑기
+        </button>
+      )}
+      <button type="submit" className="primary">
         {continuing ? '다음 라운드 바로 시작' : '제시어 확정 및 시작'}
       </button>
     </form>

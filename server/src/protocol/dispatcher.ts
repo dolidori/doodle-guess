@@ -18,6 +18,8 @@ const EVENT_MAX_BYTES: Record<string, number> = {
   LEAVE_ROOM: 1024,
   SET_ROUND_DURATION: 1024,
   SET_ANSWER_MODE: 1024,
+  SET_DRAWER_ORDER: 1024,
+  SHUFFLE_KEYWORD: 1024,
   SET_KEYWORD_AND_START: 1024,
   SUBMIT_GUESS: 1024,
   DRAW_STROKE_BATCH: 8192,
@@ -27,7 +29,8 @@ const EVENT_MAX_BYTES: Record<string, number> = {
   RECLAIM_DRAWER: 1024,
   KICK_PLAYER: 1024,
   START_NEXT_ROUND: 1024,
-  RETURN_TO_WAITING: 1024
+  RETURN_TO_WAITING: 1024,
+  END_CEREMONY: 1024
 };
 
 export class Dispatcher {
@@ -170,6 +173,19 @@ export class Dispatcher {
           (command.payload as ClientPayloadMap['SET_ANSWER_MODE']).answerMode
         );
         break;
+      case 'SET_DRAWER_ORDER': {
+        const payload = command.payload as ClientPayloadMap['SET_DRAWER_ORDER'];
+        this.gameService.setDrawerOrder(
+          room,
+          actorId,
+          payload.drawerOrderMode,
+          payload.rotationLaps
+        );
+        break;
+      }
+      case 'SHUFFLE_KEYWORD':
+        this.gameService.shuffleKeyword(room, actorId);
+        break;
       case 'SET_KEYWORD_AND_START': {
         const payload = command.payload as ClientPayloadMap['SET_KEYWORD_AND_START'];
         this.gameService.startRound(room, actorId, payload.roundId, payload.keyword);
@@ -235,6 +251,9 @@ export class Dispatcher {
           actorId,
           (command.payload as ClientPayloadMap['RETURN_TO_WAITING']).roundId
         );
+        break;
+      case 'END_CEREMONY':
+        this.gameService.endCeremony(room, actorId);
         break;
       default:
         throw new ProtocolError('INVALID_ENVELOPE', '알 수 없는 이벤트입니다.');

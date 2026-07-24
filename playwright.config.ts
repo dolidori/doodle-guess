@@ -7,6 +7,7 @@ export default defineConfig({
   timeout: 30_000,
   expect: { timeout: 5000 },
   fullyParallel: false,
+  workers: 1,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://127.0.0.1:5173',
@@ -15,6 +16,10 @@ export default defineConfig({
   projects: [
     { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'] } },
     { name: 'chromium-mobile', use: { ...devices['Pixel 7'] } },
+    {
+      name: 'chromium-tablet',
+      use: { ...devices['iPad Pro 11'], browserName: 'chromium' }
+    },
     {
       name: 'chromium-mobile-landscape',
       use: {
@@ -25,7 +30,7 @@ export default defineConfig({
   ],
   webServer: externalServer ? undefined : [
     {
-      command: 'npm run dev:server',
+      command: 'E2E_DISABLE_RATE_LIMIT=1 npm run dev:server',
       url: 'http://127.0.0.1:3001/health/live',
       reuseExistingServer: true,
       timeout: 30_000

@@ -6,6 +6,7 @@ export type PrivateState = {
   playerId: string;
   roundId: string;
   keyword: string | null;
+  suggestedKeyword: string | null;
   hasSeenKeywordThisRound: boolean;
   hasAnsweredCorrectly: boolean;
   allowedActions: AllowedAction[];

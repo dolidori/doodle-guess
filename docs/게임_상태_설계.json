@@ -627,7 +627,6 @@
         "normalizedKeyword",
         "keywordExposedPlayerIds",
         "correctPlayerIds",
-        "drawerScored",
         "startedAt",
         "roundEndsAt",
         "winnerId",
@@ -700,10 +699,6 @@
             "$ref": "#/$defs/Uuid"
           },
           "xVisibility": "SERVER_PRIVATE"
-        },
-        "drawerScored": {
-          "type": "boolean",
-          "description": "그림 담당자 점수가 해당 라운드에서 이미 지급됐는지"
         },
         "startedAt": {
           "anyOf": [

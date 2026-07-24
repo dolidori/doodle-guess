@@ -275,6 +275,13 @@ export const GameScreen = ({
             : '시간 종료'} · 대기실 복귀를 기다리는 중
         </div>
       )}
+      {publicState.drawerOrderMode === 'ROTATE' &&
+        publicState.rotationCurrentTurn > 0 &&
+        publicState.status !== 'RESULTS' && (
+          <div className="status-banner rotation-banner">
+            순환 그리기 {publicState.rotationCurrentTurn}/{publicState.rotationTotalTurns}번째 차례
+          </div>
+        )}
 
       <div className="room-layout">
         <PlayerList />
@@ -282,8 +289,8 @@ export const GameScreen = ({
           <div className="canvas-and-chat">
             <DrawingCanvas enabled={canDraw} settings={settings} />
             <GuessFeed
-              className="mobile-guess-feed"
-              titleId="mobile-guess-feed-title"
+              className="side-guess-feed"
+              titleId="side-guess-feed-title"
             />
           </div>
           {canDraw && (
@@ -304,6 +311,62 @@ export const GameScreen = ({
         </section>
         <aside className="control-column">
           <div className="control-panel">
+            <section className="drawer-order-panel panel-section">
+              <h3>그리기 순서</h3>
+              {actions.has('SET_DRAWER_ORDER') ? (
+                <>
+                  <fieldset>
+                    <legend className="visually-hidden">그리기 순서 선택</legend>
+                    <label>
+                      <input
+                        type="radio"
+                        name="drawer-order"
+                        checked={publicState.drawerOrderMode === 'FIXED'}
+                        onChange={() => send('SET_DRAWER_ORDER', {
+                          drawerOrderMode: 'FIXED',
+                          rotationLaps: publicState.rotationLaps
+                        })}
+                      />
+                      고정
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="drawer-order"
+                        checked={publicState.drawerOrderMode === 'ROTATE'}
+                        onChange={() => send('SET_DRAWER_ORDER', {
+                          drawerOrderMode: 'ROTATE',
+                          rotationLaps: publicState.rotationLaps
+                        })}
+                      />
+                      순서대로
+                    </label>
+                  </fieldset>
+                  {publicState.drawerOrderMode === 'ROTATE' && (
+                    <label>
+                      바퀴 수
+                      <select
+                        value={publicState.rotationLaps}
+                        onChange={(event) => send('SET_DRAWER_ORDER', {
+                          drawerOrderMode: 'ROTATE',
+                          rotationLaps: Number(event.target.value)
+                        })}
+                      >
+                        {Array.from({ length: 10 }, (_, index) => index + 1).map((laps) => (
+                          <option key={laps} value={laps}>{laps}바퀴</option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </>
+              ) : (
+                <p>
+                  {publicState.drawerOrderMode === 'ROTATE'
+                    ? `순서대로 · ${publicState.rotationLaps}바퀴`
+                    : '그리기 담당자 고정'}
+                </p>
+              )}
+            </section>
             <section className="answer-mode-panel panel-section">
               <h3>정답 판정 모드</h3>
               {actions.has('SET_ANSWER_MODE') ? (
@@ -338,7 +401,10 @@ export const GameScreen = ({
               <small>
                 {publicState.answerMode === 'FIRST_CORRECT'
                   ? '첫 정답이 나오면 바로 라운드가 끝납니다.'
-                  : '정답은 가려지고, 정답자는 1점씩·그림 담당자는 최대 1점을 받습니다.'}
+                  : '정답은 가려지고 타이머 종료 또는 전원 정답까지 계속됩니다.'}
+              </small>
+              <small>
+                정답 순위에 따라 참여인원 수부터 1점씩 줄고, 그림 담당자는 정답자 수만큼 받습니다.
               </small>
             </section>
             {actions.has('SET_ROUND_DURATION') ? (
@@ -393,10 +459,6 @@ export const GameScreen = ({
               </button>
             )}
           </div>
-          <GuessFeed
-            className="desktop-guess-feed"
-            titleId="desktop-guess-feed-title"
-          />
         </aside>
       </div>
     </main>

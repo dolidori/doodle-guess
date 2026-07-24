@@ -7,6 +7,11 @@ const publicState = (): PublicState => ({
   roomCode: '123',
   mode: 'NORMAL',
   answerMode: 'FIRST_CORRECT',
+  drawerOrderMode: 'FIXED',
+  rotationLaps: 1,
+  rotationCurrentTurn: 0,
+  rotationTotalTurns: 0,
+  finalRankings: null,
   status: 'ROUND_ACTIVE',
   roomVersion: 2,
   eventSeq: 2,
@@ -53,6 +58,50 @@ describe('클라이언트 reducer 순서와 중복 제거', () => {
     const once = gameReducer(initialState, { type: 'ROUND_SOLVED', payload });
     const twice = gameReducer(once, { type: 'ROUND_SOLVED', payload });
     expect(twice.modalQueue).toHaveLength(1);
+  });
+
+  it('전원이 맞히지 못한 라운드 종료 모달에 정답을 크게 표시할 값을 보관한다', () => {
+    const result = gameReducer(initialState, {
+      type: 'ROUND_EXPIRED',
+      payload: {
+        eventId: crypto.randomUUID(),
+        answerMode: 'UNTIL_TIMER',
+        correctCount: 1,
+        answerText: '해바라기'
+      }
+    });
+
+    expect(result.modalQueue[0]).toMatchObject({
+      title: '정답 공개',
+      answer: '해바라기'
+    });
+  });
+
+  it('순환 게임 결과를 시상식 모달에 저장하고 대기실 복귀 시 닫는다', () => {
+    const resultsState = {
+      ...publicState(),
+      status: 'RESULTS' as const,
+      finalRankings: [
+        { rank: 1, playerId: 'one', nickname: '우승자', score: 10 },
+        { rank: 2, playerId: 'two', nickname: '준우승자', score: 7 }
+      ]
+    };
+    const withResults = gameReducer(initialState, {
+      type: 'PUBLIC_STATE',
+      state: resultsState
+    });
+    expect(withResults.modalQueue[0]?.kind).toBe('RESULTS');
+    expect(withResults.modalQueue[0]?.rankings?.[0]).toMatchObject({
+      rank: 1,
+      nickname: '우승자',
+      score: 10
+    });
+
+    const waiting = gameReducer(withResults, {
+      type: 'PUBLIC_STATE',
+      state: { ...resultsState, status: 'WAITING' }
+    });
+    expect(waiting.modalQueue).toHaveLength(0);
   });
 
   it('drawingSeq가 연속인 delta만 적용한다', () => {

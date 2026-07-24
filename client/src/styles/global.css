@@ -445,11 +445,19 @@ h3 {
   background: #176044;
 }
 
+.rotation-banner {
+  border-color: var(--color-brand-cyan);
+}
+
 .room-layout {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(12rem, 0.8fr) minmax(20rem, 2.5fr) minmax(17rem, 1fr);
+  grid-template-columns: minmax(12rem, 0.7fr) minmax(32rem, 4fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "players canvas"
+    "players controls";
   gap: var(--space-2);
   margin-top: var(--space-2);
 }
@@ -462,6 +470,10 @@ h3 {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: rgb(35 30 58 / 0.88);
+}
+
+.player-panel {
+  grid-area: players;
 }
 
 .player-panel h2 {
@@ -514,6 +526,7 @@ h3 {
 }
 
 .canvas-column {
+  grid-area: canvas;
   min-width: 0;
   min-height: 0;
   display: flex;
@@ -522,7 +535,11 @@ h3 {
 }
 
 .canvas-and-chat {
-  display: contents;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(20rem, 3fr) minmax(15rem, 1fr);
+  gap: var(--space-2);
 }
 
 .canvas-stage {
@@ -598,26 +615,31 @@ h3 {
 }
 
 .control-panel {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  align-items: start;
   gap: var(--space-2);
+  max-height: min(13rem, 30vh);
 }
 
 .control-column {
+  grid-area: controls;
   min-width: 0;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
+  display: block;
 }
 
 .control-column > .control-panel {
-  flex: 1 1 auto;
+  min-height: 0;
 }
 
-.control-column > .desktop-guess-feed {
-  flex: 1 1 10rem;
-  min-height: 8rem;
+.control-panel > .panel-section {
+  padding: var(--space-2);
+}
+
+.control-panel h3,
+.control-panel p {
+  margin-bottom: var(--space-1);
 }
 
 .duration-panel input[type="range"] {
@@ -627,18 +649,51 @@ h3 {
 }
 
 .answer-mode-panel fieldset {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-1);
   border: 0;
   padding: 0;
   margin: 0 0 var(--space-2);
 }
 
+.drawer-order-panel fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  border: 0;
+}
+
+.drawer-order-panel label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 36px;
+  margin: 0;
+}
+
+.drawer-order-panel input[type="radio"] {
+  width: 1.25rem;
+  min-height: 1.25rem;
+  accent-color: var(--color-brand-yellow);
+}
+
+.drawer-order-panel select {
+  min-height: 40px;
+  border: 2px solid #bfb5ed;
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.65rem;
+  background: var(--color-canvas);
+  color: var(--color-text-on-light);
+}
+
 .answer-mode-panel label {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-height: 44px;
+  min-height: 36px;
   margin: 0;
 }
 
@@ -783,8 +838,15 @@ h3 {
   flex-direction: column;
 }
 
-.guess-feed.mobile-guess-feed {
-  display: none;
+.guess-feed.side-guess-feed {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.side-guess-feed ol {
+  min-height: 0;
+  overscroll-behavior: contain;
 }
 
 .guess-feed ol {
@@ -915,6 +977,55 @@ h3 {
   line-height: 1;
   letter-spacing: 0.08em;
   font-variant-numeric: tabular-nums;
+}
+
+.modal-answer {
+  display: block;
+  margin: 0.25rem 0 1.25rem;
+  color: white;
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 12vw, 5.5rem);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.modal-results {
+  width: min(94vw, 38rem);
+}
+
+.result-rankings {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding: 0;
+  list-style: none;
+}
+
+.result-rankings li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0.8rem 1rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: rgb(35 30 58 / 0.9);
+}
+
+.result-rank-1 {
+  border-color: var(--color-brand-yellow) !important;
+  font-size: 1.25rem;
+}
+
+.result-rank-2 {
+  border-color: #d8d9e0 !important;
+}
+
+.result-rank-3 {
+  border-color: #c9895b !important;
+}
+
+.ceremony-waiting {
+  color: var(--color-text-muted);
 }
 
 .modal-actions {

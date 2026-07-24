@@ -25,14 +25,19 @@ export const allowedActionsFor = (
   const preparing = room.round.status === 'PREPARING_KEYWORD';
   const active = room.round.status === 'DRAWING_AND_GUESSING';
   const ended = room.round.status === 'SOLVED' || room.round.status === 'EXPIRED';
+  const results = room.status === 'RESULTS';
   const privileged = player.isHost || player.isModerator;
   const isDrawer = player.playerId === room.drawerId;
 
   if (preparing && privileged) {
     actions.push('SET_ROUND_DURATION', 'SET_ANSWER_MODE');
+    if (room.rotationPlayerIds.length === 0) actions.push('SET_DRAWER_ORDER');
   }
   if (preparing && isDrawer && canStartRound(room)) actions.push('SET_KEYWORD_AND_START');
-  if (ended && isDrawer && canStartRound(room)) actions.push('SET_KEYWORD_AND_START');
+  if (ended && !results && isDrawer && canStartRound(room)) actions.push('SET_KEYWORD_AND_START');
+  if ((preparing || (ended && !results)) && isDrawer && canStartRound(room)) {
+    actions.push('SHUFFLE_KEYWORD');
+  }
 
   if (active && isBeforeDeadline(room, now) && !room.round.guessLocked &&
       !player.isModerator &&
@@ -69,13 +74,14 @@ export const allowedActionsFor = (
     actions.push('KICK_PLAYER');
   }
 
-  if (ended &&
+  if (ended && !results && room.drawerOrderMode === 'FIXED' &&
       ((room.mode === 'NORMAL' && player.isHost) ||
        (room.mode === 'MODERATOR' && player.isModerator))) {
     actions.push('START_NEXT_ROUND');
   }
-  if ((active || ended) && privileged) {
+  if ((active || (ended && !results)) && privileged) {
     actions.push('RETURN_TO_WAITING');
   }
+  if (results && privileged) actions.push('END_CEREMONY');
   return actions;
 };

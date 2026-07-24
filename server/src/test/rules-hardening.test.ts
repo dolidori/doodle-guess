@@ -10,6 +10,7 @@ import {
   hashSessionToken,
   RoomService
 } from '../rooms/roomService.js';
+import { buildPrivateState } from '../state/privateState.js';
 import type { ClientConnection, Player, RoomRuntime } from '../rooms/types.js';
 
 const fakeConnection = (id: string): ClientConnection => ({
@@ -78,6 +79,61 @@ describe('방·세션·권한 강화 검증', () => {
     const host = createPlayer('호스트', hashSessionToken(token), true, false);
 
     expect(registry.create('NORMAL', host).answerMode).toBe('UNTIL_TIMER');
+  });
+
+  it('새 방은 고정 그리기와 서버 제시어 기본값으로 시작한다', () => {
+    const { room } = setupRoom();
+
+    expect(room.drawerOrderMode).toBe('FIXED');
+    expect(room.rotationLaps).toBe(1);
+    expect(room.suggestedKeyword).toMatch(/\S/u);
+  });
+
+  it('순환 그리기는 지정 바퀴를 마치면 순위를 발표하고 시상식 종료 후 점수를 초기화한다', () => {
+    const { room, gameService, host } = setupRoom();
+    const first = attachPlayer(room, '첫번째', 'first');
+    const second = attachPlayer(room, '두번째', 'second');
+    gameService.setDrawerOrder(room, host.playerId, 'ROTATE', 2);
+
+    const oneLap = [
+      { drawer: host, answerer: first },
+      { drawer: first.player, answerer: second },
+      { drawer: second.player, answerer: first }
+    ];
+    for (const { drawer, answerer } of [...oneLap, ...oneLap]) {
+      expect(room.drawerId).toBe(drawer.playerId);
+      gameService.startRound(room, drawer.playerId, room.round.roundId, '우산');
+      gameService.submitGuess(room, answerer.player.playerId, {
+        roundId: room.round.roundId,
+        guessId: crypto.randomUUID(),
+        text: '우산'
+      }, answerer.connection);
+    }
+
+    expect(room.status).toBe('RESULTS');
+    expect(room.finalRankings).toHaveLength(3);
+    expect(room.finalRankings![0]!.score)
+      .toBeGreaterThanOrEqual(room.finalRankings![1]!.score);
+
+    gameService.endCeremony(room, host.playerId);
+    expect(room.status).toBe('WAITING');
+    expect([...room.players.values()].every((player) => player.score === 0)).toBe(true);
+    expect(room.rotationPlayerIds).toEqual([]);
+  });
+
+  it('그림 담당자는 서버 제시어를 다시 뽑고 직접 입력한 제시어로 시작할 수 있다', () => {
+    const { room, gameService, host } = setupRoom();
+    const guest = attachPlayer(room, '참가자', 'guest');
+    const initialSuggestion = room.suggestedKeyword;
+
+    expect(buildPrivateState(room, host).suggestedKeyword).toBe(initialSuggestion);
+    expect(buildPrivateState(room, guest.player).suggestedKeyword).toBeNull();
+    gameService.shuffleKeyword(room, host.playerId);
+    expect(room.suggestedKeyword).toMatch(/\S/u);
+    expect(room.suggestedKeyword).not.toBe(initialSuggestion);
+
+    gameService.startRound(room, host.playerId, room.round.roundId, '직접 입력');
+    expect(room.round.keyword).toBe('직접 입력');
   });
 
   it('준비·진행·종료 상태에서 allowedActions를 역할별로 제한한다', () => {
@@ -173,6 +229,44 @@ describe('방·세션·권한 강화 검증', () => {
     expect(room.roundTimer).toBeNull();
     expect(sentEvents(hostConnection).filter((event) => event.type === 'ROUND_EXPIRED'))
       .toHaveLength(1);
+  });
+
+  it('정답 순위는 참여인원 수부터 차감하고 그림 담당자는 정답자 수만큼 받는다', () => {
+    const { room, gameService, host } = setupRoom();
+    const first = attachPlayer(room, '첫번째', 'first');
+    const second = attachPlayer(room, '두번째', 'second');
+    const third = attachPlayer(room, '세번째', 'third');
+    gameService.setAnswerMode(room, host.playerId, 'UNTIL_TIMER');
+    gameService.startRound(room, host.playerId, room.round.roundId, '우산');
+
+    for (const answerer of [first, second, third]) {
+      gameService.submitGuess(room, answerer.player.playerId, {
+        roundId: room.round.roundId,
+        guessId: crypto.randomUUID(),
+        text: '우산'
+      }, answerer.connection);
+    }
+
+    expect(first.player.score).toBe(4);
+    expect(second.player.score).toBe(3);
+    expect(third.player.score).toBe(2);
+    expect(host.score).toBe(3);
+  });
+
+  it('전원이 맞히지 못한 선착순 종료 이벤트에서 정답을 공개한다', () => {
+    const { room, gameService, host, hostConnection } = setupRoom();
+    const first = attachPlayer(room, '첫번째', 'first');
+    attachPlayer(room, '두번째', 'second');
+    gameService.startRound(room, host.playerId, room.round.roundId, '우산');
+
+    gameService.submitGuess(room, first.player.playerId, {
+      roundId: room.round.roundId,
+      guessId: crypto.randomUUID(),
+      text: '우산'
+    }, first.connection);
+
+    const solved = sentEvents(hostConnection).find((event) => event.type === 'ROUND_SOLVED');
+    expect(solved?.payload.answerText).toBe('우산');
   });
 
   it('종료 후 같은 drawer가 대기실 없이 새 제시어로 다음 라운드를 시작한다', () => {

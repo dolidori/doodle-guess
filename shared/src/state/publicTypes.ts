@@ -2,7 +2,14 @@ import type { Stroke } from './drawingTypes.js';
 
 export type RoomMode = 'NORMAL' | 'MODERATOR';
 export type AnswerMode = 'FIRST_CORRECT' | 'UNTIL_TIMER';
-export type RoomStatus = 'WAITING' | 'ROUND_ACTIVE' | 'ROUND_SOLVED' | 'ROUND_EXPIRED' | 'CLOSED';
+export type DrawerOrderMode = 'FIXED' | 'ROTATE';
+export type RoomStatus =
+  | 'WAITING'
+  | 'ROUND_ACTIVE'
+  | 'ROUND_SOLVED'
+  | 'ROUND_EXPIRED'
+  | 'RESULTS'
+  | 'CLOSED';
 export type RoundStatus = 'PREPARING_KEYWORD' | 'DRAWING_AND_GUESSING' | 'SOLVED' | 'EXPIRED';
 
 export type PublicPlayer = {
@@ -11,6 +18,13 @@ export type PublicPlayer = {
   connected: boolean;
   isHost: boolean;
   isModerator: boolean;
+  score: number;
+};
+
+export type FinalRanking = {
+  rank: number;
+  playerId: string;
+  nickname: string;
   score: number;
 };
 
@@ -48,6 +62,11 @@ export type PublicState = {
   roomCode: string;
   mode: RoomMode;
   answerMode: AnswerMode;
+  drawerOrderMode: DrawerOrderMode;
+  rotationLaps: number;
+  rotationCurrentTurn: number;
+  rotationTotalTurns: number;
+  finalRankings: FinalRanking[] | null;
   status: RoomStatus;
   roomVersion: number;
   eventSeq: number;

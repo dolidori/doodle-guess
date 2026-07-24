@@ -151,12 +151,13 @@ describe('실제 WebSocket 핵심 게임 흐름', () => {
     expect(shared.payload.isCorrect).toBe(true);
     expect(shared.payload.guessSeq).toBe(2);
     expect(solved.payload.winnerNickname).toBe('참가자');
+    expect(solved.payload.answerText).toBeNull();
     const solvedState = await host.next('PUBLIC_STATE', (message) => message.payload.status === 'ROUND_SOLVED');
     expect(solvedState.payload.round.guessLocked).toBe(true);
     expect(solvedState.payload.round.drawingLocked).toBe(true);
     expect(Object.fromEntries(solvedState.payload.players.map(
       (player: any) => [player.nickname, player.score]
-    ))).toEqual({ 방장: 1, 참가자: 1 });
+    ))).toEqual({ 방장: 1, 참가자: 2 });
 
     guest.send('SUBMIT_GUESS', {
       roundId,
@@ -413,6 +414,7 @@ describe('실제 WebSocket 핵심 게임 흐름', () => {
     expect(expired).toBe(true);
     const expiredEvent = await guest.next('ROUND_EXPIRED');
     expect(expiredEvent.payload.roundId).toBe(roundId);
+    expect(expiredEvent.payload.answerText).toBe('시계');
     const expiredState = await guest.next(
       'PUBLIC_STATE',
       (message) => message.payload.status === 'ROUND_EXPIRED'
@@ -528,7 +530,7 @@ describe('실제 WebSocket 핵심 게임 흐름', () => {
     expect(firstScoreState.payload.status).toBe('ROUND_ACTIVE');
     expect(firstScoreState.payload.players.find(
       (player: any) => player.playerId === hostSession.payload.playerId
-    ).score).toBe(1);
+    ).score).toBe(3);
     expect(firstScoreState.payload.players.find(
       (player: any) => player.playerId === drawerSession.payload.playerId
     ).score).toBe(1);
@@ -564,11 +566,12 @@ describe('실제 WebSocket 핵심 게임 흐름', () => {
     const scores = Object.fromEntries(secondScoreState.payload.players.map(
       (player: any) => [player.nickname, player.score]
     ));
-    expect(scores).toEqual({ 방장: 1, 화가: 1, 추측자: 1 });
+    expect(scores).toEqual({ 방장: 3, 화가: 2, 추측자: 2 });
     expect(secondScoreState.payload.status).toBe('ROUND_EXPIRED');
     expect(expired.payload).toMatchObject({
       answerMode: 'UNTIL_TIMER',
-      correctCount: 2
+      correctCount: 2,
+      answerText: null
     });
     await host.next('PRIVATE_STATE');
     await drawer.next('PUBLIC_STATE', (message) => message.payload.status === 'ROUND_EXPIRED');

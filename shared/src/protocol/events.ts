@@ -4,7 +4,7 @@ import type {
   SERVER_EVENT_TYPES
 } from './constants.js';
 import type { StrokeBatchPayload } from '../state/drawingTypes.js';
-import type { AnswerMode, RoomMode } from '../state/publicTypes.js';
+import type { AnswerMode, DrawerOrderMode, RoomMode } from '../state/publicTypes.js';
 
 export type ClientEventType = (typeof CLIENT_EVENT_TYPES)[number];
 export type ServerEventType = (typeof SERVER_EVENT_TYPES)[number];
@@ -16,6 +16,8 @@ export type ClientPayloadMap = {
   LEAVE_ROOM: Record<string, never>;
   SET_ROUND_DURATION: { durationSeconds: number };
   SET_ANSWER_MODE: { answerMode: AnswerMode };
+  SET_DRAWER_ORDER: { drawerOrderMode: DrawerOrderMode; rotationLaps: number };
+  SHUFFLE_KEYWORD: Record<string, never>;
   SET_KEYWORD_AND_START: { roundId: string; keyword: string };
   SUBMIT_GUESS: { roundId: string; guessId: string; text: string };
   DRAW_STROKE_BATCH: StrokeBatchPayload;
@@ -26,6 +28,7 @@ export type ClientPayloadMap = {
   KICK_PLAYER: { targetPlayerId: string };
   START_NEXT_ROUND: { previousRoundId: string };
   RETURN_TO_WAITING: { roundId: string };
+  END_CEREMONY: Record<string, never>;
 };
 
 export type ClientEnvelope<T extends ClientEventType = ClientEventType> = {

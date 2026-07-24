@@ -3,9 +3,21 @@ import { expect, test } from '@playwright/test';
 test('모바일에서 공개 추측 채팅이 캔버스 오른쪽에 나란히 배치된다', async ({
   page
 }, testInfo) => {
-  test.skip(!testInfo.project.name.startsWith('chromium-mobile'), '모바일 전용 레이아웃 검증');
+  test.skip(
+    !testInfo.project.name.startsWith('chromium-mobile') &&
+    !testInfo.project.name.startsWith('chromium-tablet'),
+    '모바일·태블릿 전용 레이아웃 검증'
+  );
 
   await page.goto('/');
+  if ((page.viewportSize()?.width ?? 0) <= 640) {
+    const lobbyCard = await page.locator('.lobby-card').boundingBox();
+    const viewport = page.viewportSize()!;
+    expect(lobbyCard).not.toBeNull();
+    expect(Math.abs(
+      lobbyCard!.y + lobbyCard!.height / 2 - viewport.height / 2
+    )).toBeLessThanOrEqual(viewport.height * 0.08);
+  }
   await page.getByLabel('닉네임').fill('모바일방장');
   await page.getByRole('button', { name: '방 만들기' }).click();
 
@@ -19,7 +31,7 @@ test('모바일에서 공개 추측 채팅이 캔버스 오른쪽에 나란히 �
 
   if ((page.viewportSize()?.width ?? 0) <= 640) {
     const canvasAndChat = page.locator('.canvas-and-chat');
-    const chatList = page.locator('.mobile-guess-feed ol');
+    const chatList = page.locator('.side-guess-feed ol');
     const initialRowBox = await canvasAndChat.boundingBox();
     await chatList.evaluate((list) => {
       for (let index = 0; index < 40; index += 1) {
@@ -54,6 +66,26 @@ test('모바일에서 공개 추측 채팅이 캔버스 오른쪽에 나란히 �
     expect(controlColumnBox!.y).toBeGreaterThanOrEqual(
       playerPanelBox!.y + playerPanelBox!.height - 1
     );
+  } else {
+    const layoutBottomPadding = await page.locator('.room-layout').evaluate(
+      (layout) => Number.parseFloat(getComputedStyle(layout).paddingBottom)
+    );
+    const canvasColumnBox = await page.locator('.canvas-column').boundingBox();
+    const controlColumnBox = await page.locator('.control-column').boundingBox();
+
+    expect(layoutBottomPadding).toBeGreaterThanOrEqual(24);
+    expect(canvasColumnBox).not.toBeNull();
+    expect(controlColumnBox).not.toBeNull();
+    const viewport = page.viewportSize()!;
+    if (viewport.width > viewport.height && viewport.height <= 500) {
+      expect(controlColumnBox!.x).toBeGreaterThanOrEqual(
+        canvasColumnBox!.x + canvasColumnBox!.width - 1
+      );
+    } else {
+      expect(controlColumnBox!.y).toBeGreaterThanOrEqual(
+        canvasColumnBox!.y + canvasColumnBox!.height - 1
+      );
+    }
   }
 });
 
@@ -66,6 +98,23 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await host.goto('/');
   await host.getByLabel('닉네임').fill('방장');
   await host.getByRole('button', { name: '방 만들기' }).click();
+  if ((host.viewportSize()?.width ?? 0) >= 1024) {
+    const desktopCanvas = await host.locator('.canvas-stage').boundingBox();
+    const desktopFeed = await host.locator('.side-guess-feed').boundingBox();
+    const desktopControls = await host.locator('.control-column').boundingBox();
+    const desktopCanvasColumn = await host.locator('.canvas-column').boundingBox();
+
+    expect(desktopCanvas).not.toBeNull();
+    expect(desktopFeed).not.toBeNull();
+    expect(desktopControls).not.toBeNull();
+    expect(desktopCanvasColumn).not.toBeNull();
+    expect(desktopFeed!.x).toBeGreaterThanOrEqual(
+      desktopCanvas!.x + desktopCanvas!.width - 1
+    );
+    expect(desktopControls!.y).toBeGreaterThanOrEqual(
+      desktopCanvasColumn!.y + desktopCanvasColumn!.height - 1
+    );
+  }
   const roomButton = host.getByRole('button', { name: /방번호 \d{3} 크게 보기/ });
   await expect(roomButton).toBeVisible();
   const header = host.locator('.game-header');
@@ -121,11 +170,13 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await canvas.scrollIntoViewIfNeeded();
   let box = await canvas.boundingBox();
   expect(box).not.toBeNull();
-  await host.mouse.move(box!.x + 80, box!.y + 80);
-  const eraserCursor = host.locator('.eraser-cursor');
-  await expect(eraserCursor).toBeVisible();
-  const cursorBox = await eraserCursor.boundingBox();
-  expect(cursorBox!.width).toBeCloseTo(Math.min(box!.width, box!.height) * 0.014 * 4, 0);
+  if (await host.evaluate(() => matchMedia('(hover: hover)').matches)) {
+    await host.mouse.move(box!.x + 80, box!.y + 80);
+    const eraserCursor = host.locator('.eraser-cursor');
+    await expect(eraserCursor).toBeVisible();
+    const cursorBox = await eraserCursor.boundingBox();
+    expect(cursorBox!.width).toBeCloseTo(Math.min(box!.width, box!.height) * 0.014 * 4, 0);
+  }
 
   await host.getByRole('button', { name: '펜' }).click();
   await canvas.scrollIntoViewIfNeeded();
@@ -163,6 +214,58 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
     name: `방 ${roomCode} 참가자 최근 접속 삭제`
   }).click();
   await expect(guest.getByRole('button', { name: `방 ${roomCode} · 참가자` })).toHaveCount(0);
+  await Promise.all([hostContext.close(), guestContext.close()]);
+});
+
+test('순서대로 한 바퀴가 끝나면 시상식 후 점수를 초기화하고 대기실로 돌아간다', async ({
+  browser
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'chromium-desktop', '데스크톱에서 순환 게임 전체 흐름 검증');
+
+  const hostContext = await browser.newContext();
+  const guestContext = await browser.newContext();
+  const host = await hostContext.newPage();
+  const guest = await guestContext.newPage();
+
+  await host.goto('/');
+  await host.getByLabel('닉네임').fill('순환방장');
+  await host.getByRole('button', { name: '방 만들기' }).click();
+  const roomButton = host.getByRole('button', { name: /방번호 \d{3} 크게 보기/ });
+  const roomCode = (await roomButton.textContent())!.replace(/\D/gu, '');
+
+  await guest.goto('/');
+  await guest.getByLabel('닉네임').fill('순환참가자');
+  await guest.getByLabel('방번호').fill(roomCode);
+  await guest.getByRole('button', { name: '입장하기' }).click();
+
+  await host.getByLabel('순서대로').click();
+  await expect(host.getByLabel('순서대로')).toBeChecked();
+  await expect(host.getByLabel('바퀴 수')).toHaveValue('1');
+  await host.getByLabel('제시어', { exact: true }).fill('첫 제시어');
+  await host.getByRole('button', { name: '제시어 확정 및 시작' }).click();
+  await guest.getByLabel('정답 추측').fill('첫 제시어');
+  await guest.getByRole('button', { name: '제출' }).click();
+
+  await host.getByRole('dialog').getByRole('button', { name: '확인' }).click();
+  await guest.getByRole('dialog').getByRole('button', { name: '확인' }).click();
+  await expect(guest.getByRole('button', { name: '제시어 확정 및 시작' })).toBeVisible();
+
+  await guest.getByLabel('제시어', { exact: true }).fill('둘째 제시어');
+  await guest.getByRole('button', { name: '제시어 확정 및 시작' }).click();
+  await host.getByLabel('정답 추측').fill('둘째 제시어');
+  await host.getByRole('button', { name: '제출' }).click();
+
+  await host.getByRole('dialog').getByRole('button', { name: '확인' }).click();
+  await guest.getByRole('dialog').getByRole('button', { name: '확인' }).click();
+  const ceremony = host.getByRole('dialog', { name: '최종 시상식' });
+  await expect(ceremony).toContainText('순환방장');
+  await expect(ceremony).toContainText('순환참가자');
+  await ceremony.getByRole('button', { name: '시상식 종료 · 대기실로' }).click();
+
+  await expect(host.getByText('0점 · 연결됨')).toHaveCount(2);
+  await expect(host.getByRole('button', { name: '제시어 확정 및 시작' })).toBeVisible();
+  await expect(guest.getByRole('dialog', { name: '최종 시상식' })).toBeHidden();
+
   await Promise.all([hostContext.close(), guestContext.close()]);
 });
 

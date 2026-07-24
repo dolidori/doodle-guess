@@ -12,6 +12,7 @@ export const buildPrivateState = (
     playerId: player.playerId,
     roundId: room.round.roundId,
     keyword: maySeeKeyword ? room.round.keyword : null,
+    suggestedKeyword: maySeeKeyword ? room.suggestedKeyword : null,
     hasSeenKeywordThisRound: room.round.keywordExposedPlayerIds.has(player.playerId),
     hasAnsweredCorrectly: room.round.correctPlayerIds.has(player.playerId),
     allowedActions: allowedActionsFor(room, player, now)

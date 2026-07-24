@@ -12,9 +12,16 @@ export type ConnectionStatus = 'CONNECTING' | 'CONNECTED' | 'RECONNECTING' | 'FA
 
 export type ModalItem = {
   key: string;
-  kind: 'SOLVED' | 'EXPIRED' | 'CONFIRM_LEAVE' | 'CONFIRM_CLEAR' | 'ROOM_CODE';
+  kind: 'SOLVED' | 'EXPIRED' | 'RESULTS' | 'CONFIRM_LEAVE' | 'CONFIRM_CLEAR' | 'ROOM_CODE';
   title: string;
   message: string;
+  answer?: string;
+  rankings?: Array<{
+    rank: number;
+    playerId: string;
+    nickname: string;
+    score: number;
+  }>;
 };
 
 export type ToastItem = {
@@ -151,6 +158,11 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     case 'PUBLIC_STATE': {
       if (state.publicState && action.state.roomVersion < state.publicState.roomVersion) return state;
       const changedRound = state.publicState?.round.roundId !== action.state.round.roundId;
+      const ceremonyEnded = state.publicState?.status === 'RESULTS' &&
+        action.state.status === 'WAITING';
+      const enteredCeremony = action.state.status === 'RESULTS' &&
+        action.state.finalRankings !== null &&
+        !state.modalQueue.some((modal) => modal.kind === 'RESULTS');
       const consumedEventIds = new Set(state.consumedEventIds);
       if (action.state.round.lastRoundEventId &&
           (action.state.round.status === 'SOLVED' || action.state.round.status === 'EXPIRED')) {
@@ -166,6 +178,17 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           strokes: []
         } : state.drawing,
         keywordHidden: changedRound ? true : state.keywordHidden,
+        modalQueue: ceremonyEnded
+          ? state.modalQueue.filter((modal) => modal.kind !== 'RESULTS')
+          : enteredCeremony
+            ? [...state.modalQueue, {
+                key: `game-results:${action.state.round.roundId}`,
+                kind: 'RESULTS',
+                title: '최종 시상식',
+                message: '모든 순환 그리기가 끝났습니다.',
+                rankings: action.state.finalRankings!
+              }]
+            : state.modalQueue,
         consumedEventIds
       };
     }
@@ -219,32 +242,42 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
     case 'ROUND_SOLVED': {
       if (state.consumedEventIds.has(action.payload.eventId)) return state;
       const consumed = new Set(state.consumedEventIds).add(action.payload.eventId);
+      const answer = typeof action.payload.answerText === 'string'
+        ? action.payload.answerText
+        : undefined;
       return {
         ...state,
         consumedEventIds: consumed,
         modalQueue: [...state.modalQueue, {
           key: `round-solved:${action.payload.eventId}`,
           kind: 'SOLVED',
-          title: '정답을 맞혔습니다',
-          message: `${action.payload.winnerNickname}님이 가장 먼저 맞혔습니다.`
+          title: answer ? '정답 공개' : '정답을 맞혔습니다',
+          message: `${action.payload.winnerNickname}님이 가장 먼저 맞혔습니다.`,
+          ...(answer ? { answer } : {})
         }]
       };
     }
     case 'ROUND_EXPIRED': {
       if (state.consumedEventIds.has(action.payload.eventId)) return state;
       const consumed = new Set(state.consumedEventIds).add(action.payload.eventId);
+      const answer = typeof action.payload.answerText === 'string'
+        ? action.payload.answerText
+        : undefined;
       return {
         ...state,
         consumedEventIds: consumed,
         modalQueue: [...state.modalQueue, {
           key: `round-expired:${action.payload.eventId}`,
           kind: 'EXPIRED',
-          title: action.payload.answerMode === 'UNTIL_TIMER' ? '라운드 종료' : '시간 종료',
+          title: answer
+            ? '정답 공개'
+            : action.payload.answerMode === 'UNTIL_TIMER' ? '라운드 종료' : '시간 종료',
           message: action.payload.answerMode === 'UNTIL_TIMER'
             ? action.payload.correctCount > 0
               ? `${action.payload.correctCount}명이 정답을 맞혔습니다.`
               : '이번 라운드에는 정답자가 없습니다.'
-            : '제한 시간이 끝났습니다.'
+            : '제한 시간이 끝났습니다.',
+          ...(answer ? { answer } : {})
         }]
       };
     }

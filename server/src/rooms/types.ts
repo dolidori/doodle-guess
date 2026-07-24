@@ -1,6 +1,8 @@
 import type WebSocket from 'ws';
 import type {
   AnswerMode,
+  DrawerOrderMode,
+  FinalRanking,
   GuessPublic,
   RoomMode,
   RoomStatus,
@@ -42,7 +44,6 @@ export type RoundState = {
   normalizedKeyword: string | null;
   keywordExposedPlayerIds: Set<string>;
   correctPlayerIds: Set<string>;
-  drawerScored: boolean;
   startedAt: number | null;
   roundEndsAt: number | null;
   winnerId: string | null;
@@ -73,6 +74,13 @@ export type RoomRuntime = {
   roomCode: string;
   mode: RoomMode;
   answerMode: AnswerMode;
+  drawerOrderMode: DrawerOrderMode;
+  rotationLaps: number;
+  rotationPlayerIds: string[];
+  rotationTurnIndex: number;
+  suggestedKeyword: string;
+  lastSuggestedKeyword: string | null;
+  finalRankings: FinalRanking[] | null;
   status: RoomStatus;
   roomVersion: number;
   eventSeq: number;

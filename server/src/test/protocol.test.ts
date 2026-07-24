@@ -11,9 +11,9 @@ import { parseCommand } from '../protocol/schemas.js';
 
 describe('공용 계약', () => {
   it('이벤트와 액션 개수가 기준 문서와 일치한다', () => {
-    expect(CLIENT_EVENT_TYPES).toHaveLength(15);
+    expect(CLIENT_EVENT_TYPES).toHaveLength(18);
     expect(SERVER_EVENT_TYPES).toHaveLength(14);
-    expect(ALLOWED_ACTIONS).toHaveLength(13);
+    expect(ALLOWED_ACTIONS).toHaveLength(16);
   });
 
   it('팔레트와 굵기 값이 고정되어 있다', () => {
@@ -68,6 +68,22 @@ describe('공용 계약', () => {
       requestId: crypto.randomUUID(),
       payload: { answerMode }
     }).payload).toEqual({ answerMode });
+  });
+
+  it('그리기 순서와 바퀴 수 설정을 검증한다', () => {
+    expect(parseCommand({
+      v: 1,
+      type: 'SET_DRAWER_ORDER',
+      requestId: crypto.randomUUID(),
+      payload: { drawerOrderMode: 'ROTATE', rotationLaps: 3 }
+    }).payload).toEqual({ drawerOrderMode: 'ROTATE', rotationLaps: 3 });
+
+    expect(() => parseCommand({
+      v: 1,
+      type: 'SET_DRAWER_ORDER',
+      requestId: crypto.randomUUID(),
+      payload: { drawerOrderMode: 'ROTATE', rotationLaps: 0 }
+    })).toThrow();
   });
 
   it('알 수 없는 정답 모드를 거부한다', () => {

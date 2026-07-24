@@ -6,6 +6,7 @@ import {
   ROOM_CODE_MIN,
   type RoomMode
 } from '../../../shared/src/index.js';
+import { pickRandomKeyword } from '../game/keywordService.js';
 import { ProtocolError } from '../protocol/errors.js';
 import { RoomCommandQueue } from './roomCommandQueue.js';
 import type { Player, RoomRuntime } from './types.js';
@@ -30,7 +31,6 @@ const emptyRound = (roundNumber = 1, revision = 0, drawerEpoch = 0) => ({
   normalizedKeyword: null,
   keywordExposedPlayerIds: new Set<string>(),
   correctPlayerIds: new Set<string>(),
-  drawerScored: false,
   startedAt: null,
   roundEndsAt: null,
   winnerId: null,
@@ -67,6 +67,13 @@ export class RoomRegistry {
       roomCode,
       mode,
       answerMode: 'UNTIL_TIMER',
+      drawerOrderMode: 'FIXED',
+      rotationLaps: 1,
+      rotationPlayerIds: [],
+      rotationTurnIndex: 0,
+      suggestedKeyword: pickRandomKeyword(),
+      lastSuggestedKeyword: null,
+      finalRankings: null,
       status: 'WAITING',
       roomVersion: 1,
       eventSeq: 0,
