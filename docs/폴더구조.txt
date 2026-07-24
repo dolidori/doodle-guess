@@ -1,0 +1,143 @@
+doodle-guess/
+├── client/
+│   ├── public/
+│   │   ├── images/
+│   │   │   └── icon/
+│   │   │       ├── icon-192.png
+│   │   │       └── icon-512.png
+│   │   └── manifest.webmanifest
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── App.tsx
+│   │   │   ├── AppRouter.tsx
+│   │   │   └── providers.tsx
+│   │   ├── components/
+│   │   │   ├── canvas/
+│   │   │   │   ├── DrawingCanvas.tsx
+│   │   │   │   ├── DrawingToolbar.tsx
+│   │   │   │   ├── KeywordPanel.tsx
+│   │   │   │   └── canvasRenderer.ts
+│   │   │   ├── game/
+│   │   │   │   ├── GuessFeed.tsx
+│   │   │   │   ├── GuessInput.tsx
+│   │   │   │   ├── PlayerList.tsx
+│   │   │   │   └── RoundStatus.tsx
+│   │   │   ├── lobby/
+│   │   │   │   ├── CreateRoomForm.tsx
+│   │   │   │   ├── JoinRoomForm.tsx
+│   │   │   │   └── ServerStatus.tsx
+│   │   │   └── feedback/
+│   │   │       ├── ModalQueue.tsx
+│   │   │       ├── ReconnectOverlay.tsx
+│   │   │       └── ToastQueue.tsx
+│   │   ├── screens/
+│   │   │   ├── LobbyScreen.tsx
+│   │   │   ├── GameScreen.tsx
+│   │   │   └── ModeratorScreen.tsx
+│   │   ├── state/
+│   │   │   ├── gameReducer.ts
+│   │   │   ├── GameContext.tsx
+│   │   │   ├── allowedActions.ts
+│   │   │   └── modalReducer.ts
+│   │   ├── realtime/
+│   │   │   ├── websocketClient.ts
+│   │   │   ├── eventDispatch.ts
+│   │   │   ├── reconnect.ts
+│   │   │   ├── serverClock.ts
+│   │   │   └── snapshotAssembler.ts
+│   │   ├── styles/
+│   │   │   ├── tokens.css
+│   │   │   ├── global.css
+│   │   │   └── responsive.css
+│   │   ├── test/
+│   │   │   ├── setup.ts
+│   │   │   └── fixtures.ts
+│   │   └── main.tsx
+│   ├── index.html
+│   ├── tsconfig.json
+│   └── vite.config.ts
+├── server/
+│   └── src/
+│       ├── index.ts
+│       ├── config.ts
+│       ├── http/
+│       │   ├── health.ts
+│       │   ├── serverTime.ts
+│       │   └── staticAssets.ts
+│       ├── websocket/
+│       │   ├── connection.ts
+│       │   ├── heartbeat.ts
+│       │   └── origin.ts
+│       ├── protocol/
+│       │   ├── dispatcher.ts
+│       │   ├── schemas.ts
+│       │   ├── errors.ts
+│       │   └── rateLimit.ts
+│       ├── rooms/
+│       │   ├── roomRegistry.ts
+│       │   ├── roomCommandQueue.ts
+│       │   ├── roomService.ts
+│       │   └── roomTimers.ts
+│       ├── game/
+│       │   ├── gameStateMachine.ts
+│       │   ├── gameService.ts
+│       │   ├── keywordService.ts
+│       │   ├── guessService.ts
+│       │   ├── roundTimer.ts
+│       │   └── permissionService.ts
+│       ├── drawing/
+│       │   ├── drawingService.ts
+│       │   ├── snapshotService.ts
+│       │   └── strokeValidation.ts
+│       ├── state/
+│       │   ├── publicState.ts
+│       │   └── privateState.ts
+│       ├── broadcast/
+│       │   ├── roomBroadcast.ts
+│       │   └── backpressure.ts
+│       ├── logging/
+│       │   └── logger.ts
+│       └── test/
+│           ├── integration/
+│           ├── concurrency/
+│           └── fixtures/
+├── shared/
+│   └── src/
+│       ├── protocol/
+│       │   ├── events.ts
+│       │   ├── payloads.ts
+│       │   └── constants.ts
+│       ├── state/
+│       │   ├── publicTypes.ts
+│       │   ├── privateTypes.ts
+│       │   └── drawingTypes.ts
+│       └── index.ts
+├── tests/
+│   ├── e2e/
+│   │   ├── multi-room.spec.ts
+│   │   ├── reconnect.spec.ts
+│   │   ├── drawing.spec.ts
+│   │   ├── timer-sync.spec.ts
+│   │   ├── round-expiry.spec.ts
+│   │   └── first-answer.spec.ts
+│   └── load/
+│       ├── baseline.js
+│       └── stress.js
+├── docs/
+├── images/
+│   └── icon/
+│       ├── icon-192.png
+│       └── icon-512.png
+├── package.json
+├── package-lock.json
+├── tsconfig.base.json
+├── eslint.config.js
+└── README.md
+
+# 구조 근거
+# - GAME_DEVELOPMENT_GUIDELINES.md §6.2 표준 프로젝트 구조
+# - 결정_기록.md D-18: DB/persistence 폴더 없음, 일회성 인메모리 Room
+# - 결정_기록.md D-21: game/roundTimer.ts와 round-expiry E2E
+# - 게임 설명.md 6행 및 D-13: drawing 모듈에 vector/undo/clear/snapshot 분리
+# - 공통 지침 §1.2: server state projection과 client reducer 분리
+# - WebSocket_이벤트_명세.md: shared/protocol이 통신 계약의 코드 단일 출처

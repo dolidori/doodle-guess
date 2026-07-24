@@ -1,0 +1,157 @@
+@media (max-width: 1023px) {
+  .room-layout {
+    grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);
+    grid-template-areas:
+      "canvas controls"
+      "players players";
+  }
+
+  .player-panel {
+    grid-area: players;
+    max-height: 14rem;
+  }
+
+  .canvas-column {
+    grid-area: canvas;
+  }
+
+  .control-panel {
+    grid-area: controls;
+  }
+}
+
+@media (max-width: 640px) {
+  .game-screen {
+    padding: max(0.25rem, var(--safe-top))
+      max(0.25rem, var(--safe-right))
+      max(0.25rem, var(--safe-bottom))
+      max(0.25rem, var(--safe-left));
+  }
+
+  .game-header {
+    min-height: 52px;
+    gap: 0.35rem;
+    padding: 0.3rem;
+  }
+
+  .room-code-button,
+  .game-header > button {
+    min-height: 40px;
+    padding: 0.35rem 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .bgm-toggle {
+    width: 40px;
+    min-width: 40px;
+    padding: 0.45rem;
+  }
+
+  .identity {
+    min-width: 0;
+    max-width: 6rem;
+    overflow: hidden;
+  }
+
+  .identity strong,
+  .identity span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .round-status {
+    flex-direction: column;
+    gap: 0;
+    font-size: 0.72rem;
+  }
+
+  .countdown {
+    font-size: 1.2rem;
+  }
+
+  .warning-text,
+  .connection-chip {
+    display: none;
+  }
+
+  .room-layout {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding-bottom: max(var(--space-3), var(--safe-bottom));
+  }
+
+  .player-panel {
+    flex: none;
+    max-height: 12rem;
+  }
+
+  .canvas-column {
+    flex: none;
+    min-height: min(56dvh, 29rem);
+  }
+
+  .canvas-stage {
+    min-height: 18rem;
+  }
+
+  .control-panel {
+    flex: none;
+    overflow: visible;
+  }
+
+  .guess-input {
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+    padding-bottom: max(var(--space-2), var(--safe-bottom));
+  }
+
+  .lobby-card {
+    min-height: auto;
+  }
+
+  .brand-spacer {
+    min-height: 6rem;
+  }
+
+  .lobby-form {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .lobby-form fieldset {
+    justify-content: space-between;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .game-header {
+    min-height: 44px;
+  }
+
+  .room-layout {
+    display: grid;
+    grid-template-columns: minmax(10rem, 0.8fr) minmax(0, 2fr) minmax(14rem, 1fr);
+    grid-template-areas: "players canvas controls";
+    overflow: hidden;
+  }
+
+  .player-panel {
+    max-height: none;
+    overflow-y: auto;
+  }
+
+  .canvas-column {
+    min-height: 0;
+  }
+
+  .canvas-stage {
+    min-height: 10rem;
+  }
+
+  .control-panel {
+    overflow-y: auto;
+  }
+}

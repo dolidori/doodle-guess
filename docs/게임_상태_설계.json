@@ -1,0 +1,1408 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://doodle-guess.local/schemas/game-state.json",
+  "title": "Doodle Guess 서버 권위 상태",
+  "description": "Room, Player, Round, Guess, Drawing, Stroke와 수신자별 상태 투영의 단일 구조 정의",
+  "xDocumentVersion": "1.1.0",
+  "xSources": [
+    "게임 설명.md 1~14행",
+    "결정_기록.md D-01~D-24",
+    "GAME_DEVELOPMENT_GUIDELINES.md §1.2, §2.3, §2.4, §2.6, §3.7, §6.3"
+  ],
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "rooms"
+  ],
+  "properties": {
+    "rooms": {
+      "type": "object",
+      "description": "서버 메모리에만 존재하는 활성 방 맵. 키는 roomCode다.",
+      "patternProperties": {
+        "^[1-9][0-9]{2}$": {
+          "$ref": "#/$defs/Room"
+        }
+      },
+      "additionalProperties": false,
+      "maxProperties": 900
+    }
+  },
+  "$defs": {
+    "Timestamp": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Unix epoch milliseconds"
+    },
+    "Uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "RoomCode": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]{2}$"
+    },
+    "RoomMode": {
+      "type": "string",
+      "enum": [
+        "NORMAL",
+        "MODERATOR"
+      ]
+    },
+    "AnswerMode": {
+      "type": "string",
+      "enum": [
+        "FIRST_CORRECT",
+        "UNTIL_TIMER"
+      ]
+    },
+    "RoomStatus": {
+      "type": "string",
+      "enum": [
+        "WAITING",
+        "ROUND_ACTIVE",
+        "ROUND_SOLVED",
+        "ROUND_EXPIRED",
+        "CLOSED"
+      ]
+    },
+    "RoundStatus": {
+      "type": "string",
+      "enum": [
+        "PREPARING_KEYWORD",
+        "DRAWING_AND_GUESSING",
+        "SOLVED",
+        "EXPIRED"
+      ]
+    },
+    "AllowedAction": {
+      "type": "string",
+      "enum": [
+        "LEAVE_ROOM",
+        "SET_ROUND_DURATION",
+        "SET_ANSWER_MODE",
+        "SET_KEYWORD_AND_START",
+        "SUBMIT_GUESS",
+        "DRAW_STROKE_BATCH",
+        "UNDO_LAST_STROKE",
+        "CLEAR_DRAWING",
+        "ASSIGN_DRAWER",
+        "RECLAIM_DRAWER",
+        "KICK_PLAYER",
+        "START_NEXT_ROUND",
+        "RETURN_TO_WAITING"
+      ]
+    },
+    "PaletteColor": {
+      "type": "string",
+      "enum": [
+        "BLACK",
+        "BLUE",
+        "ORANGE",
+        "GREEN",
+        "VERMILION",
+        "PURPLE"
+      ]
+    },
+    "StrokeWidth": {
+      "type": "string",
+      "enum": [
+        "THIN",
+        "MEDIUM",
+        "THICK"
+      ]
+    },
+    "StrokeTool": {
+      "type": "string",
+      "enum": [
+        "PEN",
+        "ERASER"
+      ]
+    },
+    "Player": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "playerId",
+        "nickname",
+        "normalizedNickname",
+        "sessionTokenHash",
+        "connected",
+        "isHost",
+        "isModerator",
+        "score",
+        "joinedAt",
+        "disconnectedAt"
+      ],
+      "properties": {
+        "playerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "nickname": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "description": "앞뒤 공백 제거 후 비어 있지 않고 제어 문자가 없는 표시명"
+        },
+        "normalizedNickname": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20,
+          "xVisibility": "SERVER_PRIVATE"
+        },
+        "sessionTokenHash": {
+          "type": "string",
+          "minLength": 32,
+          "xVisibility": "SERVER_PRIVATE",
+          "description": "ROOM_SESSION의 단일 256-bit sessionToken을 서버에서 해시한 값이며 탭 세션 식별과 재접속 복구를 함께 담당"
+        },
+        "connected": {
+          "type": "boolean"
+        },
+        "isHost": {
+          "type": "boolean"
+        },
+        "isModerator": {
+          "type": "boolean"
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "joinedAt": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "disconnectedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "PublicPlayer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "playerId",
+        "nickname",
+        "connected",
+        "isHost",
+        "isModerator",
+        "score"
+      ],
+      "properties": {
+        "playerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "nickname": {
+          "type": "string"
+        },
+        "connected": {
+          "type": "boolean"
+        },
+        "isHost": {
+          "type": "boolean"
+        },
+        "isModerator": {
+          "type": "boolean"
+        },
+        "score": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "Point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "Stroke": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "strokeId",
+        "authorId",
+        "roundId",
+        "drawingRevision",
+        "drawerEpoch",
+        "tool",
+        "color",
+        "width",
+        "points",
+        "finalized",
+        "lastBatchSeq",
+        "undone",
+        "createdAt"
+      ],
+      "properties": {
+        "strokeId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "authorId": {
+          "$ref": "#/$defs/Uuid",
+          "description": "인증된 연결 컨텍스트에서 서버가 기록하며 클라이언트 값을 신뢰하지 않음"
+        },
+        "roundId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "drawingRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "drawerEpoch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tool": {
+          "$ref": "#/$defs/StrokeTool"
+        },
+        "color": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PaletteColor"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "PEN은 팔레트 색, ERASER는 null"
+        },
+        "width": {
+          "$ref": "#/$defs/StrokeWidth"
+        },
+        "points": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 2048,
+          "items": {
+            "$ref": "#/$defs/Point"
+          }
+        },
+        "finalized": {
+          "type": "boolean"
+        },
+        "lastBatchSeq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "undone": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/Timestamp"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "tool": {
+                "const": "PEN"
+              }
+            },
+            "required": [
+              "tool"
+            ]
+          },
+          "then": {
+            "properties": {
+              "color": {
+                "$ref": "#/$defs/PaletteColor"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tool": {
+                "const": "ERASER"
+              }
+            },
+            "required": [
+              "tool"
+            ]
+          },
+          "then": {
+            "properties": {
+              "color": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "StrokeBatch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roundId",
+        "drawingRevision",
+        "drawerEpoch",
+        "strokeId",
+        "batchSeq",
+        "isFinal",
+        "tool",
+        "color",
+        "width",
+        "points"
+      ],
+      "properties": {
+        "roundId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "drawingRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "drawerEpoch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "strokeId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "batchSeq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "isFinal": {
+          "type": "boolean"
+        },
+        "tool": {
+          "$ref": "#/$defs/StrokeTool"
+        },
+        "color": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PaletteColor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "width": {
+          "$ref": "#/$defs/StrokeWidth"
+        },
+        "points": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "$ref": "#/$defs/Point"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "tool": {
+                "const": "PEN"
+              }
+            },
+            "required": [
+              "tool"
+            ]
+          },
+          "then": {
+            "properties": {
+              "color": {
+                "$ref": "#/$defs/PaletteColor"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "tool": {
+                "const": "ERASER"
+              }
+            },
+            "required": [
+              "tool"
+            ]
+          },
+          "then": {
+            "properties": {
+              "color": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ],
+      "xMaxUtf8Bytes": 8192,
+      "xRateLimit": {
+        "sustainedPerSecond": 25,
+        "burst": 40
+      },
+      "xDedupeKey": "roundId:drawingRevision:strokeId:batchSeq",
+      "xStyleRule": "tool, color, width are required in every batch and must remain identical for the same strokeId"
+    },
+    "Drawing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "drawingRevision",
+        "drawingSeq",
+        "drawerEpoch",
+        "strokes",
+        "visibleStrokeIds",
+        "strokeCount",
+        "pointCount",
+        "serializedBytes"
+      ],
+      "properties": {
+        "drawingRevision": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "새 라운드 또는 전체 지우기마다 증가"
+        },
+        "drawingSeq": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "수락된 draw mutation마다 증가"
+        },
+        "drawerEpoch": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "그리기 권한 지정 또는 회수마다 증가"
+        },
+        "strokes": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "$ref": "#/$defs/Stroke"
+          }
+        },
+        "visibleStrokeIds": {
+          "type": "array",
+          "maxItems": 1000,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Uuid"
+          }
+        },
+        "strokeCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000
+        },
+        "pointCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 50000
+        },
+        "serializedBytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4194304
+        }
+      },
+      "xEraserModel": "ERASER 스트로크를 벡터 순서대로 합성",
+      "xWidthValues": {
+        "THIN": 0.003,
+        "MEDIUM": 0.007,
+        "THICK": 0.014
+      },
+      "xPalette": {
+        "BLACK": {
+          "hex": "#111827",
+          "label": "검정"
+        },
+        "BLUE": {
+          "hex": "#0072B2",
+          "label": "파랑"
+        },
+        "ORANGE": {
+          "hex": "#E69F00",
+          "label": "주황"
+        },
+        "GREEN": {
+          "hex": "#009E73",
+          "label": "초록"
+        },
+        "VERMILION": {
+          "hex": "#D55E00",
+          "label": "버밀리언"
+        },
+        "PURPLE": {
+          "hex": "#7B2CBF",
+          "label": "보라"
+        }
+      }
+    },
+    "Guess": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "guessId",
+        "roundId",
+        "guessSeq",
+        "playerId",
+        "nickname",
+        "text",
+        "submittedAt",
+        "isCorrect"
+      ],
+      "properties": {
+        "guessId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "roundId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "guessSeq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "playerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "nickname": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "text": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "UNTIL_TIMER의 정답은 공개 상태에서 null"
+        },
+        "submittedAt": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "isCorrect": {
+          "type": "boolean"
+        }
+      },
+      "xMaxUtf8PayloadBytes": 512,
+      "xRateLimit": {
+        "sustainedPerSecond": 4,
+        "burst": 8
+      },
+      "xPublication": "수락한 추측을 방 전체에 공개하되 UNTIL_TIMER 정답 text는 null"
+    },
+    "Round": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roundId",
+        "roundNumber",
+        "status",
+        "hasKeyword",
+        "keyword",
+        "normalizedKeyword",
+        "keywordExposedPlayerIds",
+        "correctPlayerIds",
+        "drawerScored",
+        "startedAt",
+        "roundEndsAt",
+        "winnerId",
+        "winnerNickname",
+        "solvedAt",
+        "expiredAt",
+        "lastRoundEventId",
+        "guessSeq",
+        "guessLocked",
+        "drawingLocked",
+        "drawing"
+      ],
+      "properties": {
+        "roundId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "roundNumber": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "$ref": "#/$defs/RoundStatus"
+        },
+        "hasKeyword": {
+          "type": "boolean"
+        },
+        "keyword": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "xMaxUtf8Bytes": 256,
+          "xVisibility": "SERVER_PRIVATE"
+        },
+        "normalizedKeyword": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 50
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "ECMAScript /\\s/gu로 모든 공백만 제거한 값",
+          "xVisibility": "SERVER_ONLY"
+        },
+        "keywordExposedPlayerIds": {
+          "type": "array",
+          "maxItems": 30,
+          "uniqueItems": true,
+          "description": "현재 라운드에서 제시어를 받은 적이 있어 영구히 추측에서 제외되는 플레이어 ID",
+          "items": {
+            "$ref": "#/$defs/Uuid"
+          },
+          "xVisibility": "SERVER_PRIVATE"
+        },
+        "correctPlayerIds": {
+          "type": "array",
+          "maxItems": 30,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/Uuid"
+          },
+          "xVisibility": "SERVER_PRIVATE"
+        },
+        "drawerScored": {
+          "type": "boolean",
+          "description": "그림 담당자 점수가 해당 라운드에서 이미 지급됐는지"
+        },
+        "startedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "roundEndsAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "제시어 확정과 같은 원자 작업에서 startedAt + Room.durationSeconds*1000으로 설정"
+        },
+        "winnerId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "winnerNickname": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "solvedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expiredAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "lastRoundEventId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Uuid"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "SOLVED 또는 EXPIRED 화면·모달 중복 방지용 안정 이벤트 ID"
+        },
+        "guessSeq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "guessLocked": {
+          "type": "boolean"
+        },
+        "drawingLocked": {
+          "type": "boolean"
+        },
+        "drawing": {
+          "$ref": "#/$defs/Drawing"
+        }
+      }
+    },
+    "Room": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roomCode",
+        "mode",
+        "answerMode",
+        "status",
+        "roomVersion",
+        "eventSeq",
+        "capacity",
+        "hostId",
+        "moderatorId",
+        "drawerId",
+        "durationSeconds",
+        "players",
+        "round",
+        "guessFeed",
+        "kickedNicknames",
+        "kickedSessionTokenHashes",
+        "hostDisconnectedAt",
+        "expiresAt",
+        "createdAt"
+      ],
+      "properties": {
+        "roomCode": {
+          "$ref": "#/$defs/RoomCode"
+        },
+        "mode": {
+          "$ref": "#/$defs/RoomMode"
+        },
+        "answerMode": {
+          "$ref": "#/$defs/AnswerMode"
+        },
+        "status": {
+          "$ref": "#/$defs/RoomStatus"
+        },
+        "roomVersion": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "입장·역할·상태·설정 등 저빈도 의미 상태 변경마다 증가"
+        },
+        "eventSeq": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "방 이벤트의 단조 증가 순서"
+        },
+        "capacity": {
+          "const": 30,
+          "description": "호스트·진행자·연결 단절 슬롯 포함"
+        },
+        "hostId": {
+          "$ref": "#/$defs/Uuid",
+          "description": "방 생성부터 종료까지 불변"
+        },
+        "moderatorId": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Uuid"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "drawerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "durationSeconds": {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 180,
+          "multipleOf": 5,
+          "default": 60,
+          "description": "PREPARING_KEYWORD에서만 host 또는 moderator가 변경"
+        },
+        "players": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 30,
+          "items": {
+            "$ref": "#/$defs/Player"
+          }
+        },
+        "round": {
+          "$ref": "#/$defs/Round"
+        },
+        "guessFeed": {
+          "type": "array",
+          "maxItems": 100,
+          "description": "현재 라운드에서 서버가 수락한 최근 100개 공개 추측",
+          "items": {
+            "$ref": "#/$defs/Guess"
+          }
+        },
+        "kickedNicknames": {
+          "type": "array",
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 20
+          },
+          "xVisibility": "SERVER_PRIVATE"
+        },
+        "kickedSessionTokenHashes": {
+          "type": "array",
+          "maxItems": 100,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 32
+          },
+          "xVisibility": "SERVER_PRIVATE"
+        },
+        "hostDisconnectedAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "expiresAt": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "hostDisconnectedAt + 1800000ms. 호스트 복귀 시 null."
+        },
+        "createdAt": {
+          "$ref": "#/$defs/Timestamp"
+        }
+      }
+    },
+    "DrawingSnapshotMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshotId",
+        "roundId",
+        "drawingRevision",
+        "lastDrawingSeq",
+        "totalChunks",
+        "sha256"
+      ],
+      "properties": {
+        "snapshotId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "roundId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "drawingRevision": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "lastDrawingSeq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "totalChunks": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "xMaxChunkBytes": 65536
+    },
+    "PublicRound": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roundId",
+        "status",
+        "durationSeconds",
+        "startedAt",
+        "roundEndsAt",
+        "hasKeyword",
+        "guessLocked",
+        "winnerId",
+        "winnerNickname",
+        "solvedAt",
+        "expiredAt",
+        "lastRoundEventId",
+        "guessSeq",
+        "correctCount"
+      ],
+      "properties": {
+        "roundId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "status": {
+          "$ref": "#/$defs/RoundStatus"
+        },
+        "durationSeconds": {
+          "type": "integer",
+          "minimum": 20,
+          "maximum": 180,
+          "multipleOf": 5
+        },
+        "startedAt": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "roundEndsAt": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "hasKeyword": {
+          "type": "boolean"
+        },
+        "guessLocked": {
+          "type": "boolean"
+        },
+        "winnerId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "winnerNickname": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "solvedAt": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "expiredAt": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "lastRoundEventId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "guessSeq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "correctCount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30
+        }
+      }
+    },
+    "PublicState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roomCode",
+        "mode",
+        "answerMode",
+        "status",
+        "roomVersion",
+        "serverNow",
+        "hostDisconnectedAt",
+        "expiresAt",
+        "players",
+        "drawerId",
+        "drawerEpoch",
+        "round",
+        "drawing",
+        "guessFeed"
+      ],
+      "properties": {
+        "roomCode": {
+          "$ref": "#/$defs/RoomCode"
+        },
+        "mode": {
+          "$ref": "#/$defs/RoomMode"
+        },
+        "answerMode": {
+          "$ref": "#/$defs/AnswerMode"
+        },
+        "status": {
+          "$ref": "#/$defs/RoomStatus"
+        },
+        "roomVersion": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "serverNow": {
+          "$ref": "#/$defs/Timestamp"
+        },
+        "hostDisconnectedAt": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "expiresAt": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "players": {
+          "type": "array",
+          "maxItems": 30,
+          "items": {
+            "$ref": "#/$defs/PublicPlayer"
+          }
+        },
+        "drawerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "drawerEpoch": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "round": {
+          "$ref": "#/$defs/PublicRound"
+        },
+        "drawing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "drawingRevision",
+            "drawingSeq",
+            "strokeCount",
+            "pointCount"
+          ],
+          "properties": {
+            "drawingRevision": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "drawingSeq": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "strokeCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000
+            },
+            "pointCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 50000
+            }
+          }
+        },
+        "guessFeed": {
+          "type": "array",
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/Guess"
+          }
+        }
+      },
+      "description": "제시어 원문, normalizedKeyword, 토큰 해시, 차단 목록, keywordExposedPlayerIds를 절대 포함하지 않음"
+    },
+    "PrivateState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "playerId",
+        "roundId",
+        "keyword",
+        "hasSeenKeywordThisRound",
+        "hasAnsweredCorrectly",
+        "allowedActions"
+      ],
+      "properties": {
+        "playerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "roundId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "keyword": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "현재 drawer 또는 moderator에게만 원문, 나머지는 null"
+        },
+        "hasSeenKeywordThisRound": {
+          "type": "boolean",
+          "description": "playerId가 keywordExposedPlayerIds에 포함되는지의 수신자별 파생값"
+        },
+        "hasAnsweredCorrectly": {
+          "type": "boolean",
+          "description": "playerId가 correctPlayerIds에 포함되는지의 수신자별 파생값"
+        },
+        "allowedActions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/AllowedAction"
+          }
+        }
+      }
+    },
+    "RoomSession": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "roomCode",
+        "playerId",
+        "nickname",
+        "mode",
+        "sessionToken",
+        "isReconnect"
+      ],
+      "properties": {
+        "roomCode": {
+          "$ref": "#/$defs/RoomCode"
+        },
+        "playerId": {
+          "$ref": "#/$defs/Uuid"
+        },
+        "nickname": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "mode": {
+          "$ref": "#/$defs/RoomMode"
+        },
+        "sessionToken": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$",
+          "xVisibility": "RECIPIENT_ONLY",
+          "description": "성공한 입장·복구 때 회전하고 탭별 sessionStorage에 저장"
+        },
+        "isReconnect": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "xStateCorrespondence": [
+    {
+      "roomStatus": "WAITING",
+      "roundStatus": "PREPARING_KEYWORD"
+    },
+    {
+      "roomStatus": "ROUND_ACTIVE",
+      "roundStatus": "DRAWING_AND_GUESSING"
+    },
+    {
+      "roomStatus": "ROUND_SOLVED",
+      "roundStatus": "SOLVED"
+    },
+    {
+      "roomStatus": "ROUND_EXPIRED",
+      "roundStatus": "EXPIRED"
+    }
+  ],
+  "xStateTransitions": [
+    {
+      "from": "WAITING/PREPARING_KEYWORD",
+      "action": "SET_KEYWORD_AND_START",
+      "actor": "drawerId",
+      "guard": "drawer connected, eligible connected guesser >= 1, keyword valid",
+      "atomicEffects": "keyword and normalizedKeyword stored; drawer and moderator added to keywordExposedPlayerIds; startedAt set; roundEndsAt=startedAt+durationSeconds*1000; guessLocked=false; drawingLocked=false; statuses become ROUND_ACTIVE/DRAWING_AND_GUESSING"
+    },
+    {
+      "from": "ROUND_ACTIVE/DRAWING_AND_GUESSING",
+      "action": "first accepted correct guess",
+      "actor": "eligible guesser",
+      "guard": "serverNow < roundEndsAt and status still active",
+      "atomicEffects": "Guess appended and shared; winner stored once; solvedAt set; lastRoundEventId set; guessLocked=true; drawingLocked=true; statuses become ROUND_SOLVED/SOLVED"
+    },
+    {
+      "from": "ROUND_ACTIVE/DRAWING_AND_GUESSING",
+      "action": "deadline",
+      "actor": "server room queue",
+      "guard": "serverNow >= roundEndsAt and status still active",
+      "atomicEffects": "winner remains null; expiredAt set; lastRoundEventId set; guessLocked=true; drawingLocked=true; statuses become ROUND_EXPIRED/EXPIRED"
+    },
+    {
+      "from": "ROUND_SOLVED/SOLVED",
+      "action": "START_NEXT_ROUND",
+      "actor": "NORMAL host or MODERATOR moderator",
+      "guard": "actor connected",
+      "atomicEffects": "new roundId and roundNumber; keyword, winner, keywordExposedPlayerIds and guessFeed cleared; drawingRevision incremented; drawingSeq reset; drawerId and durationSeconds retained; statuses become WAITING/PREPARING_KEYWORD"
+    },
+    {
+      "from": "ROUND_EXPIRED/EXPIRED",
+      "action": "START_NEXT_ROUND",
+      "actor": "NORMAL host or MODERATOR moderator",
+      "guard": "actor connected",
+      "atomicEffects": "same reset as solved next round"
+    },
+    {
+      "from": "any non-CLOSED",
+      "action": "host disconnect",
+      "actor": "connection lifecycle",
+      "guard": "playerId equals immutable hostId",
+      "atomicEffects": "connected=false; isHost and hostId retained; hostDisconnectedAt set; expiresAt=hostDisconnectedAt+1800000; no host transfer"
+    },
+    {
+      "from": "any non-CLOSED",
+      "action": "host reconnect before expiresAt",
+      "actor": "session token or exact nickname fallback",
+      "guard": "existing host slot disconnected and not expired",
+      "atomicEffects": "same host slot connected; token rotated; hostDisconnectedAt and expiresAt cleared; no role mutation"
+    },
+    {
+      "from": "any non-CLOSED",
+      "action": "host TTL expiry",
+      "actor": "server room queue",
+      "guard": "host still disconnected and serverNow >= expiresAt",
+      "atomicEffects": "status=CLOSED; ROOM_CLOSED broadcast; all connections closed; room removed"
+    },
+    {
+      "from": "MODERATOR room in PREPARING_KEYWORD or DRAWING_AND_GUESSING",
+      "action": "KICK_PLAYER targeting drawerId",
+      "actor": "host or moderator",
+      "guard": "target is a non-privileged same-room player",
+      "atomicEffects": "target removed and blocked; drawerId=moderatorId; drawerEpoch incremented; KICKED sent to target; PLAYER_KICKED and PUBLIC_STATE sent to remaining room"
+    }
+  ],
+  "xAllowedActionRules": [
+    {
+      "action": "LEAVE_ROOM",
+      "when": "actor is a connected room member and room.status is not CLOSED"
+    },
+    {
+      "action": "SET_ROUND_DURATION",
+      "when": "round.status=PREPARING_KEYWORD and actor is host or moderator"
+    },
+    {
+      "action": "SET_KEYWORD_AND_START",
+      "when": "round.status=PREPARING_KEYWORD and actor.playerId=drawerId and minimum start condition holds"
+    },
+    {
+      "action": "SUBMIT_GUESS",
+      "when": "round.status=DRAWING_AND_GUESSING, serverNow<roundEndsAt, actor connected, actor not moderator, actor.playerId not in keywordExposedPlayerIds"
+    },
+    {
+      "action": "DRAW_STROKE_BATCH",
+      "when": "round.status=DRAWING_AND_GUESSING, serverNow<roundEndsAt, drawingLocked=false, actor.playerId=drawerId"
+    },
+    {
+      "action": "UNDO_LAST_STROKE",
+      "when": "DRAW_STROKE_BATCH condition and visibleStrokeIds is not empty"
+    },
+    {
+      "action": "CLEAR_DRAWING",
+      "when": "DRAW_STROKE_BATCH condition"
+    },
+    {
+      "action": "ASSIGN_DRAWER",
+      "when": "mode=MODERATOR, round.status in [PREPARING_KEYWORD, DRAWING_AND_GUESSING], actor is connected moderator, target is connected same-room player"
+    },
+    {
+      "action": "RECLAIM_DRAWER",
+      "when": "mode=MODERATOR, round.status in [PREPARING_KEYWORD, DRAWING_AND_GUESSING], actor is connected moderator, actor.playerId != drawerId"
+    },
+    {
+      "action": "KICK_PLAYER",
+      "when": "actor is connected host or moderator, target is different non-privileged same-room player"
+    },
+    {
+      "action": "START_NEXT_ROUND",
+      "when": "round.status in [SOLVED, EXPIRED] and actor is NORMAL host or MODERATOR moderator"
+    }
+  ],
+  "xInvariants": [
+    "A connection can read and mutate only its authenticated room.",
+    "hostId is immutable for the room lifetime; host disconnect never transfers host authority.",
+    "The player whose playerId equals hostId always retains isHost=true until room deletion.",
+    "An active room has exactly one drawerId and only that player can mutate the drawing or set the keyword.",
+    "keyword and normalizedKeyword never appear in PublicState, logs, errors, drawing snapshots, or other rooms.",
+    "Only the current drawer and moderator receive keyword in PrivateState.",
+    "Once a playerId enters keywordExposedPlayerIds, it stays there for that round and cannot submit guesses.",
+    "Only server-accepted guesses enter guessFeed; every accepted guess is shared to the entire room in guessSeq order.",
+    "Exactly one of SOLVED or EXPIRED terminates an active round.",
+    "SOLVED and EXPIRED both lock drawing and guessing on server and client.",
+    "durationSeconds is 20..180, divisible by 5, defaults to 60, and cannot change while active.",
+    "roundEndsAt is set atomically with keyword acceptance and active transition.",
+    "At or after roundEndsAt, request handling first commits expiry before evaluating drawing or guess mutation.",
+    "Drawing authority is normalized vector strokes; repeated full-canvas bitmap frames are forbidden.",
+    "Every stroke batch is validated against current roundId, drawingRevision, drawerEpoch, limits, and authenticated drawer.",
+    "players.length includes host, moderator, and disconnected slots and never exceeds 30.",
+    "When host is disconnected, expiresAt equals hostDisconnectedAt plus 1800000 milliseconds and no other player becomes host."
+  ],
+  "xProtocolBindings": {
+    "clearDrawingCommand": "CLEAR_DRAWING",
+    "clearDrawingBroadcast": "DRAWING_CLEARED",
+    "nextRoundCommand": "START_NEXT_ROUND",
+    "kickedTargetEvent": "KICKED",
+    "kickedRoomEvent": "PLAYER_KICKED"
+  },
+  "xPersistence": {
+    "type": "EPHEMERAL_IN_MEMORY",
+    "restoreAfterServerRestart": false
+  }
+}
