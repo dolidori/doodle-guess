@@ -112,8 +112,8 @@
     min-height: auto;
   }
 
-  .brand-spacer {
-    min-height: 6rem;
+  .lobby-screen {
+    place-items: end center;
   }
 
   .lobby-form {

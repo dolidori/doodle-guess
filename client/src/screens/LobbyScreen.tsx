@@ -18,7 +18,7 @@ export const LobbyScreen = () => {
   return (
     <main className="lobby-screen">
       <section className="lobby-card">
-        <div className="brand-spacer" aria-label="Doodle Guess 두들 게스" />
+        <h1 className="visually-hidden">Doodle Guess 두들 게스</h1>
         <ServerStatus />
         <div className="lobby-grid">
           <div>

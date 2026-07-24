@@ -24,6 +24,7 @@ export const allowedActionsFor = (
   const actions: AllowedAction[] = ['LEAVE_ROOM'];
   const preparing = room.round.status === 'PREPARING_KEYWORD';
   const active = room.round.status === 'DRAWING_AND_GUESSING';
+  const ended = room.round.status === 'SOLVED' || room.round.status === 'EXPIRED';
   const privileged = player.isHost || player.isModerator;
   const isDrawer = player.playerId === room.drawerId;
 
@@ -31,6 +32,7 @@ export const allowedActionsFor = (
     actions.push('SET_ROUND_DURATION', 'SET_ANSWER_MODE');
   }
   if (preparing && isDrawer && canStartRound(room)) actions.push('SET_KEYWORD_AND_START');
+  if (ended && isDrawer && canStartRound(room)) actions.push('SET_KEYWORD_AND_START');
 
   if (active && isBeforeDeadline(room, now) && !room.round.guessLocked &&
       !player.isModerator &&
@@ -67,12 +69,12 @@ export const allowedActionsFor = (
     actions.push('KICK_PLAYER');
   }
 
-  if ((room.round.status === 'SOLVED' || room.round.status === 'EXPIRED') &&
+  if (ended &&
       ((room.mode === 'NORMAL' && player.isHost) ||
        (room.mode === 'MODERATOR' && player.isModerator))) {
     actions.push('START_NEXT_ROUND');
   }
-  if ((active || room.round.status === 'SOLVED' || room.round.status === 'EXPIRED') && privileged) {
+  if ((active || ended) && privileged) {
     actions.push('RETURN_TO_WAITING');
   }
   return actions;

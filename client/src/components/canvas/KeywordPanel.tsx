@@ -7,8 +7,10 @@ export const KeywordPanel = () => {
   const mayStart = state.privateState?.allowedActions.includes('SET_KEYWORD_AND_START') ?? false;
   const privateKeyword = state.privateState?.keyword;
   const roundId = state.publicState?.round.roundId;
+  const continuing = state.publicState?.round.status === 'SOLVED' ||
+    state.publicState?.round.status === 'EXPIRED';
 
-  if (privateKeyword !== null && privateKeyword !== undefined) {
+  if (privateKeyword !== null && privateKeyword !== undefined && !continuing) {
     return (
       <section className="keyword-panel panel-section">
         <h3>제시어</h3>
@@ -42,7 +44,7 @@ export const KeywordPanel = () => {
         if (send('SET_KEYWORD_AND_START', { roundId, keyword })) setKeyword('');
       }}
     >
-      <label htmlFor="keyword">제시어</label>
+      <label htmlFor="keyword">{continuing ? '다음 라운드 제시어' : '제시어'}</label>
       <input
         id="keyword"
         value={keyword}
@@ -51,7 +53,7 @@ export const KeywordPanel = () => {
         onChange={(event) => setKeyword(event.target.value)}
       />
       <button type="submit" className="primary" disabled={!keyword.trim()}>
-        제시어 확정 및 시작
+        {continuing ? '다음 라운드 바로 시작' : '제시어 확정 및 시작'}
       </button>
     </form>
   );

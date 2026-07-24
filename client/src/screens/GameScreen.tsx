@@ -43,7 +43,10 @@ export const GameScreen = ({
   });
   const [durationDraft, setDurationDraft] = useState<number | null>(null);
   const [bgmControlOpen, setBgmControlOpen] = useState(false);
+  const [roomCodeOpen, setRoomCodeOpen] = useState(false);
   const bgmControlRef = useRef<HTMLDivElement>(null);
+  const roomCodeButtonRef = useRef<HTMLButtonElement>(null);
+  const roomCodeCloseRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!bgmControlOpen) return;
     const closeOutside = (event: PointerEvent): void => {
@@ -59,6 +62,23 @@ export const GameScreen = ({
       document.removeEventListener('keydown', closeOnEscape);
     };
   }, [bgmControlOpen]);
+  useEffect(() => {
+    if (!roomCodeOpen) return;
+    const triggerButton = roomCodeButtonRef.current;
+    roomCodeCloseRef.current?.focus();
+    const closeOnEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') setRoomCodeOpen(false);
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        roomCodeCloseRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('keydown', closeOnEscape);
+      triggerButton?.focus();
+    };
+  }, [roomCodeOpen]);
   if (!publicState || !session) return <main className="room-loading">방 상태를 불러오고 있습니다.</main>;
 
   const me = publicState.players.find((player) => player.playerId === session.playerId);
@@ -99,9 +119,10 @@ export const GameScreen = ({
     <main className="game-screen">
       <header className="game-header">
         <button
+          ref={roomCodeButtonRef}
           type="button"
           className="room-code-button"
-          onClick={() => window.alert(`방번호 ${publicState.roomCode}`)}
+          onClick={() => setRoomCodeOpen(true)}
           aria-label={`방번호 ${publicState.roomCode} 크게 보기`}
         >
           방 {publicState.roomCode}
@@ -150,6 +171,35 @@ export const GameScreen = ({
         <button type="button" className="danger" onClick={leave}>나가기</button>
       </header>
 
+      {roomCodeOpen && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onPointerDown={(event) => {
+            if (event.target === event.currentTarget) setRoomCodeOpen(false);
+          }}
+        >
+          <section
+            className="modal room-code-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="room-code-modal-title"
+            aria-describedby="room-code-modal-value"
+          >
+            <h2 id="room-code-modal-title">방번호</h2>
+            <strong id="room-code-modal-value">{publicState.roomCode}</strong>
+            <button
+              ref={roomCodeCloseRef}
+              type="button"
+              className="primary"
+              onClick={() => setRoomCodeOpen(false)}
+            >
+              닫기
+            </button>
+          </section>
+        </div>
+      )}
+
       {hostAbsent && (
         <div className="status-banner warning-banner">
           호스트 연결이 끊겼습니다 · 방 종료까지{' '}
@@ -178,6 +228,20 @@ export const GameScreen = ({
         <PlayerList />
         <section className="canvas-column">
           <DrawingCanvas enabled={canDraw} settings={settings} />
+          {canDraw && (
+            <DrawingToolbar
+              settings={settings}
+              onChange={setSettings}
+              disabled={!canDraw}
+              canUndo={actions.has('UNDO_LAST_STROKE')}
+              onUndo={() => send('UNDO_LAST_STROKE', {
+                roundId: round.roundId,
+                drawingRevision: publicState.drawing.drawingRevision,
+                drawerEpoch: publicState.drawerEpoch
+              })}
+              onClear={clear}
+            />
+          )}
           <GuessInput />
         </section>
         <aside className="control-panel">
@@ -252,20 +316,6 @@ export const GameScreen = ({
             </section>
           )}
           <KeywordPanel />
-          {canDraw && (
-            <DrawingToolbar
-              settings={settings}
-              onChange={setSettings}
-              disabled={!canDraw}
-              canUndo={actions.has('UNDO_LAST_STROKE')}
-              onUndo={() => send('UNDO_LAST_STROKE', {
-                roundId: round.roundId,
-                drawingRevision: publicState.drawing.drawingRevision,
-                drawerEpoch: publicState.drawerEpoch
-              })}
-              onClear={clear}
-            />
-          )}
           {actions.has('RECLAIM_DRAWER') && (
             <section className="panel-section">
               <p>기존 그림과 제시어를 유지한 채 그리기 권한을 가져옵니다.</p>

@@ -46,11 +46,17 @@ export class GameService {
 
   startRound(room: RoomRuntime, actorId: string, roundId: string, keyword: string): void {
     assertRound(room, roundId);
-    assertPreparing(room);
+    const continuingWithSameDrawer =
+      room.round.status === 'SOLVED' || room.round.status === 'EXPIRED';
+    if (!continuingWithSameDrawer) assertPreparing(room);
     assertProtocol(room.drawerId === actorId, 'NOT_DRAWER', '현재 그리기 담당자만 시작할 수 있습니다.');
     assertProtocol(canStartRound(room), 'MIN_PLAYERS', '추측할 참여자가 한 명 이상 필요합니다.');
     const normalizedKeyword = normalizeGuess(keyword);
     assertProtocol(normalizedKeyword.length > 0, 'INVALID_KEYWORD', '공백만 있는 제시어는 사용할 수 없습니다.');
+    if (continuingWithSameDrawer) {
+      cancelRoundTimer(room);
+      this.registry.nextRound(room);
+    }
     const startedAt = Date.now();
     room.round.keyword = keyword;
     room.round.normalizedKeyword = normalizedKeyword;

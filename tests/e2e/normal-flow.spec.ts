@@ -11,11 +11,12 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   const roomButton = host.getByRole('button', { name: /방번호 \d{3} 크게 보기/ });
   await expect(roomButton).toBeVisible();
   const roomCode = (await roomButton.textContent())!.replace(/\D/gu, '');
-  host.once('dialog', async (dialog) => {
-    expect(dialog.message()).toBe(`방번호 ${roomCode}`);
-    await dialog.accept();
-  });
   await roomButton.click();
+  const roomCodeDialog = host.getByRole('dialog', { name: '방번호' });
+  await expect(roomCodeDialog).toContainText(roomCode);
+  await roomCodeDialog.getByRole('button', { name: '닫기' }).click();
+  await expect(roomCodeDialog).toBeHidden();
+  await expect(roomButton).toBeFocused();
 
   await guest.goto('/');
   await guest.getByLabel('닉네임').fill('참가자');

@@ -24,10 +24,10 @@
 
 :root {
   color-scheme: dark;
-  --color-bg-deep: #1d1247;
-  --color-bg: #2b1b69;
-  --color-surface: #38257f;
-  --color-surface-raised: #49339a;
+  --color-bg-deep: #211c38;
+  --color-bg: #302852;
+  --color-surface: #3b3465;
+  --color-surface-raised: #4a4275;
   --color-surface-soft: #ede9ff;
   --color-canvas: #fffdf7;
   --color-ink: #111827;
@@ -37,7 +37,7 @@
   --color-text: #fffdfd;
   --color-text-muted: #d9d1f4;
   --color-text-on-light: #1b1633;
-  --color-border: #7664bd;
+  --color-border: #7b739f;
   --color-focus: #ffe36e;
   --color-success: #2fb171;
   --color-warning: #f2a900;

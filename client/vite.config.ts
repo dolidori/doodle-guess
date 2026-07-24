@@ -23,8 +23,8 @@ export default defineConfig({
         lang: 'ko',
         display: 'standalone',
         orientation: 'any',
-        theme_color: '#2b1b69',
-        background_color: '#1d1247',
+        theme_color: '#302852',
+        background_color: '#211c38',
         start_url: '/',
         icons: [
           { src: '/images/icon/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

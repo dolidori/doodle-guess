@@ -139,6 +139,32 @@ describe('방·세션·권한 강화 검증', () => {
     expect(room.roundTimer).toBeNull();
   });
 
+  it('종료 후 같은 drawer가 대기실 없이 새 제시어로 다음 라운드를 시작한다', () => {
+    const { room, gameService, host } = setupRoom();
+    const guest = attachPlayer(room, '참가자', 'guest').player;
+    gameService.startRound(room, host.playerId, room.round.roundId, '고양이');
+    gameService.submitGuess(room, guest.playerId, {
+      roundId: room.round.roundId,
+      guessId: crypto.randomUUID(),
+      text: '고양이'
+    }, room.connections.get(guest.playerId)!);
+
+    const previousRoundId = room.round.roundId;
+    const previousDrawerId = room.drawerId;
+    const previousScore = host.score;
+    expect(allowedActionsFor(room, host)).toContain('SET_KEYWORD_AND_START');
+
+    gameService.startRound(room, host.playerId, previousRoundId, '토끼');
+
+    expect(room.status).toBe('ROUND_ACTIVE');
+    expect(room.round.status).toBe('DRAWING_AND_GUESSING');
+    expect(room.round.roundNumber).toBe(2);
+    expect(room.round.roundId).not.toBe(previousRoundId);
+    expect(room.drawerId).toBe(previousDrawerId);
+    expect(room.round.keyword).toBe('토끼');
+    expect(host.score).toBe(previousScore);
+  });
+
   it('조작된 비권한 명령을 거부하고 NORMAL 대기실의 drawer 지정·회수를 허용한다', () => {
     const { room, roomService, gameService, host } = setupRoom();
     const guest = attachPlayer(room, '참가자', 'guest').player;

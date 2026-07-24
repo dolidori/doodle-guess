@@ -12,6 +12,12 @@ export type ToolSettings = {
   width: StrokeWidth;
 };
 
+const WIDTH_LABELS: Record<StrokeWidth, string> = {
+  THIN: '얇은 굵기',
+  MEDIUM: '보통 굵기',
+  THICK: '굵은 굵기'
+};
+
 type Props = {
   settings: ToolSettings;
   onChange: (settings: ToolSettings) => void;
@@ -33,21 +39,25 @@ export const DrawingToolbar = ({
     <div className="tool-row" role="group" aria-label="도구 선택">
       <button
         type="button"
-        className={settings.tool === 'PEN' ? 'selected' : ''}
+        className={`tool-icon-button ${settings.tool === 'PEN' ? 'selected' : ''}`}
+        aria-label="펜"
         aria-pressed={settings.tool === 'PEN'}
+        title="펜"
         disabled={disabled}
         onClick={() => onChange({ ...settings, tool: 'PEN' })}
       >
-        펜
+        <span className="pen-icon" aria-hidden="true">✎</span>
       </button>
       <button
         type="button"
-        className={settings.tool === 'ERASER' ? 'selected' : ''}
+        className={`tool-icon-button ${settings.tool === 'ERASER' ? 'selected' : ''}`}
+        aria-label="지우개"
         aria-pressed={settings.tool === 'ERASER'}
+        title="지우개"
         disabled={disabled}
         onClick={() => onChange({ ...settings, tool: 'ERASER' })}
       >
-        지우개
+        <span className="eraser-icon" aria-hidden="true" />
       </button>
     </div>
     <div className="palette" role="group" aria-label="펜 색상">
@@ -62,7 +72,6 @@ export const DrawingToolbar = ({
           onClick={() => onChange({ ...settings, tool: 'PEN', color })}
         >
           <span style={{ backgroundColor: PALETTE[color].hex }} />
-          <small>{PALETTE[color].label}</small>
         </button>
       ))}
     </div>
@@ -71,18 +80,31 @@ export const DrawingToolbar = ({
         <button
           type="button"
           key={width}
-          className={settings.width === width ? 'selected' : ''}
+          className={`width-button ${settings.width === width ? 'selected' : ''}`}
+          aria-label={WIDTH_LABELS[width]}
           aria-pressed={settings.width === width}
+          title={WIDTH_LABELS[width]}
           disabled={disabled}
           onClick={() => onChange({ ...settings, width })}
         >
-          {{ THIN: '얇게', MEDIUM: '보통', THICK: '굵게' }[width]}
+          <span className={`width-dot width-dot-${width.toLowerCase()}`} aria-hidden="true" />
         </button>
       ))}
     </div>
     <div className="tool-row">
-      <button type="button" disabled={disabled || !canUndo} onClick={onUndo}>되돌리기</button>
-      <button type="button" className="danger" disabled={disabled} onClick={onClear}>전체 지우기</button>
+      <button
+        type="button"
+        className="tool-icon-button"
+        aria-label="되돌리기"
+        title="되돌리기"
+        disabled={disabled || !canUndo}
+        onClick={onUndo}
+      >
+        <span className="undo-icon" aria-hidden="true">↶</span>
+      </button>
+      <button type="button" className="danger clear-button" disabled={disabled} onClick={onClear}>
+        전체 지우기
+      </button>
     </div>
   </section>
 );
