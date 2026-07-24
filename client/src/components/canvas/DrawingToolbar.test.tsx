@@ -33,7 +33,7 @@ describe('DrawingToolbar', () => {
     expect(onChange).toHaveBeenCalledWith({
       tool: 'ERASER',
       color: 'BLACK',
-      width: 'MEDIUM'
+      width: 'THICK'
     });
   });
 });

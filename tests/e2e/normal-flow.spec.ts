@@ -25,7 +25,7 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await guest.getByLabel('방번호').fill(`a${roomCode}b`);
   await expect(guest.getByLabel('방번호')).toHaveValue(roomCode);
   await guest.getByLabel('방번호').fill(roomCode);
-  await guest.getByLabel('방번호').press('Enter');
+  await guest.getByRole('button', { name: '입장하기' }).click();
   await expect(guest.locator('.identity strong')).toHaveText('참가자');
 
   await host.getByLabel('선착순 종료').click();
@@ -34,9 +34,14 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await host.getByRole('button', { name: '제시어 확정 및 시작' }).click();
   await expect(host.getByText('제시어가 가려졌습니다.')).toBeVisible();
   await expect(guest.getByLabel('정답 추측')).toBeEnabled();
-  expect(await guest.getByRole('button', { name: '제출' }).evaluate(
-    (button) => getComputedStyle(button).whiteSpace
-  )).toBe('nowrap');
+  const submitButtonStyle = await guest.getByRole('button', { name: '제출' }).evaluate(
+    (button) => ({
+      minWidth: Number.parseFloat(getComputedStyle(button).minWidth),
+      whiteSpace: getComputedStyle(button).whiteSpace
+    })
+  );
+  expect(submitButtonStyle.whiteSpace).toBe('nowrap');
+  expect(submitButtonStyle.minWidth).toBeGreaterThanOrEqual(88);
 
   const canvas = host.locator('.canvas-stage');
   await host.getByRole('button', { name: '지우개' }).click();
@@ -47,7 +52,7 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   const eraserCursor = host.locator('.eraser-cursor');
   await expect(eraserCursor).toBeVisible();
   const cursorBox = await eraserCursor.boundingBox();
-  expect(cursorBox!.width).toBeCloseTo(Math.min(box!.width, box!.height) * 0.007, 0);
+  expect(cursorBox!.width).toBeCloseTo(Math.min(box!.width, box!.height) * 0.014 * 4, 0);
 
   await host.getByRole('button', { name: '펜' }).click();
   await canvas.scrollIntoViewIfNeeded();

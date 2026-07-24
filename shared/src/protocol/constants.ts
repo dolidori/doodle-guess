@@ -38,6 +38,8 @@ export const STROKE_WIDTHS = {
   THICK: 0.014
 } as const;
 
+export const ERASER_WIDTH_MULTIPLIER = 4;
+
 export const CLIENT_EVENT_TYPES = [
   'CREATE_ROOM',
   'JOIN_ROOM',

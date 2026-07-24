@@ -1,4 +1,5 @@
 import {
+  ERASER_WIDTH_MULTIPLIER,
   PALETTE,
   STROKE_WIDTHS,
   type Point,
@@ -46,7 +47,11 @@ export const renderStrokes = (
     context.globalCompositeOperation = stroke.tool === 'ERASER' ? 'destination-out' : 'source-over';
     context.strokeStyle = stroke.color ? PALETTE[stroke.color].hex : '#000';
     context.fillStyle = stroke.color ? PALETTE[stroke.color].hex : '#000';
-    context.lineWidth = Math.max(ratio, STROKE_WIDTHS[stroke.width] * shortSide);
+    const toolMultiplier = stroke.tool === 'ERASER' ? ERASER_WIDTH_MULTIPLIER : 1;
+    context.lineWidth = Math.max(
+      ratio,
+      STROKE_WIDTHS[stroke.width] * shortSide * toolMultiplier
+    );
     const points = stroke.points.map((point) => ({ x: point.x * width, y: point.y * height }));
     drawPath(context, points, context.lineWidth);
   }

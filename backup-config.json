@@ -3,6 +3,7 @@
   "backupDir": "../doodle-guess(백업)",
   "exclude": [
     "dist",
+    "dev-dist",
     "node_modules",
     ".git",
     ".DS_Store",

@@ -35,7 +35,10 @@ export const DrawingToolbar = ({
   onUndo,
   onClear
 }: Props) => (
-  <section className="drawing-toolbar panel-section" aria-label="그림 도구">
+  <section
+    className={`drawing-toolbar panel-section ${settings.tool === 'ERASER' ? 'eraser-tool' : ''}`}
+    aria-label="그림 도구"
+  >
     <div className="tool-row" role="group" aria-label="도구 선택">
       <button
         type="button"
@@ -55,7 +58,7 @@ export const DrawingToolbar = ({
         aria-pressed={settings.tool === 'ERASER'}
         title="지우개"
         disabled={disabled}
-        onClick={() => onChange({ ...settings, tool: 'ERASER' })}
+        onClick={() => onChange({ ...settings, tool: 'ERASER', width: 'THICK' })}
       >
         <span className="eraser-icon" aria-hidden="true" />
       </button>

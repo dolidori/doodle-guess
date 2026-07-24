@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { STROKE_WIDTHS, type Point } from '../../../../shared/src/index.js';
+import {
+  ERASER_WIDTH_MULTIPLIER,
+  STROKE_WIDTHS,
+  type Point
+} from '../../../../shared/src/index.js';
 import { useGame } from '../../state/GameContext.js';
 import { renderPreview, renderStrokes } from './canvasRenderer.js';
 import type { ToolSettings } from './DrawingToolbar.js';
@@ -55,7 +59,9 @@ export const DrawingCanvas = ({
       return;
     }
     const rect = stage.getBoundingClientRect();
-    const diameter = STROKE_WIDTHS[settings.width] * Math.min(rect.width, rect.height);
+    const diameter = STROKE_WIDTHS[settings.width] *
+      ERASER_WIDTH_MULTIPLIER *
+      Math.min(rect.width, rect.height);
     cursor.style.width = `${diameter}px`;
     cursor.style.height = `${diameter}px`;
     cursor.style.left = `${pointer.clientX - rect.left}px`;

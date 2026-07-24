@@ -148,6 +148,33 @@ describe('방·세션·권한 강화 검증', () => {
     expect(room.roundTimer).toBeNull();
   });
 
+  it('타이머 모드에서 현재 참여자 전원이 맞히면 즉시 라운드를 종료한다', () => {
+    const { room, gameService, host, hostConnection } = setupRoom();
+    const first = attachPlayer(room, '첫번째', 'first');
+    const second = attachPlayer(room, '두번째', 'second');
+    gameService.setAnswerMode(room, host.playerId, 'UNTIL_TIMER');
+    gameService.startRound(room, host.playerId, room.round.roundId, '우산');
+
+    gameService.submitGuess(room, first.player.playerId, {
+      roundId: room.round.roundId,
+      guessId: crypto.randomUUID(),
+      text: '우산'
+    }, first.connection);
+    expect(room.status).toBe('ROUND_ACTIVE');
+
+    gameService.submitGuess(room, second.player.playerId, {
+      roundId: room.round.roundId,
+      guessId: crypto.randomUUID(),
+      text: '우산'
+    }, second.connection);
+    expect(room.status).toBe('ROUND_EXPIRED');
+    expect(room.round.status).toBe('EXPIRED');
+    expect(room.round.correctPlayerIds.size).toBe(2);
+    expect(room.roundTimer).toBeNull();
+    expect(sentEvents(hostConnection).filter((event) => event.type === 'ROUND_EXPIRED'))
+      .toHaveLength(1);
+  });
+
   it('종료 후 같은 drawer가 대기실 없이 새 제시어로 다음 라운드를 시작한다', () => {
     const { room, gameService, host } = setupRoom();
     const guest = attachPlayer(room, '참가자', 'guest').player;

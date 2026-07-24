@@ -84,18 +84,12 @@ export class GameService {
     room.roundTimer.unref();
   }
 
-  expireRound(room: RoomRuntime, roundId: string, now = Date.now()): boolean {
-    if (room.round.roundId !== roundId || room.round.status !== 'DRAWING_AND_GUESSING') return false;
-    const roundEndsAt = room.round.roundEndsAt;
-    if (roundEndsAt === null) return false;
-    if (now < roundEndsAt) {
-      this.scheduleExpiry(room, roundId);
-      return false;
-    }
+  private finishTimedRound(room: RoomRuntime, roundId: string, endedAt: number): void {
+    const roundEndsAt = room.round.roundEndsAt!;
     cancelRoundTimer(room);
     room.round.status = 'EXPIRED';
     room.status = 'ROUND_EXPIRED';
-    room.round.expiredAt = now;
+    room.round.expiredAt = endedAt;
     room.round.guessLocked = true;
     room.round.drawingLocked = true;
     room.round.lastRoundEventId = randomUUID();
@@ -104,7 +98,7 @@ export class GameService {
     broadcast(room, envelope('ROUND_EXPIRED', {
       eventId: room.round.lastRoundEventId,
       roundId,
-      expiredAt: now,
+      expiredAt: endedAt,
       roundEndsAt,
       answerMode: room.answerMode,
       correctCount: room.round.correctPlayerIds.size
@@ -114,6 +108,17 @@ export class GameService {
       roundId
     }));
     this.roomService.publishState(room);
+  }
+
+  expireRound(room: RoomRuntime, roundId: string, now = Date.now()): boolean {
+    if (room.round.roundId !== roundId || room.round.status !== 'DRAWING_AND_GUESSING') return false;
+    const roundEndsAt = room.round.roundEndsAt;
+    if (roundEndsAt === null) return false;
+    if (now < roundEndsAt) {
+      this.scheduleExpiry(room, roundId);
+      return false;
+    }
+    this.finishTimedRound(room, roundId, now);
     return true;
   }
 
@@ -192,6 +197,17 @@ export class GameService {
     room.roomVersion += 1;
 
     if (room.answerMode === 'UNTIL_TIMER') {
+      const eligibleGuessers = [...room.players.values()].filter((player) =>
+        player.connected &&
+        !player.isModerator &&
+        !room.round.keywordExposedPlayerIds.has(player.playerId)
+      );
+      if (eligibleGuessers.length > 0 && eligibleGuessers.every((player) =>
+        room.round.correctPlayerIds.has(player.playerId)
+      )) {
+        this.finishTimedRound(room, payload.roundId, Date.now());
+        return;
+      }
       this.roomService.publishState(room);
       return;
     }

@@ -555,6 +555,9 @@ describe('실제 WebSocket 핵심 게임 흐름', () => {
     await host.next('GUESS_SHARED', (message) => message.payload.playerId === guesserSession.payload.playerId);
     await drawer.next('GUESS_SHARED', (message) => message.payload.playerId === guesserSession.payload.playerId);
     await guesser.next('GUESS_SHARED', (message) => message.payload.playerId === guesserSession.payload.playerId);
+    const expired = await host.next('ROUND_EXPIRED');
+    await drawer.next('ROUND_EXPIRED');
+    await guesser.next('ROUND_EXPIRED');
     const secondScoreState = await host.next('PUBLIC_STATE', (message) =>
       message.payload.round.correctCount === 2
     );
@@ -562,22 +565,19 @@ describe('실제 WebSocket 핵심 게임 흐름', () => {
       (player: any) => [player.nickname, player.score]
     ));
     expect(scores).toEqual({ 방장: 1, 화가: 1, 추측자: 1 });
-    expect(secondScoreState.payload.status).toBe('ROUND_ACTIVE');
-
-    host.send('SET_ANSWER_MODE', { answerMode: 'FIRST_CORRECT' });
-    expect((await host.next('ERROR')).payload.code).toBe('INVALID_PHASE');
-
-    const room = running.registry.get(roomCode);
-    await room.queue.enqueue(() =>
-      running!.dispatcher.gameService.expireRound(room, roundId, room.round.roundEndsAt!)
-    );
-    const expired = await host.next('ROUND_EXPIRED');
+    expect(secondScoreState.payload.status).toBe('ROUND_EXPIRED');
     expect(expired.payload).toMatchObject({
       answerMode: 'UNTIL_TIMER',
       correctCount: 2
     });
-    await host.next('PUBLIC_STATE', (message) => message.payload.status === 'ROUND_EXPIRED');
     await host.next('PRIVATE_STATE');
+    await drawer.next('PUBLIC_STATE', (message) => message.payload.status === 'ROUND_EXPIRED');
+    await drawer.next('PRIVATE_STATE');
+    await guesser.next('PUBLIC_STATE', (message) => message.payload.status === 'ROUND_EXPIRED');
+    await guesser.next('PRIVATE_STATE');
+
+    host.send('SET_ANSWER_MODE', { answerMode: 'FIRST_CORRECT' });
+    expect((await host.next('ERROR')).payload.code).toBe('INVALID_PHASE');
 
     host.send('RETURN_TO_WAITING', { roundId });
     const waiting = await host.next('PUBLIC_STATE', (message) => message.payload.status === 'WAITING');
