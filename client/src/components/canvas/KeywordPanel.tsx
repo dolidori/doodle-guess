@@ -1,15 +1,21 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useGame } from '../../state/GameContext.js';
 
 export const KeywordPanel = () => {
   const { state, send, dispatch } = useGame();
   const keywordInputRef = useRef<HTMLInputElement>(null);
+  const [shufflePending, setShufflePending] = useState(false);
   const mayStart = state.privateState?.allowedActions.includes('SET_KEYWORD_AND_START') ?? false;
   const privateKeyword = state.privateState?.keyword;
   const suggestedKeyword = state.privateState?.suggestedKeyword;
   const roundId = state.publicState?.round.roundId;
   const continuing = state.publicState?.round.status === 'SOLVED' ||
     state.publicState?.round.status === 'EXPIRED';
+  useEffect(() => {
+    if (!shufflePending) return;
+    const timeout = window.setTimeout(() => setShufflePending(false), 350);
+    return () => window.clearTimeout(timeout);
+  }, [shufflePending]);
 
   if (privateKeyword !== null && privateKeyword !== undefined && !continuing) {
     return (
@@ -62,7 +68,10 @@ export const KeywordPanel = () => {
           type="button"
           className="secondary"
           aria-label="기본 제시어 다시 뽑기"
-          onClick={() => send('SHUFFLE_KEYWORD', {})}
+          disabled={shufflePending}
+          onClick={() => {
+            if (send('SHUFFLE_KEYWORD', {})) setShufflePending(true);
+          }}
         >
           다시 뽑기
         </button>

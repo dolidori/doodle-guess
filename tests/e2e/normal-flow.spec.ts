@@ -166,6 +166,10 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await expect(guest.locator('.identity strong')).toHaveText('참가자');
   await expect(host.getByLabel('정답 추측')).toHaveCount(0);
   await expect(guest.getByLabel('정답 추측')).toHaveCount(1);
+  const shuffleKeyword = host.getByRole('button', { name: '기본 제시어 다시 뽑기' });
+  await shuffleKeyword.click();
+  await expect(shuffleKeyword).toBeDisabled();
+  await expect(shuffleKeyword).toBeEnabled({ timeout: 1000 });
 
   const drawerModePanel = host.locator('.drawer-order-panel');
   const answerModePanel = host.locator('.answer-mode-panel');
