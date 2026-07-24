@@ -146,6 +146,23 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await guest.getByRole('button', { name: '입장하기' }).click();
   await expect(guest.locator('.identity strong')).toHaveText('참가자');
 
+  const drawerModePanel = host.locator('.drawer-order-panel');
+  const answerModePanel = host.locator('.answer-mode-panel');
+  const drawerModeBox = await drawerModePanel.boundingBox();
+  const answerModeBox = await answerModePanel.boundingBox();
+  expect(drawerModeBox).not.toBeNull();
+  expect(answerModeBox).not.toBeNull();
+  expect(Math.abs(drawerModeBox!.height - answerModeBox!.height)).toBeLessThanOrEqual(1);
+
+  await host.getByRole('button', { name: '그리기 순서' }).click();
+  await expect(host.getByRole('tooltip')).toContainText('정한 바퀴 수만큼');
+  await host.getByRole('button', { name: '그리기 순서' }).click();
+  await expect(host.getByRole('tooltip')).toBeHidden();
+  await host.getByRole('button', { name: '정답 판정 모드' }).click();
+  await expect(host.getByRole('tooltip')).toContainText('첫 정답에서 끝납니다');
+  await host.locator('.canvas-stage').click({ position: { x: 10, y: 10 } });
+  await expect(host.getByRole('tooltip')).toBeHidden();
+
   await host.getByLabel('선착순 종료').click();
   await expect(host.getByLabel('선착순 종료')).toBeChecked();
   await host.getByLabel('제시어', { exact: true }).fill('보라색');
@@ -241,6 +258,16 @@ test('순서대로 한 바퀴가 끝나면 시상식 후 점수를 초기화하�
   await host.getByLabel('순서대로').click();
   await expect(host.getByLabel('순서대로')).toBeChecked();
   await expect(host.getByLabel('바퀴 수')).toHaveValue('1');
+  const rotatedModePanels = await host.locator('.mode-panel').evaluateAll((panels) =>
+    panels.map((panel) => ({
+      clientHeight: panel.clientHeight,
+      scrollHeight: panel.scrollHeight
+    }))
+  );
+  expect(rotatedModePanels[0]!.clientHeight).toBe(rotatedModePanels[1]!.clientHeight);
+  expect(rotatedModePanels[0]!.scrollHeight).toBeLessThanOrEqual(
+    rotatedModePanels[0]!.clientHeight + 1
+  );
   await host.getByLabel('제시어', { exact: true }).fill('첫 제시어');
   await host.getByRole('button', { name: '제시어 확정 및 시작' }).click();
   await guest.getByLabel('정답 추측').fill('첫 제시어');

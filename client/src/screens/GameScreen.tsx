@@ -69,8 +69,10 @@ export const GameScreen = ({
   const [durationDraft, setDurationDraft] = useState<number | null>(null);
   const [bgmControlOpen, setBgmControlOpen] = useState(false);
   const [roomCodeOpen, setRoomCodeOpen] = useState(false);
+  const [modeInfoOpen, setModeInfoOpen] = useState<'DRAWER_ORDER' | 'ANSWER_MODE' | null>(null);
   const [confirmation, setConfirmation] = useState<ConfirmationKind | null>(null);
   const bgmControlRef = useRef<HTMLDivElement>(null);
+  const modeInfoRef = useRef<HTMLDivElement>(null);
   const roomCodeButtonRef = useRef<HTMLButtonElement>(null);
   const roomCodeCloseRef = useRef<HTMLButtonElement>(null);
   const closeConfirmation = useCallback(() => setConfirmation(null), []);
@@ -106,6 +108,21 @@ export const GameScreen = ({
       triggerButton?.focus();
     };
   }, [roomCodeOpen]);
+  useEffect(() => {
+    if (!modeInfoOpen) return;
+    const closeOutside = (event: PointerEvent): void => {
+      if (!modeInfoRef.current?.contains(event.target as Node)) setModeInfoOpen(null);
+    };
+    const closeOnEscape = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') setModeInfoOpen(null);
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [modeInfoOpen]);
   if (!publicState || !session) return <main className="room-loading">방 상태를 불러오고 있습니다.</main>;
 
   const me = publicState.players.find((player) => player.playerId === session.playerId);
@@ -310,9 +327,26 @@ export const GameScreen = ({
           <GuessInput />
         </section>
         <aside className="control-column">
-          <div className="control-panel">
-            <section className="drawer-order-panel panel-section">
-              <h3>그리기 순서</h3>
+          <div className="control-panel" ref={modeInfoRef}>
+            <section className="drawer-order-panel mode-panel panel-section">
+              <button
+                type="button"
+                className="mode-info-trigger"
+                aria-expanded={modeInfoOpen === 'DRAWER_ORDER'}
+                aria-describedby={modeInfoOpen === 'DRAWER_ORDER' ? 'drawer-order-help' : undefined}
+                onClick={() => setModeInfoOpen((open) =>
+                  open === 'DRAWER_ORDER' ? null : 'DRAWER_ORDER'
+                )}
+              >
+                그리기 순서
+                <span aria-hidden="true">?</span>
+              </button>
+              {modeInfoOpen === 'DRAWER_ORDER' && (
+                <div id="drawer-order-help" className="mode-info-bubble" role="tooltip">
+                  고정은 지정한 한 사람이 계속 그리고, 순서대로는 참여자가 정한 바퀴 수만큼
+                  차례대로 그립니다.
+                </div>
+              )}
               {actions.has('SET_DRAWER_ORDER') ? (
                 <>
                   <fieldset>
@@ -367,8 +401,26 @@ export const GameScreen = ({
                 </p>
               )}
             </section>
-            <section className="answer-mode-panel panel-section">
-              <h3>정답 판정 모드</h3>
+            <section className="answer-mode-panel mode-panel panel-section">
+              <button
+                type="button"
+                className="mode-info-trigger"
+                aria-expanded={modeInfoOpen === 'ANSWER_MODE'}
+                aria-describedby={modeInfoOpen === 'ANSWER_MODE' ? 'answer-mode-help' : undefined}
+                onClick={() => setModeInfoOpen((open) =>
+                  open === 'ANSWER_MODE' ? null : 'ANSWER_MODE'
+                )}
+              >
+                정답 판정 모드
+                <span aria-hidden="true">?</span>
+              </button>
+              {modeInfoOpen === 'ANSWER_MODE' && (
+                <div id="answer-mode-help" className="mode-info-bubble" role="tooltip">
+                  타이머 모드는 시간이 끝나거나 전원이 맞힐 때까지 계속하고, 선착순 모드는
+                  첫 정답에서 끝납니다. 정답 순위에 따라 점수가 줄고 그림 담당자는 정답자
+                  수만큼 받습니다.
+                </div>
+              )}
               {actions.has('SET_ANSWER_MODE') ? (
                 <fieldset>
                   <legend className="visually-hidden">정답 판정 모드 선택</legend>
@@ -392,20 +444,8 @@ export const GameScreen = ({
                   </label>
                 </fieldset>
               ) : (
-                <>
-                  <p>{answerModeLabel}</p>
-                  {round.status === 'DRAWING_AND_GUESSING' &&
-                    <small>라운드 진행 중에는 모드를 바꿀 수 없습니다.</small>}
-                </>
+                <p>{answerModeLabel}</p>
               )}
-              <small>
-                {publicState.answerMode === 'FIRST_CORRECT'
-                  ? '첫 정답이 나오면 바로 라운드가 끝납니다.'
-                  : '정답은 가려지고 타이머 종료 또는 전원 정답까지 계속됩니다.'}
-              </small>
-              <small>
-                정답 순위에 따라 참여인원 수부터 1점씩 줄고, 그림 담당자는 정답자 수만큼 받습니다.
-              </small>
             </section>
             {actions.has('SET_ROUND_DURATION') ? (
               <section className="duration-panel panel-section">

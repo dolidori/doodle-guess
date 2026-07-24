@@ -617,9 +617,10 @@ h3 {
 .control-panel {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-  align-items: start;
+  align-items: stretch;
   gap: var(--space-2);
-  max-height: min(13rem, 30vh);
+  max-height: min(10.5rem, 26vh);
+  overflow: visible;
 }
 
 .control-column {
@@ -640,6 +641,70 @@ h3 {
 .control-panel h3,
 .control-panel p {
   margin-bottom: var(--space-1);
+}
+
+.mode-panel {
+  position: relative;
+  height: 8.5rem;
+}
+
+.mode-info-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 32px;
+  margin: 0 0 var(--space-1);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font-weight: 700;
+  text-align: left;
+  box-shadow: none;
+}
+
+.mode-info-trigger:hover:not(:disabled),
+.mode-info-trigger:active:not(:disabled) {
+  transform: none;
+}
+
+.mode-info-trigger > span {
+  display: inline-grid;
+  width: 1.2rem;
+  height: 1.2rem;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  color: var(--color-brand-yellow);
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.mode-info-bubble {
+  position: absolute;
+  z-index: 20;
+  bottom: calc(100% + 0.6rem);
+  left: 0;
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--color-brand-yellow);
+  border-radius: var(--radius-sm);
+  background: #17132b;
+  box-shadow: var(--shadow-panel);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.mode-info-bubble::after {
+  position: absolute;
+  top: 100%;
+  left: 1.25rem;
+  width: 0;
+  height: 0;
+  border: 0.5rem solid transparent;
+  border-top-color: var(--color-brand-yellow);
+  content: "";
 }
 
 .duration-panel input[type="range"] {
