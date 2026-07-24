@@ -21,6 +21,25 @@ test('모바일에서 공개 추측 채팅이 캔버스 오른쪽에 나란히 �
   await page.getByLabel('닉네임').fill('모바일방장');
   await page.getByRole('button', { name: '방 만들기' }).click();
 
+  if ((page.viewportSize()?.width ?? 0) <= 640) {
+    const drawer = page.locator('.settings-drawer');
+    const canvasColumn = page.locator('.canvas-column');
+    const drawerBox = await drawer.boundingBox();
+    const canvasColumnBox = await canvasColumn.boundingBox();
+    expect(drawerBox).not.toBeNull();
+    expect(canvasColumnBox).not.toBeNull();
+    expect(Math.abs(drawerBox!.width - canvasColumnBox!.width)).toBeLessThanOrEqual(1);
+
+    const toggle = page.getByRole('button', { name: '게임 설정' });
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('#game-settings-panel')).toBeHidden();
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('#game-settings-panel')).toBeVisible();
+  }
+
   const canvasBox = await page.locator('.canvas-stage').boundingBox();
   const feedBox = await page.locator('.guess-feed:visible').boundingBox();
 
@@ -145,6 +164,8 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await guest.getByLabel('방번호').fill(roomCode);
   await guest.getByRole('button', { name: '입장하기' }).click();
   await expect(guest.locator('.identity strong')).toHaveText('참가자');
+  await expect(host.getByLabel('정답 추측')).toHaveCount(0);
+  await expect(guest.getByLabel('정답 추측')).toHaveCount(1);
 
   const drawerModePanel = host.locator('.drawer-order-panel');
   const answerModePanel = host.locator('.answer-mode-panel');

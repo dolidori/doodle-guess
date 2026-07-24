@@ -70,6 +70,7 @@ export const GameScreen = ({
   const [bgmControlOpen, setBgmControlOpen] = useState(false);
   const [roomCodeOpen, setRoomCodeOpen] = useState(false);
   const [modeInfoOpen, setModeInfoOpen] = useState<'DRAWER_ORDER' | 'ANSWER_MODE' | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(true);
   const [confirmation, setConfirmation] = useState<ConfirmationKind | null>(null);
   const bgmControlRef = useRef<HTMLDivElement>(null);
   const modeInfoRef = useRef<HTMLDivElement>(null);
@@ -127,6 +128,7 @@ export const GameScreen = ({
 
   const me = publicState.players.find((player) => player.playerId === session.playerId);
   const actions = new Set(state.privateState?.allowedActions ?? []);
+  const isDrawer = publicState.drawerId === session.playerId;
   const canDraw = actions.has('DRAW_STROKE_BATCH');
   const canUndo = actions.has('UNDO_LAST_STROKE') &&
     state.drawing.strokes.some((stroke) => stroke.finalized && !stroke.undone);
@@ -136,7 +138,7 @@ export const GameScreen = ({
   const roles = [
     me?.isHost ? '호스트' : null,
     me?.isModerator ? '진행자' : null,
-    publicState.drawerId === session.playerId ? '그리기' : null,
+    isDrawer ? '그리기' : null,
     actions.has('SUBMIT_GUESS') ? '추측' : null
   ].filter(Boolean);
 
@@ -324,10 +326,23 @@ export const GameScreen = ({
               onClear={() => setConfirmation('CLEAR')}
             />
           )}
-          <GuessInput />
+          {!isDrawer && <GuessInput />}
         </section>
-        <aside className="control-column">
-          <div className="control-panel" ref={modeInfoRef}>
+        <aside className={`control-column settings-drawer ${settingsOpen ? 'open' : ''}`}>
+          <button
+            type="button"
+            className="settings-drawer-toggle"
+            aria-expanded={settingsOpen}
+            aria-controls="game-settings-panel"
+            onClick={() => {
+              setSettingsOpen((open) => !open);
+              setModeInfoOpen(null);
+            }}
+          >
+            <span>게임 설정</span>
+            <span className="settings-drawer-chevron" aria-hidden="true">⌃</span>
+          </button>
+          <div id="game-settings-panel" className="control-panel" ref={modeInfoRef}>
             <section className="drawer-order-panel mode-panel panel-section">
               <button
                 type="button"

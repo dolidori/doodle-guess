@@ -180,18 +180,72 @@
 
   .control-column {
     order: 3;
+    width: 100%;
     flex: none;
     min-height: auto;
     display: flex;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .control-column > .control-panel {
+    width: 100%;
     flex: none;
     min-height: auto;
     display: flex;
     flex-direction: column;
     max-height: none;
     overflow: visible;
+  }
+
+  .settings-drawer-toggle {
+    display: flex;
+    width: 100%;
+    min-height: 48px;
+    align-items: center;
+    justify-content: space-between;
+    border-color: var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 0.65rem 0.9rem;
+    background: rgb(35 30 58 / 0.96);
+    font-weight: 700;
+  }
+
+  .settings-drawer.open > .settings-drawer-toggle {
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+
+  .settings-drawer-chevron {
+    color: var(--color-brand-yellow);
+    font-size: 1.25rem;
+    line-height: 1;
+    transition: transform 180ms ease;
+  }
+
+  .settings-drawer:not(.open) .settings-drawer-chevron {
+    transform: rotate(180deg);
+  }
+
+  .settings-drawer > .control-panel {
+    max-height: 80rem;
+    opacity: 1;
+    transform-origin: top;
+    transition:
+      max-height 220ms ease,
+      opacity 150ms ease,
+      padding 220ms ease,
+      border-width 220ms ease;
+  }
+
+  .settings-drawer:not(.open) > .control-panel {
+    max-height: 0;
+    visibility: hidden;
+    overflow: hidden;
+    border-width: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0;
+    pointer-events: none;
   }
 
   .answer-mode-panel fieldset,

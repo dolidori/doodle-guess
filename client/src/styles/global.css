@@ -630,6 +630,10 @@ h3 {
   display: block;
 }
 
+.settings-drawer-toggle {
+  display: none;
+}
+
 .control-column > .control-panel {
   min-height: 0;
 }
