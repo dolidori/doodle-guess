@@ -18,6 +18,29 @@ test('모바일에서 공개 추측 채팅이 캔버스 오른쪽에 나란히 �
   expect(Math.abs(feedBox!.y - canvasBox!.y)).toBeLessThanOrEqual(2);
 
   if ((page.viewportSize()?.width ?? 0) <= 640) {
+    const canvasAndChat = page.locator('.canvas-and-chat');
+    const chatList = page.locator('.mobile-guess-feed ol');
+    const initialRowBox = await canvasAndChat.boundingBox();
+    await chatList.evaluate((list) => {
+      for (let index = 0; index < 40; index += 1) {
+        const item = document.createElement('li');
+        item.textContent = `긴 채팅 메시지 ${index}`;
+        list.append(item);
+      }
+    });
+    const expandedRowBox = await canvasAndChat.boundingBox();
+    const chatScroll = await chatList.evaluate((list) => ({
+      clientHeight: list.clientHeight,
+      scrollHeight: list.scrollHeight,
+      overflowY: getComputedStyle(list).overflowY
+    }));
+
+    expect(initialRowBox).not.toBeNull();
+    expect(expandedRowBox).not.toBeNull();
+    expect(Math.abs(expandedRowBox!.height - initialRowBox!.height)).toBeLessThanOrEqual(1);
+    expect(chatScroll.overflowY).toBe('auto');
+    expect(chatScroll.scrollHeight).toBeGreaterThan(chatScroll.clientHeight);
+
     const canvasColumnBox = await page.locator('.canvas-column').boundingBox();
     const playerPanelBox = await page.locator('.player-panel').boundingBox();
     const controlColumnBox = await page.locator('.control-column').boundingBox();
