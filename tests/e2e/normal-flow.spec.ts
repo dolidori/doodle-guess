@@ -29,7 +29,19 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await host.getByRole('button', { name: '방 만들기' }).click();
   const roomButton = host.getByRole('button', { name: /방번호 \d{3} 크게 보기/ });
   await expect(roomButton).toBeVisible();
-  await expect(host.getByRole('img', { name: 'Doodle Guess' })).toBeVisible();
+  const header = host.locator('.game-header');
+  const headerTitle = host.getByRole('img', { name: 'Doodle Guess' });
+  await expect(headerTitle).toBeVisible();
+  if ((host.viewportSize()?.width ?? 0) >= 1024) {
+    const headerBox = await header.boundingBox();
+    const titleBox = await headerTitle.boundingBox();
+    expect(headerBox).not.toBeNull();
+    expect(titleBox).not.toBeNull();
+    expect(titleBox!.width).toBeGreaterThanOrEqual(224);
+    expect(Math.abs(
+      titleBox!.x + titleBox!.width / 2 - (headerBox!.x + headerBox!.width / 2)
+    )).toBeLessThanOrEqual(2);
+  }
   const roomCode = (await roomButton.textContent())!.replace(/\D/gu, '');
   await roomButton.click();
   const roomCodeDialog = host.getByRole('dialog', { name: '방번호' });
@@ -54,12 +66,16 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await expect(guest.getByLabel('정답 추측')).toBeEnabled();
   const submitButtonStyle = await guest.getByRole('button', { name: '제출' }).evaluate(
     (button) => ({
+      flexBasis: Number.parseFloat(getComputedStyle(button).flexBasis),
       minWidth: Number.parseFloat(getComputedStyle(button).minWidth),
-      whiteSpace: getComputedStyle(button).whiteSpace
+      whiteSpace: getComputedStyle(button).whiteSpace,
+      wordBreak: getComputedStyle(button).wordBreak
     })
   );
   expect(submitButtonStyle.whiteSpace).toBe('nowrap');
-  expect(submitButtonStyle.minWidth).toBeGreaterThanOrEqual(88);
+  expect(submitButtonStyle.wordBreak).toBe('keep-all');
+  expect(submitButtonStyle.flexBasis).toBeGreaterThanOrEqual(112);
+  expect(submitButtonStyle.minWidth).toBeGreaterThanOrEqual(112);
 
   const canvas = host.locator('.canvas-stage');
   await host.getByRole('button', { name: '지우개' }).click();

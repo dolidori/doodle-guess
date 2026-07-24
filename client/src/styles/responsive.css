@@ -1,3 +1,20 @@
+@media (min-width: 1024px) {
+  .header-title {
+    position: absolute;
+    left: 50%;
+    width: clamp(14rem, 22vw, 19rem);
+    max-height: 3.25rem;
+    z-index: 1;
+    pointer-events: none;
+    transform: translateX(-50%);
+  }
+
+  .header-cluster {
+    position: relative;
+    z-index: 2;
+  }
+}
+
 @media (max-width: 1023px) {
   .room-layout {
     grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr);

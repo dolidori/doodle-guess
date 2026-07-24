@@ -587,9 +587,10 @@ h3 {
 }
 
 .guess-input button {
-  flex: none;
-  min-width: 5.5rem;
+  flex: 0 0 7rem;
+  min-width: 7rem;
   white-space: nowrap;
+  word-break: keep-all;
 }
 
 .control-panel {
@@ -838,10 +839,6 @@ h3 {
 .guess-seq {
   color: var(--color-brand-cyan);
   font-variant-numeric: tabular-nums;
-}
-
-.answer-badge {
-  color: #a8f3ca;
 }
 
 .toast-viewport {

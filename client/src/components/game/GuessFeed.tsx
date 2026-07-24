@@ -33,9 +33,8 @@ export const GuessFeed = () => {
               <span className="guess-seq">#{guess.guessSeq}</span>
             </div>
             <span className="guess-message-text">
-              {guess.text ?? '정답을 맞혔습니다 · 내용 가림'}
+              {guess.isCorrect ? '정답' : guess.text}
             </span>
-            {guess.isCorrect && <b className="answer-badge">정답</b>}
           </li>
         ))}
       </ol>
