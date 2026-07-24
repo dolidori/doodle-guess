@@ -30,40 +30,54 @@
 
   .game-header {
     min-height: 52px;
-    gap: 0.35rem;
+    gap: 0.2rem;
     padding: 0.3rem;
   }
 
+  .header-title {
+    position: absolute;
+    left: 50%;
+    width: clamp(3.75rem, 20vw, 6rem);
+    max-height: 1.5rem;
+    transform: translateX(-50%);
+  }
+
+  .header-left {
+    flex: 1;
+  }
+
+  .header-right {
+    flex: none;
+  }
+
+  .header-cluster {
+    gap: 0.2rem;
+  }
+
   .room-code-button,
-  .game-header > button {
+  .header-right > button {
     min-height: 40px;
     padding: 0.35rem 0.5rem;
     font-size: 0.9rem;
   }
 
   .bgm-toggle {
-    width: 40px;
-    min-width: 40px;
-    padding: 0.45rem;
+    width: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0.4rem;
   }
 
   .identity {
-    min-width: 0;
-    max-width: 6rem;
-    overflow: hidden;
+    display: none;
   }
 
-  .identity strong,
-  .identity span {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+  .header-right .round-status > span {
+    display: none;
   }
 
   .round-status {
-    flex-direction: column;
-    gap: 0;
-    font-size: 0.72rem;
+    min-width: 3rem;
   }
 
   .countdown {

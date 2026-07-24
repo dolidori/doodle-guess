@@ -280,6 +280,7 @@ h3 {
 }
 
 .game-header {
+  position: relative;
   flex: none;
   min-height: 64px;
   display: flex;
@@ -290,6 +291,31 @@ h3 {
   border-radius: var(--radius-md);
   background: rgb(35 30 58 / 0.92);
   box-shadow: var(--shadow-panel);
+}
+
+.header-cluster {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.header-left {
+  justify-content: flex-start;
+}
+
+.header-right {
+  justify-content: flex-end;
+}
+
+.header-title {
+  flex: none;
+  display: block;
+  width: clamp(10rem, 18vw, 19rem);
+  height: auto;
+  max-height: 3.25rem;
+  object-fit: contain;
 }
 
 .room-code-button {
@@ -311,7 +337,7 @@ h3 {
 }
 
 .round-status {
-  flex: 1;
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -531,11 +557,9 @@ h3 {
 .eraser-cursor {
   position: absolute;
   z-index: 2;
-  box-sizing: border-box;
   pointer-events: none;
-  border: 1px solid rgb(17 24 39 / 0.9);
   border-radius: 50%;
-  outline: 1px solid rgb(255 255 255 / 0.9);
+  outline: 1px solid rgb(17 24 39 / 0.9);
   transform: translate(-50%, -50%);
 }
 
@@ -560,6 +584,11 @@ h3 {
 .guess-input > div {
   display: flex;
   gap: var(--space-2);
+}
+
+.guess-input button {
+  flex: none;
+  white-space: nowrap;
 }
 
 .control-panel {

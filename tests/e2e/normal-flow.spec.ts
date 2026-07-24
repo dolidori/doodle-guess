@@ -11,6 +11,7 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await host.getByRole('button', { name: '방 만들기' }).click();
   const roomButton = host.getByRole('button', { name: /방번호 \d{3} 크게 보기/ });
   await expect(roomButton).toBeVisible();
+  await expect(host.getByRole('img', { name: 'Doodle Guess' })).toBeVisible();
   const roomCode = (await roomButton.textContent())!.replace(/\D/gu, '');
   await roomButton.click();
   const roomCodeDialog = host.getByRole('dialog', { name: '방번호' });
@@ -33,6 +34,9 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await host.getByRole('button', { name: '제시어 확정 및 시작' }).click();
   await expect(host.getByText('제시어가 가려졌습니다.')).toBeVisible();
   await expect(guest.getByLabel('정답 추측')).toBeEnabled();
+  expect(await guest.getByRole('button', { name: '제출' }).evaluate(
+    (button) => getComputedStyle(button).whiteSpace
+  )).toBe('nowrap');
 
   const canvas = host.locator('.canvas-stage');
   await host.getByRole('button', { name: '지우개' }).click();

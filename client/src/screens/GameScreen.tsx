@@ -151,59 +151,68 @@ export const GameScreen = ({
   return (
     <main className="game-screen">
       <header className="game-header">
-        <button
-          ref={roomCodeButtonRef}
-          type="button"
-          className="room-code-button"
-          onClick={() => setRoomCodeOpen(true)}
-          aria-label={`방번호 ${publicState.roomCode} 크게 보기`}
-        >
-          방 {publicState.roomCode}
-        </button>
-        <div className="identity">
-          <strong>{session.nickname}</strong>
-          <span>{roles.join(' · ') || '관람'}</span>
-        </div>
-        <RoundStatus />
-        <div className={`connection-chip ${state.connection.status === 'CONNECTED' ? 'connected' : ''}`}>
-          {state.connection.status === 'CONNECTED' ? '연결됨' : '연결 확인 중'}
-        </div>
-        {me?.isHost && (
-          <div className="bgm-control" ref={bgmControlRef}>
-            <button
-              type="button"
-              className="ghost bgm-toggle"
-              aria-label={`배경음 볼륨 조절 · 현재 ${Math.round(bgmVolume * 100)}%`}
-              aria-expanded={bgmControlOpen}
-              aria-controls="bgm-volume-panel"
-              onClick={() => setBgmControlOpen((open) => !open)}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  d="M9 18V5.8L19 4v11.2M9 10l10-1.8M9 18c0 1.7-1.6 3-3.5 3S2 19.7 2 18s1.6-3 3.5-3S9 16.3 9 18Zm10-2.8c0 1.7-1.6 3-3.5 3s-3.5-1.3-3.5-3 1.6-3 3.5-3 3.5 1.3 3.5 3Z"
-                />
-                {bgmVolume === 0 && <path className="mute-slash" d="M3 3l18 18" />}
-              </svg>
-            </button>
-            {bgmControlOpen && (
-              <section id="bgm-volume-panel" className="bgm-volume-panel" aria-label="배경음 볼륨">
-                <label htmlFor="bgm-volume">볼륨 {Math.round(bgmVolume * 100)}%</label>
-                <input
-                  id="bgm-volume"
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={Math.round(bgmVolume * 100)}
-                  onChange={(event) => onBgmVolumeChange(Number(event.target.value) / 100)}
-                />
-              </section>
-            )}
+        <div className="header-cluster header-left">
+          <button
+            ref={roomCodeButtonRef}
+            type="button"
+            className="room-code-button"
+            onClick={() => setRoomCodeOpen(true)}
+            aria-label={`방번호 ${publicState.roomCode} 크게 보기`}
+          >
+            방 {publicState.roomCode}
+          </button>
+          <div className="identity">
+            <strong>{session.nickname}</strong>
+            <span>{roles.join(' · ') || '관람'}</span>
           </div>
-        )}
-        <button type="button" className="danger" onClick={() => setConfirmation('LEAVE')}>
-          나가기
-        </button>
+        </div>
+        <img
+          className="header-title"
+          src="/images/bg/header_title.webp"
+          alt="Doodle Guess"
+        />
+        <div className="header-cluster header-right">
+          <RoundStatus />
+          <div className={`connection-chip ${state.connection.status === 'CONNECTED' ? 'connected' : ''}`}>
+            {state.connection.status === 'CONNECTED' ? '연결됨' : '연결 확인 중'}
+          </div>
+          {me?.isHost && (
+            <div className="bgm-control" ref={bgmControlRef}>
+              <button
+                type="button"
+                className="ghost bgm-toggle"
+                aria-label={`배경음 볼륨 조절 · 현재 ${Math.round(bgmVolume * 100)}%`}
+                aria-expanded={bgmControlOpen}
+                aria-controls="bgm-volume-panel"
+                onClick={() => setBgmControlOpen((open) => !open)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M9 18V5.8L19 4v11.2M9 10l10-1.8M9 18c0 1.7-1.6 3-3.5 3S2 19.7 2 18s1.6-3 3.5-3S9 16.3 9 18Zm10-2.8c0 1.7-1.6 3-3.5 3s-3.5-1.3-3.5-3 1.6-3 3.5-3 3.5 1.3 3.5 3Z"
+                  />
+                  {bgmVolume === 0 && <path className="mute-slash" d="M3 3l18 18" />}
+                </svg>
+              </button>
+              {bgmControlOpen && (
+                <section id="bgm-volume-panel" className="bgm-volume-panel" aria-label="배경음 볼륨">
+                  <label htmlFor="bgm-volume">볼륨 {Math.round(bgmVolume * 100)}%</label>
+                  <input
+                    id="bgm-volume"
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={Math.round(bgmVolume * 100)}
+                    onChange={(event) => onBgmVolumeChange(Number(event.target.value) / 100)}
+                  />
+                </section>
+              )}
+            </div>
+          )}
+          <button type="button" className="danger" onClick={() => setConfirmation('LEAVE')}>
+            나가기
+          </button>
+        </div>
       </header>
 
       {roomCodeOpen && (
