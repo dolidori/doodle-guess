@@ -146,6 +146,9 @@
 
   .lobby-screen {
     place-items: end center;
+    background:
+      linear-gradient(rgb(29 28 43 / 0.28), rgb(29 28 43 / 0.4)),
+      url("/images/bg/lobby_m_bg.webp") center / cover no-repeat;
   }
 
   .lobby-form {
