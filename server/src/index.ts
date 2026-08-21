@@ -14,6 +14,7 @@ import { RoomRegistry } from './rooms/roomRegistry.js';
 import type { ClientConnection } from './rooms/types.js';
 import { startHeartbeat } from './websocket/heartbeat.js';
 import { isOriginAllowed } from './websocket/origin.js';
+import { clientIp } from './websocket/clientIp.js';
 import { isRecovered } from './broadcast/backpressure.js';
 import { sendDrawingSnapshot } from './drawing/snapshotService.js';
 
@@ -86,14 +87,15 @@ export const startServer = async (
       ws,
       ip: config.nodeEnv === 'test'
         ? `test-${connectionId}`
-        : request.socket.remoteAddress ?? 'unknown',
+        : clientIp(request, config.trustProxy),
       roomCode: null,
       playerId: null,
       lastPongAt: Date.now(),
       needsSnapshot: false,
       overloadedSince: null,
       processedRequestIds: new Map(),
-      explicitlyLeft: false
+      explicitlyLeft: false,
+      livenessProbeAt: null
     };
     connections.add(connection);
     ws.on('pong', () => {

@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import type {
-  AnswerMode,
-  DrawerOrderMode,
-  GuessPublic
+import {
+  MAX_KEYWORD_SHUFFLES,
+  type AnswerMode,
+  type DrawerOrderMode,
+  type GuessPublic
 } from '../../../shared/src/index.js';
 import { broadcast, envelope, sendEnvelope } from '../broadcast/roomBroadcast.js';
 import { ProtocolError, assertProtocol } from '../protocol/errors.js';
@@ -76,6 +77,12 @@ export class GameService {
       room.round.status === 'EXPIRED';
     assertProtocol(canPrepareKeyword, 'INVALID_PHASE', '지금은 제시어를 다시 뽑을 수 없습니다.');
     assertProtocol(room.drawerId === actorId, 'NOT_DRAWER', '현재 그리기 담당자만 제시어를 다시 뽑을 수 있습니다.');
+    assertProtocol(
+      room.round.shuffleCount < MAX_KEYWORD_SHUFFLES,
+      'SHUFFLE_LIMIT',
+      `제시어는 라운드마다 ${MAX_KEYWORD_SHUFFLES}번까지만 다시 뽑을 수 있습니다.`
+    );
+    room.round.shuffleCount += 1;
     room.lastSuggestedKeyword = room.suggestedKeyword;
     room.suggestedKeyword = pickRandomKeyword(room.lastSuggestedKeyword);
     room.roomVersion += 1;

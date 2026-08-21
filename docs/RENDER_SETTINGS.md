@@ -18,3 +18,8 @@
 |---|---|
 | `NODE_ENV` | `production` |
 | `ALLOWED_ORIGINS` | `https://doodle-guess-9m52.onrender.com` |
+| `TRUST_PROXY` | `1` (생략 가능. `NODE_ENV=production`이면 자동으로 켜진다) |
+
+Render는 앱을 로드밸런서 뒤에서 실행하므로 `socket.remoteAddress`가 모든 접속자에게
+동일한 프록시 IP로 보인다. `TRUST_PROXY`가 켜져 있어야 `X-Forwarded-For`로 실제
+접속자를 구분하며, 그렇지 않으면 서로 무관한 사용자끼리 레이트리밋을 공유한다.

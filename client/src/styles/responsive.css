@@ -40,9 +40,13 @@
   }
 
   .canvas-and-chat {
-    height: clamp(24rem, 58vh, 34rem);
-    max-height: clamp(24rem, 58vh, 34rem);
-    flex: 0 0 clamp(24rem, 58vh, 34rem);
+    /*
+     * clamp의 최솟값은 min-height와 같아서, 화면이 그보다 짧으면 캔버스가
+     * 정답칸을 화면 밖으로 밀어낸다. 하한 없이 화면 비율 상한만 둔다.
+     */
+    height: min(34rem, 58vh);
+    max-height: min(34rem, 58vh);
+    flex: 0 1 auto;
   }
 
   .control-column {
@@ -145,10 +149,11 @@
   }
 
   .canvas-and-chat {
-    height: 18rem;
-    min-height: 18rem;
-    max-height: 18rem;
-    flex-basis: 18rem;
+    /* 위와 같은 원칙: 하한 없이 화면 비율 상한만 둔다. */
+    height: min(18rem, 45vh);
+    min-height: 0;
+    max-height: min(18rem, 45vh);
+    flex: 0 1 auto;
     display: grid;
     grid-template-columns: minmax(0, 1.75fr) minmax(7.5rem, 0.9fr);
     gap: var(--space-2);
@@ -258,8 +263,6 @@
   }
 
   .guess-input {
-    position: static;
-    z-index: auto;
     padding-bottom: var(--space-2);
   }
 
@@ -315,7 +318,7 @@
   }
 
   .canvas-stage {
-    min-height: 6rem;
+    min-height: 0;
   }
 
   .drawing-toolbar {

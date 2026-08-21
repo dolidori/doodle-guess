@@ -39,7 +39,13 @@ export const CreateRoomForm = ({
           진행자 모드
         </label>
       </fieldset>
-      <button type="submit" className="primary" disabled={disabled || !nickname.trim()}>
+      <button
+        type="submit"
+        className="primary"
+        // JoinRoomForm과 같은 이유로 모바일 첫 탭 유실을 막는다.
+        onPointerDown={(event) => event.preventDefault()}
+        disabled={disabled || !nickname.trim()}
+      >
         방 만들기
       </button>
     </form>

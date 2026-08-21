@@ -30,6 +30,9 @@ export const JoinRoomForm = ({
     <button
       type="submit"
       className="primary"
+      // 모바일에서 입력창이 포커스된 채로 누르면 첫 탭이 키보드 닫힘에 소모되어
+      // 버튼이 눌리지 않는다. 포커스 이동을 막아 첫 탭에서 바로 제출되게 한다.
+      onPointerDown={(event) => event.preventDefault()}
       disabled={disabled || !/^[1-9][0-9]{2}$/u.test(roomCode) || !nickname.trim()}
     >
       입장하기

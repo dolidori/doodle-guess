@@ -29,7 +29,8 @@ const fakeConnection = (id: string): ClientConnection => ({
   needsSnapshot: false,
   overloadedSince: null,
   processedRequestIds: new Map(),
-  explicitlyLeft: false
+  explicitlyLeft: false,
+  livenessProbeAt: null
 });
 
 const sentEvents = (connection: ClientConnection): Array<{ type: string; payload: any }> =>

@@ -25,7 +25,8 @@ const fakeConnection = (id: string): ClientConnection => ({
   needsSnapshot: false,
   overloadedSince: null,
   processedRequestIds: new Map(),
-  explicitlyLeft: false
+  explicitlyLeft: false,
+  livenessProbeAt: null
 });
 
 describe('Room 큐 동시성과 호스트 수명', () => {

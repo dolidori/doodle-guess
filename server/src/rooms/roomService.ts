@@ -18,6 +18,9 @@ export const hashSessionToken = (token: string): string =>
 
 const normalizedNickname = (nickname: string): string => nickname.trim();
 
+/** ping을 보낸 뒤 pong을 기다려 주는 시간. 이 시간을 넘기면 죽은 연결로 본다. */
+const LIVENESS_PROBE_GRACE_MS = 1000;
+
 export const createPlayer = (
   nickname: string,
   sessionTokenHash: string,
@@ -44,6 +47,44 @@ export class RoomService {
     connection.playerId = player.playerId;
     connection.explicitlyLeft = false;
     room.connections.set(player.playerId, connection);
+  }
+
+  /**
+   * 토큰이 맞더라도 기존 연결을 무조건 밀어내면 토큰을 훔친 쪽이 정상 접속자를
+   * 쫓아낼 수 있다. 그래서 먼저 ping을 보내 생존을 확인하고, pong으로 답하는
+   * 연결은 지켜 준다. 답이 없는 연결만 죽은 것으로 보고 슬롯을 넘긴다.
+   */
+  private claimSlotFromStaleConnection(
+    room: RoomRuntime,
+    player: Player,
+    replacement: ClientConnection,
+    now = Date.now()
+  ): void {
+    const stale = room.connections.get(player.playerId);
+    if (!stale || stale === replacement) return;
+
+    if (stale.livenessProbeAt === null) {
+      stale.livenessProbeAt = now;
+      try {
+        stale.ws.ping();
+      } catch {
+        // 소켓이 이미 죽었다면 다음 시도에서 인계된다.
+      }
+      throw new ProtocolError('SESSION_IN_USE', '이전 연결을 확인하는 중입니다. 잠시 후 다시 시도해 주세요.');
+    }
+    if (stale.lastPongAt >= stale.livenessProbeAt) {
+      stale.livenessProbeAt = null;
+      throw new ProtocolError('SESSION_IN_USE', '이미 연결된 세션입니다.');
+    }
+    if (now - stale.livenessProbeAt < LIVENESS_PROBE_GRACE_MS) {
+      throw new ProtocolError('SESSION_IN_USE', '이전 연결을 확인하는 중입니다. 잠시 후 다시 시도해 주세요.');
+    }
+
+    room.connections.delete(player.playerId);
+    stale.roomCode = null;
+    stale.playerId = null;
+    stale.explicitlyLeft = true;
+    stale.ws.close(4004, '같은 세션이 다른 연결로 복귀했습니다.');
   }
 
   private sendSession(
@@ -117,7 +158,9 @@ export class RoomService {
       const tokenPlayer = [...room.players.values()].find((candidate) => candidate.sessionTokenHash === hash);
       assertProtocol(tokenPlayer, 'INVALID_SESSION', '유효하지 않은 세션입니다.');
       assertProtocol(tokenPlayer.nickname === nickname, 'INVALID_SESSION', '세션과 닉네임이 일치하지 않습니다.');
-      assertProtocol(!tokenPlayer.connected, 'SESSION_IN_USE', '이미 연결된 세션입니다.');
+      // 죽은 소켓은 하트비트 타임아웃(90초) 전까지 connected로 남는다. 재접속은 0.5초 뒤에
+      // 오므로, 생존이 확인되지 않은 연결이라면 슬롯을 넘겨받아 복귀를 막지 않는다.
+      if (tokenPlayer.connected) this.claimSlotFromStaleConnection(room, tokenPlayer, connection);
       player = tokenPlayer;
       isReconnect = true;
     } else {

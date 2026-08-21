@@ -55,6 +55,20 @@ const SESSION_KEY = 'doodle-guess-current-session';
 const RECENT_KEY = 'doodle-guess-recent-rooms';
 const SNAPSHOT_TIMEOUT_MS = 5000;
 
+/**
+ * 입장 실패 중 서버 혼잡·연결 인계 경합처럼 잠시 뒤면 풀리는 것들.
+ * 닉네임 중복이나 강퇴처럼 사용자가 조치해야 하는 실패는 재시도하지 않는다.
+ */
+const JOIN_RETRY_CODES = new Set([
+  'RATE_LIMITED',
+  'SERVER_BUSY',
+  'SESSION_IN_USE',
+  'INTERNAL_ERROR'
+]);
+const MAX_JOIN_ATTEMPTS = 5;
+
+type JoinPayload = ClientPayloadMap['JOIN_ROOM'];
+
 type StoredSession = {
   roomCode: string;
   nickname: string;
@@ -111,6 +125,10 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
   const snapshotActiveRef = useRef(false);
   const pendingSnapshotDeltasRef = useRef<StrokeBatchEvent[]>([]);
   const snapshotTimerRef = useRef<number | null>(null);
+  const pendingJoinRef = useRef<
+    { requestId: string; payload: JoinPayload; attempts: number } | null
+  >(null);
+  const joinRetryTimerRef = useRef<number | null>(null);
   useEffect(() => {
     stateRef.current = state;
     const current = drawingSequenceRef.current;
@@ -152,14 +170,34 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
   }, []);
 
+  const clearJoinRetry = useCallback(() => {
+    if (joinRetryTimerRef.current !== null) {
+      clearTimeout(joinRetryTimerRef.current);
+      joinRetryTimerRef.current = null;
+    }
+    pendingJoinRef.current = null;
+  }, []);
+
+  const sendJoin = useCallback((payload: JoinPayload, attempts = 0) => {
+    clearJoinRetry();
+    const socket = socketRef.current;
+    // 소켓이 닫혀 있으면 재연결 흐름이 open 시점에 다시 JOIN을 보낸다.
+    if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    const requestId = crypto.randomUUID();
+    pendingJoinRef.current = { requestId, payload, attempts };
+    socket.send(JSON.stringify({ v: 1, type: 'JOIN_ROOM', requestId, payload }));
+  }, [clearJoinRetry]);
+
   const handleMessage = useCallback(async (message: MessageEvent<string>) => {
     const event = JSON.parse(message.data) as {
       type: string;
       payload: any;
+      requestId?: string;
       roomVersion?: number;
     };
     switch (event.type) {
       case 'ROOM_SESSION':
+        clearJoinRetry();
         rememberSession(event.payload as RoomSession);
         dispatch({ type: 'SESSION', session: event.payload as RoomSession });
         if ((event.payload as RoomSession).isReconnect) toast('재연결되었습니다.');
@@ -282,6 +320,20 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         break;
       case 'ERROR': {
         const error = event.payload as ErrorPayload;
+        const pendingJoin = pendingJoinRef.current;
+        if (pendingJoin && event.requestId === pendingJoin.requestId) {
+          pendingJoinRef.current = null;
+          const attempts = pendingJoin.attempts + 1;
+          if (JOIN_RETRY_CODES.has(error.code) && attempts < MAX_JOIN_ATTEMPTS) {
+            const delay = Math.min(4000, 400 * 2 ** (attempts - 1));
+            joinRetryTimerRef.current = window.setTimeout(
+              () => sendJoin(pendingJoin.payload, attempts),
+              delay
+            );
+            if (attempts === 1) toast('입장이 밀려 다시 시도하고 있습니다.');
+            break;
+          }
+        }
         toast(error.message, 'error');
         if (error.code === 'ROOM_NOT_FOUND') {
           sessionStorage.removeItem(SESSION_KEY);
@@ -303,7 +355,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         dispatch({ type: 'ROOM_CLOSED', message: roomCloseMessage(event.payload.reason as string) });
         break;
     }
-  }, [rememberSession, toast]);
+  }, [clearJoinRetry, rememberSession, sendJoin, toast]);
 
   const connectRef = useRef<() => void>(() => undefined);
   useEffect(() => {
@@ -321,19 +373,13 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         reconnectAttemptsRef.current = 0;
         dispatch({ type: 'CONNECTION', status: 'CONNECTED', attempts: 0 });
         const stored = reconnectSessionRef.current;
-        if (stored) {
-          socket.send(JSON.stringify({
-            v: 1,
-            type: 'JOIN_ROOM',
-            requestId: crypto.randomUUID(),
-            payload: stored
-          }));
-        }
+        if (stored) sendJoin(stored);
       });
       socket.addEventListener('message', (message) => void handleMessage(message));
       socket.addEventListener('close', () => {
         if (disposedRef.current || socketRef.current !== socket) return;
         socketRef.current = null;
+        clearJoinRetry();
         if (snapshotTimerRef.current !== null) {
           clearTimeout(snapshotTimerRef.current);
           snapshotTimerRef.current = null;
@@ -356,7 +402,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       });
       socket.addEventListener('error', () => socket.close());
     };
-  }, [handleMessage]);
+  }, [clearJoinRetry, handleMessage, sendJoin]);
 
   useEffect(() => {
     disposedRef.current = false;
@@ -366,6 +412,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       disposedRef.current = true;
       if (reconnectTimerRef.current !== null) clearTimeout(reconnectTimerRef.current);
       if (snapshotTimerRef.current !== null) clearTimeout(snapshotTimerRef.current);
+      if (joinRetryTimerRef.current !== null) clearTimeout(joinRetryTimerRef.current);
       socketRef.current?.close();
       socketRef.current = null;
     };
@@ -489,18 +536,23 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.removeItem(SESSION_KEY);
     }
     reconnectSessionRef.current = null;
-    send('JOIN_ROOM', { roomCode, nickname, ...(token ? { sessionToken: token } : {}) });
-  }, [send]);
+    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
+      toast('서버에 연결되어 있지 않습니다.', 'error');
+      return;
+    }
+    sendJoin({ roomCode, nickname, ...(token ? { sessionToken: token } : {}) });
+  }, [sendJoin, toast]);
 
   const resetToLobby = useCallback(() => {
     sessionStorage.removeItem(SESSION_KEY);
     reconnectSessionRef.current = null;
+    clearJoinRetry();
     dispatch({ type: 'RESET_TO_LOBBY' });
     if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
       reconnectAttemptsRef.current = 0;
       connectRef.current();
     }
-  }, []);
+  }, [clearJoinRetry]);
 
   const value = useMemo<GameContextValue>(() => ({
     state,

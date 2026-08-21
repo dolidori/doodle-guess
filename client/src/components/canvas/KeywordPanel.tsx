@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { MAX_KEYWORD_SHUFFLES } from '../../../../shared/src/index.js';
 import { useGame } from '../../state/GameContext.js';
 
 export const KeywordPanel = () => {
@@ -11,6 +12,10 @@ export const KeywordPanel = () => {
   const roundId = state.publicState?.round.roundId;
   const continuing = state.publicState?.round.status === 'SOLVED' ||
     state.publicState?.round.status === 'EXPIRED';
+  // 서버가 허용을 거둬가면(라운드 단계가 아니거나 소진) 0으로 본다.
+  const remainingShuffles = state.privateState?.allowedActions.includes('SHUFFLE_KEYWORD')
+    ? state.privateState.remainingKeywordShuffles
+    : 0;
   useEffect(() => {
     if (!shufflePending) return;
     const timeout = window.setTimeout(() => setShufflePending(false), 350);
@@ -63,19 +68,29 @@ export const KeywordPanel = () => {
         maxLength={50}
         autoComplete="off"
       />
-      {state.privateState?.allowedActions.includes('SHUFFLE_KEYWORD') && (
-        <button
-          type="button"
-          className="secondary"
-          aria-label="기본 제시어 다시 뽑기"
-          disabled={shufflePending}
-          onClick={() => {
-            if (send('SHUFFLE_KEYWORD', {})) setShufflePending(true);
-          }}
-        >
-          다시 뽑기
-        </button>
-      )}
+      <button
+        type="button"
+        className="secondary shuffle-button"
+        aria-label={
+          remainingShuffles > 0
+            ? `기본 제시어 다시 뽑기, ${MAX_KEYWORD_SHUFFLES}번 중 ${remainingShuffles}번 남음`
+            : `다시 뽑기를 ${MAX_KEYWORD_SHUFFLES}번 모두 썼습니다. 제시어를 직접 입력해 주세요.`
+        }
+        title={
+          remainingShuffles > 0
+            ? undefined
+            : `다시 뽑기는 라운드마다 ${MAX_KEYWORD_SHUFFLES}번까지입니다.`
+        }
+        disabled={shufflePending || remainingShuffles === 0}
+        onClick={() => {
+          if (send('SHUFFLE_KEYWORD', {})) setShufflePending(true);
+        }}
+      >
+        다시 뽑기
+        <span className="shuffle-count" aria-hidden="true">
+          {remainingShuffles}／{MAX_KEYWORD_SHUFFLES}
+        </span>
+      </button>
       <button
         type="submit"
         className="primary"

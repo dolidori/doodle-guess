@@ -52,6 +52,8 @@ export type RoundState = {
   expiredAt: number | null;
   lastRoundEventId: string | null;
   guessSeq: number;
+  /** 이번 라운드에 제시어를 다시 뽑은 횟수. 라운드가 바뀌면 0으로 시작한다. */
+  shuffleCount: number;
   guessLocked: boolean;
   drawingLocked: boolean;
   drawing: DrawingState;
@@ -68,6 +70,8 @@ export type ClientConnection = {
   overloadedSince: number | null;
   processedRequestIds: Map<string, number>;
   explicitlyLeft: boolean;
+  /** 인계 요청 시 이 연결이 살아 있는지 확인하려고 ping을 보낸 시각. */
+  livenessProbeAt: number | null;
 };
 
 export type RoomRuntime = {

@@ -1,4 +1,4 @@
-import type { AllowedAction } from '../../../shared/src/index.js';
+import { MAX_KEYWORD_SHUFFLES, type AllowedAction } from '../../../shared/src/index.js';
 import type { Player, RoomRuntime } from '../rooms/types.js';
 
 const isBeforeDeadline = (room: RoomRuntime, now: number): boolean =>
@@ -35,7 +35,8 @@ export const allowedActionsFor = (
   }
   if (preparing && isDrawer && canStartRound(room)) actions.push('SET_KEYWORD_AND_START');
   if (ended && !results && isDrawer && canStartRound(room)) actions.push('SET_KEYWORD_AND_START');
-  if ((preparing || (ended && !results)) && isDrawer && canStartRound(room)) {
+  if ((preparing || (ended && !results)) && isDrawer && canStartRound(room) &&
+      room.round.shuffleCount < MAX_KEYWORD_SHUFFLES) {
     actions.push('SHUFFLE_KEYWORD');
   }
 

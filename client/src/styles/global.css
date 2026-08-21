@@ -540,12 +540,18 @@ h3 {
   display: grid;
   grid-template-columns: minmax(20rem, 3fr) minmax(15rem, 1fr);
   gap: var(--space-2);
+  /* 화면이 짧아 캔버스가 배정된 높이를 넘겨도 아래 정답칸을 덮지 않게 한다. */
+  overflow: hidden;
 }
 
 .canvas-stage {
   position: relative;
   flex: 1;
-  min-height: 14rem;
+  /*
+   * min-height를 두면 화면이 그보다 짧을 때 캔버스가 정답칸을 밀어내거나 덮는다.
+   * 정답칸이 먼저 자리를 잡고 캔버스가 남는 공간을 쓰도록 하한을 두지 않는다.
+   */
+  min-height: 0;
   overflow: hidden;
   border: 3px solid var(--color-ink);
   border-radius: var(--radius-md);
@@ -597,6 +603,9 @@ h3 {
 
 .guess-input {
   flex: none;
+  /* 캔버스(position: relative)나 설정 패널이 넘쳐도 정답칸이 항상 위에 오게 한다. */
+  position: relative;
+  z-index: 1;
   padding: var(--space-2);
   border-radius: var(--radius-md);
   background: rgb(35 30 58 / 0.92);
@@ -786,6 +795,20 @@ h3 {
   grid-template-rows: auto 40px 36px;
   align-content: start;
   gap: var(--space-1);
+}
+
+.shuffle-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+}
+
+/* 남은 다시 뽑기 횟수. 버튼 글자보다 한 단계 약하게 보여 준다. */
+.shuffle-count {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85em;
+  opacity: 0.75;
 }
 
 .keyword-entry-panel > label,

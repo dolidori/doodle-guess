@@ -3,6 +3,8 @@ import type { ErrorCode, ErrorPayload } from '../../../shared/src/index.js';
 const RETRYABLE = new Set<ErrorCode>([
   'RATE_LIMITED',
   'SERVER_BUSY',
+  // 이전 연결의 생존 확인이 끝나면 풀리는 일시적 상태다.
+  'SESSION_IN_USE',
   'INTERNAL_ERROR',
   'ROOM_FULL',
   'ROOM_CODE_EXHAUSTED',

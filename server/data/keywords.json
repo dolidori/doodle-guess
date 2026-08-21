@@ -1,82 +1,3897 @@
 {
-  "$schema_note": "Doodle Guess 기본 제시어 단일 출처. text는 화면 표시와 서버 자동 정답 판정에 사용하며 category와 difficulty는 관리용 참고 정보다.",
-  "version": 1,
+  "$schema_note": "Doodle Guess 기본 제시어 단일 출처. text는 화면 표시와 서버 자동 정답 판정에 사용하며 category와 difficulty는 관리용 참고 정보다. difficulty는 1(쉬움)·2(보통)·3(어려움)이다.",
+  "version": 2,
   "policy": {
     "assignment": "대기실에서 words 목록 중 하나를 기본값으로 랜덤 배정하며 그림 담당자는 직접 입력으로 바꿀 수 있다.",
-    "shuffle": "그림 담당자가 SHUFFLE_KEYWORD로 다시 뽑을 수 있고 직전 제시어는 연속 배정하지 않는다.",
+    "shuffle": "그림 담당자가 SHUFFLE_KEYWORD로 다시 뽑을 수 있고 직전 제시어는 연속 배정하지 않는다. 다시 뽑기는 라운드마다 MAX_KEYWORD_SHUFFLES(5)번까지이며 라운드가 바뀌면 다시 채워진다. 직접 입력으로 확정하는 것은 횟수 제한을 받지 않는다.",
     "reveal": "기본 제시어와 확정 제시어는 그림 담당자와 진행자에게만 전송한다.",
     "judging": "서버가 공백을 제거한 추측 문자열과 확정 제시어를 비교해 자동 판정한다."
   },
   "words": [
-    { "id": 1, "text": "사과", "category": "음식", "difficulty": 1 },
-    { "id": 2, "text": "바나나", "category": "음식", "difficulty": 1 },
-    { "id": 3, "text": "수박", "category": "음식", "difficulty": 1 },
-    { "id": 4, "text": "딸기", "category": "음식", "difficulty": 1 },
-    { "id": 5, "text": "피자", "category": "음식", "difficulty": 2 },
-    { "id": 6, "text": "햄버거", "category": "음식", "difficulty": 2 },
-    { "id": 7, "text": "아이스크림", "category": "음식", "difficulty": 2 },
-    { "id": 8, "text": "케이크", "category": "음식", "difficulty": 2 },
-    { "id": 9, "text": "라면", "category": "음식", "difficulty": 2 },
-    { "id": 10, "text": "달걀", "category": "음식", "difficulty": 1 },
-    { "id": 11, "text": "강아지", "category": "동물", "difficulty": 1 },
-    { "id": 12, "text": "고양이", "category": "동물", "difficulty": 1 },
-    { "id": 13, "text": "토끼", "category": "동물", "difficulty": 1 },
-    { "id": 14, "text": "코끼리", "category": "동물", "difficulty": 2 },
-    { "id": 15, "text": "기린", "category": "동물", "difficulty": 2 },
-    { "id": 16, "text": "사자", "category": "동물", "difficulty": 2 },
-    { "id": 17, "text": "펭귄", "category": "동물", "difficulty": 2 },
-    { "id": 18, "text": "물고기", "category": "동물", "difficulty": 1 },
-    { "id": 19, "text": "거북이", "category": "동물", "difficulty": 2 },
-    { "id": 20, "text": "나비", "category": "동물", "difficulty": 2 },
-    { "id": 21, "text": "공룡", "category": "동물", "difficulty": 2 },
-    { "id": 22, "text": "돼지", "category": "동물", "difficulty": 1 },
-    { "id": 23, "text": "자동차", "category": "탈것", "difficulty": 1 },
-    { "id": 24, "text": "비행기", "category": "탈것", "difficulty": 2 },
-    { "id": 25, "text": "배", "category": "탈것", "difficulty": 1 },
-    { "id": 26, "text": "자전거", "category": "탈것", "difficulty": 2 },
-    { "id": 27, "text": "기차", "category": "탈것", "difficulty": 2 },
-    { "id": 28, "text": "로켓", "category": "탈것", "difficulty": 2 },
-    { "id": 29, "text": "버스", "category": "탈것", "difficulty": 1 },
-    { "id": 30, "text": "헬리콥터", "category": "탈것", "difficulty": 3 },
-    { "id": 31, "text": "해", "category": "자연", "difficulty": 1 },
-    { "id": 32, "text": "달", "category": "자연", "difficulty": 1 },
-    { "id": 33, "text": "별", "category": "자연", "difficulty": 1 },
-    { "id": 34, "text": "무지개", "category": "자연", "difficulty": 2 },
-    { "id": 35, "text": "구름", "category": "자연", "difficulty": 1 },
-    { "id": 36, "text": "나무", "category": "자연", "difficulty": 1 },
-    { "id": 37, "text": "꽃", "category": "자연", "difficulty": 1 },
-    { "id": 38, "text": "산", "category": "자연", "difficulty": 1 },
-    { "id": 39, "text": "눈사람", "category": "자연", "difficulty": 2 },
-    { "id": 40, "text": "번개", "category": "자연", "difficulty": 2 },
-    { "id": 41, "text": "집", "category": "사물", "difficulty": 1 },
-    { "id": 42, "text": "시계", "category": "사물", "difficulty": 2 },
-    { "id": 43, "text": "우산", "category": "사물", "difficulty": 1 },
-    { "id": 44, "text": "안경", "category": "사물", "difficulty": 2 },
-    { "id": 45, "text": "모자", "category": "사물", "difficulty": 1 },
-    { "id": 46, "text": "가방", "category": "사물", "difficulty": 1 },
-    { "id": 47, "text": "신발", "category": "사물", "difficulty": 1 },
-    { "id": 48, "text": "열쇠", "category": "사물", "difficulty": 2 },
-    { "id": 49, "text": "책", "category": "사물", "difficulty": 1 },
-    { "id": 50, "text": "연필", "category": "사물", "difficulty": 1 },
-    { "id": 51, "text": "가위", "category": "사물", "difficulty": 2 },
-    { "id": 52, "text": "풍선", "category": "사물", "difficulty": 1 },
-    { "id": 53, "text": "선물", "category": "사물", "difficulty": 2 },
-    { "id": 54, "text": "촛불", "category": "사물", "difficulty": 2 },
-    { "id": 55, "text": "텔레비전", "category": "사물", "difficulty": 2 },
-    { "id": 56, "text": "휴대폰", "category": "사물", "difficulty": 2 },
-    { "id": 57, "text": "컵", "category": "사물", "difficulty": 1 },
-    { "id": 58, "text": "의자", "category": "사물", "difficulty": 1 },
-    { "id": 59, "text": "기타", "category": "사물", "difficulty": 2 },
-    { "id": 60, "text": "축구공", "category": "사물", "difficulty": 1 },
-    { "id": 61, "text": "왕관", "category": "사물", "difficulty": 2 },
-    { "id": 62, "text": "로봇", "category": "사물", "difficulty": 2 },
-    { "id": 63, "text": "유령", "category": "사물", "difficulty": 2 },
-    { "id": 64, "text": "눈송이", "category": "자연", "difficulty": 2 },
-    { "id": 65, "text": "등대", "category": "사물", "difficulty": 3 },
-    { "id": 66, "text": "성", "category": "사물", "difficulty": 2 },
-    { "id": 67, "text": "우주선", "category": "탈것", "difficulty": 3 },
-    { "id": 68, "text": "낙타", "category": "동물", "difficulty": 3 },
-    { "id": 69, "text": "공작새", "category": "동물", "difficulty": 3 },
-    { "id": 70, "text": "선인장", "category": "자연", "difficulty": 2 }
+    {
+      "id": 1,
+      "text": "사과",
+      "category": "음식",
+      "difficulty": 1
+    },
+    {
+      "id": 2,
+      "text": "바나나",
+      "category": "음식",
+      "difficulty": 1
+    },
+    {
+      "id": 3,
+      "text": "수박",
+      "category": "음식",
+      "difficulty": 1
+    },
+    {
+      "id": 4,
+      "text": "딸기",
+      "category": "음식",
+      "difficulty": 1
+    },
+    {
+      "id": 5,
+      "text": "피자",
+      "category": "음식",
+      "difficulty": 2
+    },
+    {
+      "id": 6,
+      "text": "햄버거",
+      "category": "음식",
+      "difficulty": 2
+    },
+    {
+      "id": 7,
+      "text": "아이스크림",
+      "category": "음식",
+      "difficulty": 2
+    },
+    {
+      "id": 8,
+      "text": "케이크",
+      "category": "음식",
+      "difficulty": 2
+    },
+    {
+      "id": 9,
+      "text": "라면",
+      "category": "음식",
+      "difficulty": 2
+    },
+    {
+      "id": 10,
+      "text": "달걀",
+      "category": "음식",
+      "difficulty": 1
+    },
+    {
+      "id": 11,
+      "text": "강아지",
+      "category": "동물",
+      "difficulty": 1
+    },
+    {
+      "id": 12,
+      "text": "고양이",
+      "category": "동물",
+      "difficulty": 1
+    },
+    {
+      "id": 13,
+      "text": "토끼",
+      "category": "동물",
+      "difficulty": 1
+    },
+    {
+      "id": 14,
+      "text": "코끼리",
+      "category": "동물",
+      "difficulty": 2
+    },
+    {
+      "id": 15,
+      "text": "기린",
+      "category": "동물",
+      "difficulty": 2
+    },
+    {
+      "id": 16,
+      "text": "사자",
+      "category": "동물",
+      "difficulty": 2
+    },
+    {
+      "id": 17,
+      "text": "펭귄",
+      "category": "동물",
+      "difficulty": 2
+    },
+    {
+      "id": 18,
+      "text": "물고기",
+      "category": "동물",
+      "difficulty": 1
+    },
+    {
+      "id": 19,
+      "text": "거북이",
+      "category": "동물",
+      "difficulty": 2
+    },
+    {
+      "id": 20,
+      "text": "나비",
+      "category": "동물",
+      "difficulty": 2
+    },
+    {
+      "id": 21,
+      "text": "공룡",
+      "category": "동물",
+      "difficulty": 2
+    },
+    {
+      "id": 22,
+      "text": "돼지",
+      "category": "동물",
+      "difficulty": 1
+    },
+    {
+      "id": 23,
+      "text": "자동차",
+      "category": "탈것",
+      "difficulty": 1
+    },
+    {
+      "id": 24,
+      "text": "비행기",
+      "category": "탈것",
+      "difficulty": 2
+    },
+    {
+      "id": 25,
+      "text": "배",
+      "category": "탈것",
+      "difficulty": 1
+    },
+    {
+      "id": 26,
+      "text": "자전거",
+      "category": "탈것",
+      "difficulty": 2
+    },
+    {
+      "id": 27,
+      "text": "기차",
+      "category": "탈것",
+      "difficulty": 2
+    },
+    {
+      "id": 28,
+      "text": "로켓",
+      "category": "탈것",
+      "difficulty": 2
+    },
+    {
+      "id": 29,
+      "text": "버스",
+      "category": "탈것",
+      "difficulty": 1
+    },
+    {
+      "id": 30,
+      "text": "헬리콥터",
+      "category": "탈것",
+      "difficulty": 3
+    },
+    {
+      "id": 31,
+      "text": "해",
+      "category": "자연",
+      "difficulty": 1
+    },
+    {
+      "id": 32,
+      "text": "달",
+      "category": "자연",
+      "difficulty": 1
+    },
+    {
+      "id": 33,
+      "text": "별",
+      "category": "자연",
+      "difficulty": 1
+    },
+    {
+      "id": 34,
+      "text": "무지개",
+      "category": "자연",
+      "difficulty": 2
+    },
+    {
+      "id": 35,
+      "text": "구름",
+      "category": "자연",
+      "difficulty": 1
+    },
+    {
+      "id": 36,
+      "text": "나무",
+      "category": "자연",
+      "difficulty": 1
+    },
+    {
+      "id": 37,
+      "text": "꽃",
+      "category": "자연",
+      "difficulty": 1
+    },
+    {
+      "id": 38,
+      "text": "산",
+      "category": "자연",
+      "difficulty": 1
+    },
+    {
+      "id": 39,
+      "text": "눈사람",
+      "category": "자연",
+      "difficulty": 2
+    },
+    {
+      "id": 40,
+      "text": "번개",
+      "category": "자연",
+      "difficulty": 2
+    },
+    {
+      "id": 41,
+      "text": "집",
+      "category": "사물",
+      "difficulty": 1
+    },
+    {
+      "id": 42,
+      "text": "시계",
+      "category": "사물",
+      "difficulty": 2
+    },
+    {
+      "id": 43,
+      "text": "우산",
+      "category": "사물",
+      "difficulty": 1
+    },
+    {
+      "id": 44,
+      "text": "안경",
+      "category": "사물",
+      "difficulty": 2
+    },
+    {
+      "id": 45,
+      "text": "모자",
+      "category": "사물",
+      "difficulty": 1
+    },
+    {
+      "id": 46,
+      "text": "가방",
+      "category": "사물",
+      "difficulty": 1
+    },
+    {
+      "id": 47,
+      "text": "신발",
+      "category": "사물",
+      "difficulty": 1
+    },
+    {
+      "id": 48,
+      "text": "열쇠",
+      "category": "사물",
+      "difficulty": 2
+    },
+    {
+      "id": 49,
+      "text": "책",
+      "category": "사물",
+      "difficulty": 1
+    },
+    {
+      "id": 50,
+      "text": "연필",
+      "category": "사물",
+      "difficulty": 1
+    },
+    {
+      "id": 51,
+      "text": "가위",
+      "category": "사물",
+      "difficulty": 2
+    },
+    {
+      "id": 52,
+      "text": "풍선",
+      "category": "사물",
+      "difficulty": 1
+    },
+    {
+      "id": 53,
+      "text": "선물",
+      "category": "사물",
+      "difficulty": 2
+    },
+    {
+      "id": 54,
+      "text": "촛불",
+      "category": "사물",
+      "difficulty": 2
+    },
+    {
+      "id": 55,
+      "text": "텔레비전",
+      "category": "사물",
+      "difficulty": 2
+    },
+    {
+      "id": 56,
+      "text": "휴대폰",
+      "category": "사물",
+      "difficulty": 2
+    },
+    {
+      "id": 57,
+      "text": "컵",
+      "category": "사물",
+      "difficulty": 1
+    },
+    {
+      "id": 58,
+      "text": "의자",
+      "category": "사물",
+      "difficulty": 1
+    },
+    {
+      "id": 59,
+      "text": "기타",
+      "category": "사물",
+      "difficulty": 2
+    },
+    {
+      "id": 60,
+      "text": "축구공",
+      "category": "사물",
+      "difficulty": 1
+    },
+    {
+      "id": 61,
+      "text": "왕관",
+      "category": "사물",
+      "difficulty": 2
+    },
+    {
+      "id": 62,
+      "text": "로봇",
+      "category": "사물",
+      "difficulty": 2
+    },
+    {
+      "id": 63,
+      "text": "유령",
+      "category": "사물",
+      "difficulty": 2
+    },
+    {
+      "id": 64,
+      "text": "눈송이",
+      "category": "자연",
+      "difficulty": 2
+    },
+    {
+      "id": 65,
+      "text": "등대",
+      "category": "사물",
+      "difficulty": 3
+    },
+    {
+      "id": 66,
+      "text": "성",
+      "category": "사물",
+      "difficulty": 2
+    },
+    {
+      "id": 67,
+      "text": "우주선",
+      "category": "탈것",
+      "difficulty": 3
+    },
+    {
+      "id": 68,
+      "text": "낙타",
+      "category": "동물",
+      "difficulty": 3
+    },
+    {
+      "id": 69,
+      "text": "공작새",
+      "category": "동물",
+      "difficulty": 3
+    },
+    {
+      "id": 70,
+      "text": "선인장",
+      "category": "자연",
+      "difficulty": 2
+    },
+    {
+      "id": 71,
+      "text": "분필",
+      "difficulty": 3
+    },
+    {
+      "id": 72,
+      "text": "사물함",
+      "difficulty": 3
+    },
+    {
+      "id": 73,
+      "text": "알림장",
+      "difficulty": 3
+    },
+    {
+      "id": 74,
+      "text": "초인종",
+      "difficulty": 3
+    },
+    {
+      "id": 75,
+      "text": "포스터",
+      "difficulty": 3
+    },
+    {
+      "id": 76,
+      "text": "지퍼",
+      "difficulty": 3
+    },
+    {
+      "id": 77,
+      "text": "서랍",
+      "difficulty": 3
+    },
+    {
+      "id": 78,
+      "text": "선반",
+      "difficulty": 3
+    },
+    {
+      "id": 79,
+      "text": "국",
+      "difficulty": 3
+    },
+    {
+      "id": 80,
+      "text": "찌개",
+      "difficulty": 3
+    },
+    {
+      "id": 81,
+      "text": "반찬",
+      "difficulty": 3
+    },
+    {
+      "id": 82,
+      "text": "버터",
+      "difficulty": 3
+    },
+    {
+      "id": 83,
+      "text": "소금",
+      "difficulty": 3
+    },
+    {
+      "id": 84,
+      "text": "설탕",
+      "difficulty": 3
+    },
+    {
+      "id": 85,
+      "text": "간장",
+      "difficulty": 3
+    },
+    {
+      "id": 86,
+      "text": "식용유",
+      "difficulty": 3
+    },
+    {
+      "id": 87,
+      "text": "잔디",
+      "difficulty": 3
+    },
+    {
+      "id": 88,
+      "text": "가지",
+      "difficulty": 3
+    },
+    {
+      "id": 89,
+      "text": "뿌리",
+      "difficulty": 3
+    },
+    {
+      "id": 90,
+      "text": "씨앗",
+      "difficulty": 3
+    },
+    {
+      "id": 91,
+      "text": "들판",
+      "difficulty": 3
+    },
+    {
+      "id": 92,
+      "text": "바람",
+      "difficulty": 3
+    },
+    {
+      "id": 93,
+      "text": "안개",
+      "difficulty": 3
+    },
+    {
+      "id": 94,
+      "text": "흙",
+      "difficulty": 3
+    },
+    {
+      "id": 95,
+      "text": "늪",
+      "difficulty": 3
+    },
+    {
+      "id": 96,
+      "text": "자갈",
+      "difficulty": 3
+    },
+    {
+      "id": 97,
+      "text": "그림자",
+      "difficulty": 3
+    },
+    {
+      "id": 98,
+      "text": "도로",
+      "difficulty": 3
+    },
+    {
+      "id": 99,
+      "text": "길",
+      "difficulty": 3
+    },
+    {
+      "id": 100,
+      "text": "가로등",
+      "difficulty": 3
+    },
+    {
+      "id": 101,
+      "text": "성문",
+      "difficulty": 3
+    },
+    {
+      "id": 102,
+      "text": "은행",
+      "difficulty": 3
+    },
+    {
+      "id": 103,
+      "text": "극장",
+      "difficulty": 3
+    },
+    {
+      "id": 104,
+      "text": "경찰서",
+      "difficulty": 3
+    },
+    {
+      "id": 105,
+      "text": "주차장",
+      "difficulty": 3
+    },
+    {
+      "id": 106,
+      "text": "발가락",
+      "difficulty": 3
+    },
+    {
+      "id": 107,
+      "text": "허리",
+      "difficulty": 3
+    },
+    {
+      "id": 108,
+      "text": "등",
+      "difficulty": 3
+    },
+    {
+      "id": 109,
+      "text": "손톱",
+      "difficulty": 3
+    },
+    {
+      "id": 110,
+      "text": "발톱",
+      "difficulty": 3
+    },
+    {
+      "id": 111,
+      "text": "끈",
+      "difficulty": 3
+    },
+    {
+      "id": 112,
+      "text": "현미경",
+      "difficulty": 3
+    },
+    {
+      "id": 113,
+      "text": "공기놀이",
+      "difficulty": 3
+    },
+    {
+      "id": 114,
+      "text": "체스",
+      "difficulty": 3
+    },
+    {
+      "id": 115,
+      "text": "퍼즐",
+      "difficulty": 3
+    },
+    {
+      "id": 116,
+      "text": "저승사자",
+      "difficulty": 3
+    },
+    {
+      "id": 117,
+      "text": "치아 교정",
+      "difficulty": 3
+    },
+    {
+      "id": 118,
+      "text": "숙주나물",
+      "difficulty": 3
+    },
+    {
+      "id": 119,
+      "text": "동창회",
+      "difficulty": 3
+    },
+    {
+      "id": 120,
+      "text": "재채기",
+      "difficulty": 3
+    },
+    {
+      "id": 121,
+      "text": "구두닦이",
+      "difficulty": 3
+    },
+    {
+      "id": 122,
+      "text": "교통 정체",
+      "difficulty": 3
+    },
+    {
+      "id": 123,
+      "text": "땡벌",
+      "difficulty": 3
+    },
+    {
+      "id": 124,
+      "text": "에스키모",
+      "difficulty": 3
+    },
+    {
+      "id": 125,
+      "text": "월드컵",
+      "difficulty": 3
+    },
+    {
+      "id": 126,
+      "text": "짚신",
+      "difficulty": 3
+    },
+    {
+      "id": 127,
+      "text": "칵테일",
+      "difficulty": 3
+    },
+    {
+      "id": 128,
+      "text": "디아블로",
+      "difficulty": 3
+    },
+    {
+      "id": 129,
+      "text": "봅슬레이",
+      "difficulty": 3
+    },
+    {
+      "id": 130,
+      "text": "불개미",
+      "difficulty": 3
+    },
+    {
+      "id": 131,
+      "text": "가사 도우미",
+      "difficulty": 3
+    },
+    {
+      "id": 132,
+      "text": "뱃멀미",
+      "difficulty": 3
+    },
+    {
+      "id": 133,
+      "text": "불국사",
+      "difficulty": 3
+    },
+    {
+      "id": 134,
+      "text": "홍합",
+      "difficulty": 3
+    },
+    {
+      "id": 135,
+      "text": "포니테일",
+      "difficulty": 3
+    },
+    {
+      "id": 136,
+      "text": "장인",
+      "difficulty": 3
+    },
+    {
+      "id": 137,
+      "text": "벨리 댄스",
+      "difficulty": 3
+    },
+    {
+      "id": 138,
+      "text": "피카소",
+      "difficulty": 3
+    },
+    {
+      "id": 139,
+      "text": "퓨즈",
+      "difficulty": 3
+    },
+    {
+      "id": 140,
+      "text": "광복절",
+      "difficulty": 3
+    },
+    {
+      "id": 141,
+      "text": "이쑤시개",
+      "difficulty": 3
+    },
+    {
+      "id": 142,
+      "text": "슈퍼모델",
+      "difficulty": 3
+    },
+    {
+      "id": 143,
+      "text": "돼지국밥",
+      "difficulty": 3
+    },
+    {
+      "id": 144,
+      "text": "근육",
+      "difficulty": 3
+    },
+    {
+      "id": 145,
+      "text": "썸",
+      "difficulty": 3
+    },
+    {
+      "id": 146,
+      "text": "곱창",
+      "difficulty": 3
+    },
+    {
+      "id": 147,
+      "text": "배관공",
+      "difficulty": 3
+    },
+    {
+      "id": 148,
+      "text": "샴페인",
+      "difficulty": 3
+    },
+    {
+      "id": 149,
+      "text": "벼룩시장",
+      "difficulty": 3
+    },
+    {
+      "id": 150,
+      "text": "진달래 꽃",
+      "difficulty": 3
+    },
+    {
+      "id": 151,
+      "text": "애견가",
+      "difficulty": 3
+    },
+    {
+      "id": 152,
+      "text": "상한가",
+      "difficulty": 3
+    },
+    {
+      "id": 153,
+      "text": "촉수",
+      "difficulty": 3
+    },
+    {
+      "id": 154,
+      "text": "버스 카드 충전",
+      "difficulty": 3
+    },
+    {
+      "id": 155,
+      "text": "유인원",
+      "difficulty": 3
+    },
+    {
+      "id": 156,
+      "text": "항복",
+      "difficulty": 3
+    },
+    {
+      "id": 157,
+      "text": "커플링",
+      "difficulty": 3
+    },
+    {
+      "id": 158,
+      "text": "독",
+      "difficulty": 3
+    },
+    {
+      "id": 159,
+      "text": "솥뚜껑",
+      "difficulty": 3
+    },
+    {
+      "id": 160,
+      "text": "쥐덫",
+      "difficulty": 3
+    },
+    {
+      "id": 161,
+      "text": "부산",
+      "difficulty": 3
+    },
+    {
+      "id": 162,
+      "text": "원조",
+      "difficulty": 3
+    },
+    {
+      "id": 163,
+      "text": "장롱면허",
+      "difficulty": 3
+    },
+    {
+      "id": 164,
+      "text": "문서 세절기",
+      "difficulty": 3
+    },
+    {
+      "id": 165,
+      "text": "식혜",
+      "difficulty": 3
+    },
+    {
+      "id": 166,
+      "text": "고구려",
+      "difficulty": 3
+    },
+    {
+      "id": 167,
+      "text": "고속도로",
+      "difficulty": 3
+    },
+    {
+      "id": 168,
+      "text": "울버린",
+      "difficulty": 3
+    },
+    {
+      "id": 169,
+      "text": "추석",
+      "difficulty": 3
+    },
+    {
+      "id": 170,
+      "text": "행운",
+      "difficulty": 3
+    },
+    {
+      "id": 171,
+      "text": "스위스",
+      "difficulty": 3
+    },
+    {
+      "id": 172,
+      "text": "성게",
+      "difficulty": 3
+    },
+    {
+      "id": 173,
+      "text": "투석기",
+      "difficulty": 3
+    },
+    {
+      "id": 174,
+      "text": "노동",
+      "difficulty": 3
+    },
+    {
+      "id": 175,
+      "text": "행글라이더",
+      "difficulty": 3
+    },
+    {
+      "id": 176,
+      "text": "포춘쿠키",
+      "difficulty": 3
+    },
+    {
+      "id": 177,
+      "text": "황사",
+      "difficulty": 3
+    },
+    {
+      "id": 178,
+      "text": "전기뱀장어",
+      "difficulty": 3
+    },
+    {
+      "id": 179,
+      "text": "술배",
+      "difficulty": 3
+    },
+    {
+      "id": 180,
+      "text": "소주",
+      "difficulty": 3
+    },
+    {
+      "id": 181,
+      "text": "송이버섯",
+      "difficulty": 3
+    },
+    {
+      "id": 182,
+      "text": "꽁치",
+      "difficulty": 3
+    },
+    {
+      "id": 183,
+      "text": "인공위성",
+      "difficulty": 3
+    },
+    {
+      "id": 184,
+      "text": "멍게",
+      "difficulty": 3
+    },
+    {
+      "id": 185,
+      "text": "콩팥",
+      "difficulty": 3
+    },
+    {
+      "id": 186,
+      "text": "하이패스",
+      "difficulty": 3
+    },
+    {
+      "id": 187,
+      "text": "명왕성",
+      "difficulty": 3
+    },
+    {
+      "id": 188,
+      "text": "레깅스",
+      "difficulty": 3
+    },
+    {
+      "id": 189,
+      "text": "편식",
+      "difficulty": 3
+    },
+    {
+      "id": 190,
+      "text": "스키 리프트",
+      "difficulty": 3
+    },
+    {
+      "id": 191,
+      "text": "스핑크스",
+      "difficulty": 3
+    },
+    {
+      "id": 192,
+      "text": "허풍",
+      "difficulty": 3
+    },
+    {
+      "id": 193,
+      "text": "폐차장",
+      "difficulty": 3
+    },
+    {
+      "id": 194,
+      "text": "멸종",
+      "difficulty": 3
+    },
+    {
+      "id": 195,
+      "text": "감자탕",
+      "difficulty": 3
+    },
+    {
+      "id": 196,
+      "text": "동치미",
+      "difficulty": 3
+    },
+    {
+      "id": 197,
+      "text": "주름",
+      "difficulty": 3
+    },
+    {
+      "id": 198,
+      "text": "에프킬라",
+      "difficulty": 3
+    },
+    {
+      "id": 199,
+      "text": "아프리카",
+      "difficulty": 3
+    },
+    {
+      "id": 200,
+      "text": "항공모함",
+      "difficulty": 3
+    },
+    {
+      "id": 201,
+      "text": "비듬",
+      "difficulty": 3
+    },
+    {
+      "id": 202,
+      "text": "미녀",
+      "difficulty": 3
+    },
+    {
+      "id": 203,
+      "text": "에어백",
+      "difficulty": 3
+    },
+    {
+      "id": 204,
+      "text": "스튜어디스",
+      "difficulty": 3
+    },
+    {
+      "id": 205,
+      "text": "머니클립",
+      "difficulty": 3
+    },
+    {
+      "id": 206,
+      "text": "무좀",
+      "difficulty": 3
+    },
+    {
+      "id": 207,
+      "text": "조선소",
+      "difficulty": 3
+    },
+    {
+      "id": 208,
+      "text": "자동차 극장",
+      "difficulty": 3
+    },
+    {
+      "id": 209,
+      "text": "룸메이트",
+      "difficulty": 3
+    },
+    {
+      "id": 210,
+      "text": "나팔바지",
+      "difficulty": 3
+    },
+    {
+      "id": 211,
+      "text": "바이러스",
+      "difficulty": 3
+    },
+    {
+      "id": 212,
+      "text": "등산로",
+      "difficulty": 3
+    },
+    {
+      "id": 213,
+      "text": "파자마 파티",
+      "difficulty": 3
+    },
+    {
+      "id": 214,
+      "text": "마스카라",
+      "difficulty": 3
+    },
+    {
+      "id": 215,
+      "text": "네일 아트",
+      "difficulty": 3
+    },
+    {
+      "id": 216,
+      "text": "걸음마",
+      "difficulty": 3
+    },
+    {
+      "id": 217,
+      "text": "귀지",
+      "difficulty": 3
+    },
+    {
+      "id": 218,
+      "text": "대서양",
+      "difficulty": 3
+    },
+    {
+      "id": 219,
+      "text": "샹들리에",
+      "difficulty": 3
+    },
+    {
+      "id": 220,
+      "text": "대통령",
+      "difficulty": 3
+    },
+    {
+      "id": 221,
+      "text": "디스코",
+      "difficulty": 3
+    },
+    {
+      "id": 222,
+      "text": "콩깍지",
+      "difficulty": 3
+    },
+    {
+      "id": 223,
+      "text": "로마",
+      "difficulty": 3
+    },
+    {
+      "id": 224,
+      "text": "세탁소",
+      "difficulty": 3
+    },
+    {
+      "id": 225,
+      "text": "용접",
+      "difficulty": 3
+    },
+    {
+      "id": 226,
+      "text": "식스팩",
+      "difficulty": 3
+    },
+    {
+      "id": 227,
+      "text": "만화",
+      "difficulty": 3
+    },
+    {
+      "id": 228,
+      "text": "사촌",
+      "difficulty": 3
+    },
+    {
+      "id": 229,
+      "text": "뉴욕",
+      "difficulty": 3
+    },
+    {
+      "id": 230,
+      "text": "건포도",
+      "difficulty": 3
+    },
+    {
+      "id": 231,
+      "text": "중력",
+      "difficulty": 3
+    },
+    {
+      "id": 232,
+      "text": "플루트",
+      "difficulty": 3
+    },
+    {
+      "id": 233,
+      "text": "산사태",
+      "difficulty": 3
+    },
+    {
+      "id": 234,
+      "text": "소매치기",
+      "difficulty": 3
+    },
+    {
+      "id": 235,
+      "text": "타코야키",
+      "difficulty": 3
+    },
+    {
+      "id": 236,
+      "text": "증기선",
+      "difficulty": 3
+    },
+    {
+      "id": 237,
+      "text": "호주",
+      "difficulty": 3
+    },
+    {
+      "id": 238,
+      "text": "문신",
+      "difficulty": 3
+    },
+    {
+      "id": 239,
+      "text": "먹이사슬",
+      "difficulty": 3
+    },
+    {
+      "id": 240,
+      "text": "보디가드",
+      "difficulty": 3
+    },
+    {
+      "id": 241,
+      "text": "벌새",
+      "difficulty": 3
+    },
+    {
+      "id": 242,
+      "text": "청소년",
+      "difficulty": 3
+    },
+    {
+      "id": 243,
+      "text": "과속방지턱",
+      "difficulty": 3
+    },
+    {
+      "id": 244,
+      "text": "선크림",
+      "difficulty": 3
+    },
+    {
+      "id": 245,
+      "text": "닭 가슴살",
+      "difficulty": 3
+    },
+    {
+      "id": 246,
+      "text": "갓길",
+      "difficulty": 3
+    },
+    {
+      "id": 247,
+      "text": "태평양",
+      "difficulty": 3
+    },
+    {
+      "id": 248,
+      "text": "아내",
+      "difficulty": 3
+    },
+    {
+      "id": 249,
+      "text": "졸업",
+      "difficulty": 3
+    },
+    {
+      "id": 250,
+      "text": "제우스",
+      "difficulty": 3
+    },
+    {
+      "id": 251,
+      "text": "아이언맨",
+      "difficulty": 3
+    },
+    {
+      "id": 252,
+      "text": "보디빌더",
+      "difficulty": 3
+    },
+    {
+      "id": 253,
+      "text": "로또",
+      "difficulty": 3
+    },
+    {
+      "id": 254,
+      "text": "딸",
+      "difficulty": 3
+    },
+    {
+      "id": 255,
+      "text": "모나리자",
+      "difficulty": 3
+    },
+    {
+      "id": 256,
+      "text": "샌드백",
+      "difficulty": 3
+    },
+    {
+      "id": 257,
+      "text": "심판",
+      "difficulty": 3
+    },
+    {
+      "id": 258,
+      "text": "노아의 방주",
+      "difficulty": 3
+    },
+    {
+      "id": 259,
+      "text": "스크린 골프",
+      "difficulty": 3
+    },
+    {
+      "id": 260,
+      "text": "스위트콘",
+      "difficulty": 3
+    },
+    {
+      "id": 261,
+      "text": "메주",
+      "difficulty": 3
+    },
+    {
+      "id": 262,
+      "text": "정전기",
+      "difficulty": 3
+    },
+    {
+      "id": 263,
+      "text": "면도 크림",
+      "difficulty": 3
+    },
+    {
+      "id": 264,
+      "text": "입냄새",
+      "difficulty": 3
+    },
+    {
+      "id": 265,
+      "text": "번지점프",
+      "difficulty": 3
+    },
+    {
+      "id": 266,
+      "text": "혈액형",
+      "difficulty": 3
+    },
+    {
+      "id": 267,
+      "text": "현금인출기",
+      "difficulty": 3
+    },
+    {
+      "id": 268,
+      "text": "경주마",
+      "difficulty": 3
+    },
+    {
+      "id": 269,
+      "text": "암벽등반",
+      "difficulty": 3
+    },
+    {
+      "id": 270,
+      "text": "러시아",
+      "difficulty": 3
+    },
+    {
+      "id": 271,
+      "text": "양꼬치",
+      "difficulty": 3
+    },
+    {
+      "id": 272,
+      "text": "반달가슴곰",
+      "difficulty": 3
+    },
+    {
+      "id": 273,
+      "text": "수갑",
+      "difficulty": 3
+    },
+    {
+      "id": 274,
+      "text": "참치캔",
+      "difficulty": 3
+    },
+    {
+      "id": 275,
+      "text": "충치",
+      "difficulty": 3
+    },
+    {
+      "id": 276,
+      "text": "당구장",
+      "difficulty": 3
+    },
+    {
+      "id": 277,
+      "text": "궁예",
+      "difficulty": 3
+    },
+    {
+      "id": 278,
+      "text": "카우보이",
+      "difficulty": 3
+    },
+    {
+      "id": 279,
+      "text": "모기향",
+      "difficulty": 3
+    },
+    {
+      "id": 280,
+      "text": "여드름",
+      "difficulty": 3
+    },
+    {
+      "id": 281,
+      "text": "책상",
+      "difficulty": 2
+    },
+    {
+      "id": 282,
+      "text": "공책",
+      "difficulty": 2
+    },
+    {
+      "id": 283,
+      "text": "풀",
+      "difficulty": 2
+    },
+    {
+      "id": 284,
+      "text": "자",
+      "difficulty": 2
+    },
+    {
+      "id": 285,
+      "text": "달력",
+      "difficulty": 2
+    },
+    {
+      "id": 286,
+      "text": "칠판",
+      "difficulty": 2
+    },
+    {
+      "id": 287,
+      "text": "교과서",
+      "difficulty": 2
+    },
+    {
+      "id": 288,
+      "text": "필통",
+      "difficulty": 2
+    },
+    {
+      "id": 289,
+      "text": "도시락",
+      "difficulty": 2
+    },
+    {
+      "id": 290,
+      "text": "물통",
+      "difficulty": 2
+    },
+    {
+      "id": 291,
+      "text": "양말",
+      "difficulty": 2
+    },
+    {
+      "id": 292,
+      "text": "옷",
+      "difficulty": 2
+    },
+    {
+      "id": 293,
+      "text": "수건",
+      "difficulty": 2
+    },
+    {
+      "id": 294,
+      "text": "비누",
+      "difficulty": 2
+    },
+    {
+      "id": 295,
+      "text": "치약",
+      "difficulty": 2
+    },
+    {
+      "id": 296,
+      "text": "칫솔",
+      "difficulty": 2
+    },
+    {
+      "id": 297,
+      "text": "숟가락",
+      "difficulty": 2
+    },
+    {
+      "id": 298,
+      "text": "젓가락",
+      "difficulty": 2
+    },
+    {
+      "id": 299,
+      "text": "냄비",
+      "difficulty": 2
+    },
+    {
+      "id": 300,
+      "text": "주전자",
+      "difficulty": 2
+    },
+    {
+      "id": 301,
+      "text": "밥솥",
+      "difficulty": 2
+    },
+    {
+      "id": 302,
+      "text": "냉장고",
+      "difficulty": 2
+    },
+    {
+      "id": 303,
+      "text": "세탁기",
+      "difficulty": 2
+    },
+    {
+      "id": 304,
+      "text": "청소기",
+      "difficulty": 2
+    },
+    {
+      "id": 305,
+      "text": "침대",
+      "difficulty": 2
+    },
+    {
+      "id": 306,
+      "text": "베개",
+      "difficulty": 2
+    },
+    {
+      "id": 307,
+      "text": "이불",
+      "difficulty": 2
+    },
+    {
+      "id": 308,
+      "text": "거울",
+      "difficulty": 2
+    },
+    {
+      "id": 309,
+      "text": "빗",
+      "difficulty": 2
+    },
+    {
+      "id": 310,
+      "text": "휴지",
+      "difficulty": 2
+    },
+    {
+      "id": 311,
+      "text": "쓰레기통",
+      "difficulty": 2
+    },
+    {
+      "id": 312,
+      "text": "문",
+      "difficulty": 2
+    },
+    {
+      "id": 313,
+      "text": "창문",
+      "difficulty": 2
+    },
+    {
+      "id": 314,
+      "text": "전화기",
+      "difficulty": 2
+    },
+    {
+      "id": 315,
+      "text": "TV",
+      "difficulty": 2
+    },
+    {
+      "id": 316,
+      "text": "리모컨",
+      "difficulty": 2
+    },
+    {
+      "id": 317,
+      "text": "컴퓨터",
+      "difficulty": 2
+    },
+    {
+      "id": 318,
+      "text": "마우스",
+      "difficulty": 2
+    },
+    {
+      "id": 319,
+      "text": "키보드",
+      "difficulty": 2
+    },
+    {
+      "id": 320,
+      "text": "카메라",
+      "difficulty": 2
+    },
+    {
+      "id": 321,
+      "text": "액자",
+      "difficulty": 2
+    },
+    {
+      "id": 322,
+      "text": "화분",
+      "difficulty": 2
+    },
+    {
+      "id": 323,
+      "text": "양초",
+      "difficulty": 2
+    },
+    {
+      "id": 324,
+      "text": "인형",
+      "difficulty": 2
+    },
+    {
+      "id": 325,
+      "text": "장난감",
+      "difficulty": 2
+    },
+    {
+      "id": 326,
+      "text": "블록",
+      "difficulty": 2
+    },
+    {
+      "id": 327,
+      "text": "줄넘기",
+      "difficulty": 2
+    },
+    {
+      "id": 328,
+      "text": "스케치북",
+      "difficulty": 2
+    },
+    {
+      "id": 329,
+      "text": "물감",
+      "difficulty": 2
+    },
+    {
+      "id": 330,
+      "text": "붓",
+      "difficulty": 2
+    },
+    {
+      "id": 331,
+      "text": "색연필",
+      "difficulty": 2
+    },
+    {
+      "id": 332,
+      "text": "크레파스",
+      "difficulty": 2
+    },
+    {
+      "id": 333,
+      "text": "종이",
+      "difficulty": 2
+    },
+    {
+      "id": 334,
+      "text": "깃발",
+      "difficulty": 2
+    },
+    {
+      "id": 335,
+      "text": "지도",
+      "difficulty": 2
+    },
+    {
+      "id": 336,
+      "text": "지구본",
+      "difficulty": 2
+    },
+    {
+      "id": 337,
+      "text": "스티커",
+      "difficulty": 2
+    },
+    {
+      "id": 338,
+      "text": "단추",
+      "difficulty": 2
+    },
+    {
+      "id": 339,
+      "text": "벨트",
+      "difficulty": 2
+    },
+    {
+      "id": 340,
+      "text": "키위",
+      "difficulty": 2
+    },
+    {
+      "id": 341,
+      "text": "복숭아",
+      "difficulty": 2
+    },
+    {
+      "id": 342,
+      "text": "감",
+      "difficulty": 2
+    },
+    {
+      "id": 343,
+      "text": "파인애플",
+      "difficulty": 2
+    },
+    {
+      "id": 344,
+      "text": "양파",
+      "difficulty": 2
+    },
+    {
+      "id": 345,
+      "text": "김치",
+      "difficulty": 2
+    },
+    {
+      "id": 346,
+      "text": "밥",
+      "difficulty": 2
+    },
+    {
+      "id": 347,
+      "text": "쿠키",
+      "difficulty": 2
+    },
+    {
+      "id": 348,
+      "text": "샌드위치",
+      "difficulty": 2
+    },
+    {
+      "id": 349,
+      "text": "국수",
+      "difficulty": 2
+    },
+    {
+      "id": 350,
+      "text": "우동",
+      "difficulty": 2
+    },
+    {
+      "id": 351,
+      "text": "짜장면",
+      "difficulty": 2
+    },
+    {
+      "id": 352,
+      "text": "김밥",
+      "difficulty": 2
+    },
+    {
+      "id": 353,
+      "text": "떡볶이",
+      "difficulty": 2
+    },
+    {
+      "id": 354,
+      "text": "만두",
+      "difficulty": 2
+    },
+    {
+      "id": 355,
+      "text": "치즈",
+      "difficulty": 2
+    },
+    {
+      "id": 356,
+      "text": "젤리",
+      "difficulty": 2
+    },
+    {
+      "id": 357,
+      "text": "푸딩",
+      "difficulty": 2
+    },
+    {
+      "id": 358,
+      "text": "팝콘",
+      "difficulty": 2
+    },
+    {
+      "id": 359,
+      "text": "고기",
+      "difficulty": 2
+    },
+    {
+      "id": 360,
+      "text": "생선",
+      "difficulty": 2
+    },
+    {
+      "id": 361,
+      "text": "잎",
+      "difficulty": 2
+    },
+    {
+      "id": 362,
+      "text": "언덕",
+      "difficulty": 2
+    },
+    {
+      "id": 363,
+      "text": "강",
+      "difficulty": 2
+    },
+    {
+      "id": 364,
+      "text": "호수",
+      "difficulty": 2
+    },
+    {
+      "id": 365,
+      "text": "연못",
+      "difficulty": 2
+    },
+    {
+      "id": 366,
+      "text": "섬",
+      "difficulty": 2
+    },
+    {
+      "id": 367,
+      "text": "숲",
+      "difficulty": 2
+    },
+    {
+      "id": 368,
+      "text": "하늘",
+      "difficulty": 2
+    },
+    {
+      "id": 369,
+      "text": "돌",
+      "difficulty": 2
+    },
+    {
+      "id": 370,
+      "text": "바위",
+      "difficulty": 2
+    },
+    {
+      "id": 371,
+      "text": "모래",
+      "difficulty": 2
+    },
+    {
+      "id": 372,
+      "text": "물",
+      "difficulty": 2
+    },
+    {
+      "id": 373,
+      "text": "얼음",
+      "difficulty": 2
+    },
+    {
+      "id": 374,
+      "text": "폭포",
+      "difficulty": 2
+    },
+    {
+      "id": 375,
+      "text": "동굴",
+      "difficulty": 2
+    },
+    {
+      "id": 376,
+      "text": "파도",
+      "difficulty": 2
+    },
+    {
+      "id": 377,
+      "text": "햄스터",
+      "difficulty": 2
+    },
+    {
+      "id": 378,
+      "text": "염소",
+      "difficulty": 2
+    },
+    {
+      "id": 379,
+      "text": "상어",
+      "difficulty": 2
+    },
+    {
+      "id": 380,
+      "text": "고래",
+      "difficulty": 2
+    },
+    {
+      "id": 381,
+      "text": "문어",
+      "difficulty": 2
+    },
+    {
+      "id": 382,
+      "text": "오징어",
+      "difficulty": 2
+    },
+    {
+      "id": 383,
+      "text": "벌",
+      "difficulty": 2
+    },
+    {
+      "id": 384,
+      "text": "잠자리",
+      "difficulty": 2
+    },
+    {
+      "id": 385,
+      "text": "모기",
+      "difficulty": 2
+    },
+    {
+      "id": 386,
+      "text": "파리",
+      "difficulty": 2
+    },
+    {
+      "id": 387,
+      "text": "무당벌레",
+      "difficulty": 2
+    },
+    {
+      "id": 388,
+      "text": "매미",
+      "difficulty": 2
+    },
+    {
+      "id": 389,
+      "text": "도마뱀",
+      "difficulty": 2
+    },
+    {
+      "id": 390,
+      "text": "다람쥐",
+      "difficulty": 2
+    },
+    {
+      "id": 391,
+      "text": "늑대",
+      "difficulty": 2
+    },
+    {
+      "id": 392,
+      "text": "앵무새",
+      "difficulty": 2
+    },
+    {
+      "id": 393,
+      "text": "비둘기",
+      "difficulty": 2
+    },
+    {
+      "id": 394,
+      "text": "참새",
+      "difficulty": 2
+    },
+    {
+      "id": 395,
+      "text": "까치",
+      "difficulty": 2
+    },
+    {
+      "id": 396,
+      "text": "거위",
+      "difficulty": 2
+    },
+    {
+      "id": 397,
+      "text": "지하철",
+      "difficulty": 2
+    },
+    {
+      "id": 398,
+      "text": "전철",
+      "difficulty": 2
+    },
+    {
+      "id": 399,
+      "text": "택시",
+      "difficulty": 2
+    },
+    {
+      "id": 400,
+      "text": "트럭",
+      "difficulty": 2
+    },
+    {
+      "id": 401,
+      "text": "오토바이",
+      "difficulty": 2
+    },
+    {
+      "id": 402,
+      "text": "보트",
+      "difficulty": 2
+    },
+    {
+      "id": 403,
+      "text": "구급차",
+      "difficulty": 2
+    },
+    {
+      "id": 404,
+      "text": "소방차",
+      "difficulty": 2
+    },
+    {
+      "id": 405,
+      "text": "경찰차",
+      "difficulty": 2
+    },
+    {
+      "id": 406,
+      "text": "공원",
+      "difficulty": 2
+    },
+    {
+      "id": 407,
+      "text": "놀이터",
+      "difficulty": 2
+    },
+    {
+      "id": 408,
+      "text": "정글짐",
+      "difficulty": 2
+    },
+    {
+      "id": 409,
+      "text": "벤치",
+      "difficulty": 2
+    },
+    {
+      "id": 410,
+      "text": "다리",
+      "difficulty": 2
+    },
+    {
+      "id": 411,
+      "text": "터널",
+      "difficulty": 2
+    },
+    {
+      "id": 412,
+      "text": "신호등",
+      "difficulty": 2
+    },
+    {
+      "id": 413,
+      "text": "표지판",
+      "difficulty": 2
+    },
+    {
+      "id": 414,
+      "text": "우체통",
+      "difficulty": 2
+    },
+    {
+      "id": 415,
+      "text": "분수",
+      "difficulty": 2
+    },
+    {
+      "id": 416,
+      "text": "시계탑",
+      "difficulty": 2
+    },
+    {
+      "id": 417,
+      "text": "병원",
+      "difficulty": 2
+    },
+    {
+      "id": 418,
+      "text": "약국",
+      "difficulty": 2
+    },
+    {
+      "id": 419,
+      "text": "마트",
+      "difficulty": 2
+    },
+    {
+      "id": 420,
+      "text": "시장",
+      "difficulty": 2
+    },
+    {
+      "id": 421,
+      "text": "카페",
+      "difficulty": 2
+    },
+    {
+      "id": 422,
+      "text": "식당",
+      "difficulty": 2
+    },
+    {
+      "id": 423,
+      "text": "영화관",
+      "difficulty": 2
+    },
+    {
+      "id": 424,
+      "text": "도서관",
+      "difficulty": 2
+    },
+    {
+      "id": 425,
+      "text": "박물관",
+      "difficulty": 2
+    },
+    {
+      "id": 426,
+      "text": "소방서",
+      "difficulty": 2
+    },
+    {
+      "id": 427,
+      "text": "우체국",
+      "difficulty": 2
+    },
+    {
+      "id": 428,
+      "text": "횡단보도",
+      "difficulty": 2
+    },
+    {
+      "id": 429,
+      "text": "목",
+      "difficulty": 2
+    },
+    {
+      "id": 430,
+      "text": "어깨",
+      "difficulty": 2
+    },
+    {
+      "id": 431,
+      "text": "팔",
+      "difficulty": 2
+    },
+    {
+      "id": 432,
+      "text": "손가락",
+      "difficulty": 2
+    },
+    {
+      "id": 433,
+      "text": "무릎",
+      "difficulty": 2
+    },
+    {
+      "id": 434,
+      "text": "이빨",
+      "difficulty": 2
+    },
+    {
+      "id": 435,
+      "text": "혀",
+      "difficulty": 2
+    },
+    {
+      "id": 436,
+      "text": "뼈",
+      "difficulty": 2
+    },
+    {
+      "id": 437,
+      "text": "심장",
+      "difficulty": 2
+    },
+    {
+      "id": 438,
+      "text": "상자",
+      "difficulty": 2
+    },
+    {
+      "id": 439,
+      "text": "바구니",
+      "difficulty": 2
+    },
+    {
+      "id": 440,
+      "text": "고무줄",
+      "difficulty": 2
+    },
+    {
+      "id": 441,
+      "text": "마스크",
+      "difficulty": 2
+    },
+    {
+      "id": 442,
+      "text": "반지",
+      "difficulty": 2
+    },
+    {
+      "id": 443,
+      "text": "목걸이",
+      "difficulty": 2
+    },
+    {
+      "id": 444,
+      "text": "줄",
+      "difficulty": 2
+    },
+    {
+      "id": 445,
+      "text": "북",
+      "difficulty": 2
+    },
+    {
+      "id": 446,
+      "text": "드럼",
+      "difficulty": 2
+    },
+    {
+      "id": 447,
+      "text": "피아노",
+      "difficulty": 2
+    },
+    {
+      "id": 448,
+      "text": "바이올린",
+      "difficulty": 2
+    },
+    {
+      "id": 449,
+      "text": "마이크",
+      "difficulty": 2
+    },
+    {
+      "id": 450,
+      "text": "스피커",
+      "difficulty": 2
+    },
+    {
+      "id": 451,
+      "text": "망원경",
+      "difficulty": 2
+    },
+    {
+      "id": 452,
+      "text": "돋보기",
+      "difficulty": 2
+    },
+    {
+      "id": 453,
+      "text": "텐트",
+      "difficulty": 2
+    },
+    {
+      "id": 454,
+      "text": "손전등",
+      "difficulty": 2
+    },
+    {
+      "id": 455,
+      "text": "삽",
+      "difficulty": 2
+    },
+    {
+      "id": 456,
+      "text": "양동이",
+      "difficulty": 2
+    },
+    {
+      "id": 457,
+      "text": "주사위",
+      "difficulty": 2
+    },
+    {
+      "id": 458,
+      "text": "카드",
+      "difficulty": 2
+    },
+    {
+      "id": 459,
+      "text": "볼링",
+      "difficulty": 2
+    },
+    {
+      "id": 460,
+      "text": "새우",
+      "difficulty": 2
+    },
+    {
+      "id": 461,
+      "text": "고드름",
+      "difficulty": 2
+    },
+    {
+      "id": 462,
+      "text": "낚시",
+      "difficulty": 2
+    },
+    {
+      "id": 463,
+      "text": "나무늘보",
+      "difficulty": 2
+    },
+    {
+      "id": 464,
+      "text": "신데렐라",
+      "difficulty": 2
+    },
+    {
+      "id": 465,
+      "text": "사막",
+      "difficulty": 2
+    },
+    {
+      "id": 466,
+      "text": "오아시스",
+      "difficulty": 2
+    },
+    {
+      "id": 467,
+      "text": "기저귀",
+      "difficulty": 2
+    },
+    {
+      "id": 468,
+      "text": "대포",
+      "difficulty": 2
+    },
+    {
+      "id": 469,
+      "text": "에어컨",
+      "difficulty": 2
+    },
+    {
+      "id": 470,
+      "text": "이구아나",
+      "difficulty": 2
+    },
+    {
+      "id": 471,
+      "text": "목발",
+      "difficulty": 2
+    },
+    {
+      "id": 472,
+      "text": "송편",
+      "difficulty": 2
+    },
+    {
+      "id": 473,
+      "text": "백조",
+      "difficulty": 2
+    },
+    {
+      "id": 474,
+      "text": "미녀와 야수",
+      "difficulty": 2
+    },
+    {
+      "id": 475,
+      "text": "하마",
+      "difficulty": 2
+    },
+    {
+      "id": 476,
+      "text": "스포츠카",
+      "difficulty": 2
+    },
+    {
+      "id": 477,
+      "text": "풍선껌",
+      "difficulty": 2
+    },
+    {
+      "id": 478,
+      "text": "망토",
+      "difficulty": 2
+    },
+    {
+      "id": 479,
+      "text": "펠리컨",
+      "difficulty": 2
+    },
+    {
+      "id": 480,
+      "text": "축제",
+      "difficulty": 2
+    },
+    {
+      "id": 481,
+      "text": "서류가방",
+      "difficulty": 2
+    },
+    {
+      "id": 482,
+      "text": "구미호",
+      "difficulty": 2
+    },
+    {
+      "id": 483,
+      "text": "소화전",
+      "difficulty": 2
+    },
+    {
+      "id": 484,
+      "text": "씨름",
+      "difficulty": 2
+    },
+    {
+      "id": 485,
+      "text": "스컹크",
+      "difficulty": 2
+    },
+    {
+      "id": 486,
+      "text": "포장마차",
+      "difficulty": 2
+    },
+    {
+      "id": 487,
+      "text": "바이킹",
+      "difficulty": 2
+    },
+    {
+      "id": 488,
+      "text": "꿩",
+      "difficulty": 2
+    },
+    {
+      "id": 489,
+      "text": "불꽃놀이",
+      "difficulty": 2
+    },
+    {
+      "id": 490,
+      "text": "닌자",
+      "difficulty": 2
+    },
+    {
+      "id": 491,
+      "text": "편의점",
+      "difficulty": 2
+    },
+    {
+      "id": 492,
+      "text": "눈싸움",
+      "difficulty": 2
+    },
+    {
+      "id": 493,
+      "text": "시금치",
+      "difficulty": 2
+    },
+    {
+      "id": 494,
+      "text": "갈비",
+      "difficulty": 2
+    },
+    {
+      "id": 495,
+      "text": "롤러코스터",
+      "difficulty": 2
+    },
+    {
+      "id": 496,
+      "text": "쇼핑카트",
+      "difficulty": 2
+    },
+    {
+      "id": 497,
+      "text": "화산",
+      "difficulty": 2
+    },
+    {
+      "id": 498,
+      "text": "제기차기",
+      "difficulty": 2
+    },
+    {
+      "id": 499,
+      "text": "장미",
+      "difficulty": 2
+    },
+    {
+      "id": 500,
+      "text": "배트맨",
+      "difficulty": 2
+    },
+    {
+      "id": 501,
+      "text": "에너지 드링크",
+      "difficulty": 2
+    },
+    {
+      "id": 502,
+      "text": "목욕 가운",
+      "difficulty": 2
+    },
+    {
+      "id": 503,
+      "text": "요리사",
+      "difficulty": 2
+    },
+    {
+      "id": 504,
+      "text": "원시인",
+      "difficulty": 2
+    },
+    {
+      "id": 505,
+      "text": "묘비",
+      "difficulty": 2
+    },
+    {
+      "id": 506,
+      "text": "선글라스",
+      "difficulty": 2
+    },
+    {
+      "id": 507,
+      "text": "쌍둥이",
+      "difficulty": 2
+    },
+    {
+      "id": 508,
+      "text": "회전목마",
+      "difficulty": 2
+    },
+    {
+      "id": 509,
+      "text": "멸치",
+      "difficulty": 2
+    },
+    {
+      "id": 510,
+      "text": "저녁식사",
+      "difficulty": 2
+    },
+    {
+      "id": 511,
+      "text": "전구",
+      "difficulty": 2
+    },
+    {
+      "id": 512,
+      "text": "조커",
+      "difficulty": 2
+    },
+    {
+      "id": 513,
+      "text": "비버",
+      "difficulty": 2
+    },
+    {
+      "id": 514,
+      "text": "초가집",
+      "difficulty": 2
+    },
+    {
+      "id": 515,
+      "text": "커리",
+      "difficulty": 2
+    },
+    {
+      "id": 516,
+      "text": "청개구리",
+      "difficulty": 2
+    },
+    {
+      "id": 517,
+      "text": "두꺼비",
+      "difficulty": 2
+    },
+    {
+      "id": 518,
+      "text": "범퍼카",
+      "difficulty": 2
+    },
+    {
+      "id": 519,
+      "text": "계란 샌드위치",
+      "difficulty": 2
+    },
+    {
+      "id": 520,
+      "text": "발야구",
+      "difficulty": 2
+    },
+    {
+      "id": 521,
+      "text": "동물원",
+      "difficulty": 2
+    },
+    {
+      "id": 522,
+      "text": "스머프",
+      "difficulty": 2
+    },
+    {
+      "id": 523,
+      "text": "거미줄",
+      "difficulty": 2
+    },
+    {
+      "id": 524,
+      "text": "쌍안경",
+      "difficulty": 2
+    },
+    {
+      "id": 525,
+      "text": "농부",
+      "difficulty": 2
+    },
+    {
+      "id": 526,
+      "text": "라푼젤",
+      "difficulty": 2
+    },
+    {
+      "id": 527,
+      "text": "아보카도",
+      "difficulty": 2
+    },
+    {
+      "id": 528,
+      "text": "요가",
+      "difficulty": 2
+    },
+    {
+      "id": 529,
+      "text": "정수기",
+      "difficulty": 2
+    },
+    {
+      "id": 530,
+      "text": "아기돼지 삼형제",
+      "difficulty": 2
+    },
+    {
+      "id": 531,
+      "text": "마네킹",
+      "difficulty": 2
+    },
+    {
+      "id": 532,
+      "text": "볶음밥",
+      "difficulty": 2
+    },
+    {
+      "id": 533,
+      "text": "메뚜기",
+      "difficulty": 2
+    },
+    {
+      "id": 534,
+      "text": "계란말이",
+      "difficulty": 2
+    },
+    {
+      "id": 535,
+      "text": "레모네이드",
+      "difficulty": 2
+    },
+    {
+      "id": 536,
+      "text": "헬멧",
+      "difficulty": 2
+    },
+    {
+      "id": 537,
+      "text": "마술사",
+      "difficulty": 2
+    },
+    {
+      "id": 538,
+      "text": "브로콜리",
+      "difficulty": 2
+    },
+    {
+      "id": 539,
+      "text": "인형극",
+      "difficulty": 2
+    },
+    {
+      "id": 540,
+      "text": "가발",
+      "difficulty": 2
+    },
+    {
+      "id": 541,
+      "text": "기사",
+      "difficulty": 2
+    },
+    {
+      "id": 542,
+      "text": "꽃집",
+      "difficulty": 2
+    },
+    {
+      "id": 543,
+      "text": "유람선",
+      "difficulty": 2
+    },
+    {
+      "id": 544,
+      "text": "댐",
+      "difficulty": 2
+    },
+    {
+      "id": 545,
+      "text": "요요",
+      "difficulty": 2
+    },
+    {
+      "id": 546,
+      "text": "폭풍우",
+      "difficulty": 2
+    },
+    {
+      "id": 547,
+      "text": "범고래",
+      "difficulty": 2
+    },
+    {
+      "id": 548,
+      "text": "택배",
+      "difficulty": 2
+    },
+    {
+      "id": 549,
+      "text": "공기청정기",
+      "difficulty": 2
+    },
+    {
+      "id": 550,
+      "text": "대장",
+      "difficulty": 2
+    },
+    {
+      "id": 551,
+      "text": "여왕벌",
+      "difficulty": 2
+    },
+    {
+      "id": 552,
+      "text": "너구리",
+      "difficulty": 2
+    },
+    {
+      "id": 553,
+      "text": "빙고",
+      "difficulty": 2
+    },
+    {
+      "id": 554,
+      "text": "자명종 시계",
+      "difficulty": 2
+    },
+    {
+      "id": 555,
+      "text": "포도 주스",
+      "difficulty": 2
+    },
+    {
+      "id": 556,
+      "text": "롤러스케이트장",
+      "difficulty": 2
+    },
+    {
+      "id": 557,
+      "text": "진공청소기",
+      "difficulty": 2
+    },
+    {
+      "id": 558,
+      "text": "공항",
+      "difficulty": 2
+    },
+    {
+      "id": 559,
+      "text": "버스정류장",
+      "difficulty": 2
+    },
+    {
+      "id": 560,
+      "text": "에일리언",
+      "difficulty": 2
+    },
+    {
+      "id": 561,
+      "text": "마늘",
+      "difficulty": 2
+    },
+    {
+      "id": 562,
+      "text": "백상아리",
+      "difficulty": 2
+    },
+    {
+      "id": 563,
+      "text": "그랜드피아노",
+      "difficulty": 2
+    },
+    {
+      "id": 564,
+      "text": "열대우림",
+      "difficulty": 2
+    },
+    {
+      "id": 565,
+      "text": "핫도그",
+      "difficulty": 2
+    },
+    {
+      "id": 566,
+      "text": "개집",
+      "difficulty": 2
+    },
+    {
+      "id": 567,
+      "text": "손목시계",
+      "difficulty": 2
+    },
+    {
+      "id": 568,
+      "text": "할로윈",
+      "difficulty": 2
+    },
+    {
+      "id": 569,
+      "text": "꿈",
+      "difficulty": 2
+    },
+    {
+      "id": 570,
+      "text": "고무밴드",
+      "difficulty": 2
+    },
+    {
+      "id": 571,
+      "text": "토끼 귀",
+      "difficulty": 2
+    },
+    {
+      "id": 572,
+      "text": "하늘을 나는 양탄자",
+      "difficulty": 2
+    },
+    {
+      "id": 573,
+      "text": "우물",
+      "difficulty": 2
+    },
+    {
+      "id": 574,
+      "text": "손톱깎이",
+      "difficulty": 2
+    },
+    {
+      "id": 575,
+      "text": "상추",
+      "difficulty": 2
+    },
+    {
+      "id": 576,
+      "text": "복사기",
+      "difficulty": 2
+    },
+    {
+      "id": 577,
+      "text": "스케이트보드",
+      "difficulty": 2
+    },
+    {
+      "id": 578,
+      "text": "은하수",
+      "difficulty": 2
+    },
+    {
+      "id": 579,
+      "text": "무전기",
+      "difficulty": 2
+    },
+    {
+      "id": 580,
+      "text": "삼겹살",
+      "difficulty": 2
+    },
+    {
+      "id": 581,
+      "text": "물소",
+      "difficulty": 2
+    },
+    {
+      "id": 582,
+      "text": "외발자전거",
+      "difficulty": 2
+    },
+    {
+      "id": 583,
+      "text": "스쿨버스",
+      "difficulty": 2
+    },
+    {
+      "id": 584,
+      "text": "2층 침대",
+      "difficulty": 2
+    },
+    {
+      "id": 585,
+      "text": "세면대",
+      "difficulty": 2
+    },
+    {
+      "id": 586,
+      "text": "피구",
+      "difficulty": 2
+    },
+    {
+      "id": 587,
+      "text": "동상",
+      "difficulty": 2
+    },
+    {
+      "id": 588,
+      "text": "골키퍼",
+      "difficulty": 2
+    },
+    {
+      "id": 589,
+      "text": "헤어드라이어",
+      "difficulty": 2
+    },
+    {
+      "id": 590,
+      "text": "동물병원",
+      "difficulty": 2
+    },
+    {
+      "id": 591,
+      "text": "샐러드",
+      "difficulty": 2
+    },
+    {
+      "id": 592,
+      "text": "안전벨트",
+      "difficulty": 2
+    },
+    {
+      "id": 593,
+      "text": "아파트",
+      "difficulty": 2
+    },
+    {
+      "id": 594,
+      "text": "딱풀",
+      "difficulty": 2
+    },
+    {
+      "id": 595,
+      "text": "잠수함",
+      "difficulty": 2
+    },
+    {
+      "id": 596,
+      "text": "경찰견",
+      "difficulty": 2
+    },
+    {
+      "id": 597,
+      "text": "불도저",
+      "difficulty": 2
+    },
+    {
+      "id": 598,
+      "text": "야자나무",
+      "difficulty": 2
+    },
+    {
+      "id": 599,
+      "text": "샴푸",
+      "difficulty": 2
+    },
+    {
+      "id": 600,
+      "text": "부엉이",
+      "difficulty": 2
+    },
+    {
+      "id": 601,
+      "text": "남극",
+      "difficulty": 2
+    },
+    {
+      "id": 602,
+      "text": "엑스레이",
+      "difficulty": 2
+    },
+    {
+      "id": 603,
+      "text": "개미집",
+      "difficulty": 2
+    },
+    {
+      "id": 604,
+      "text": "어부",
+      "difficulty": 2
+    },
+    {
+      "id": 605,
+      "text": "친구",
+      "difficulty": 2
+    },
+    {
+      "id": 606,
+      "text": "안대",
+      "difficulty": 2
+    },
+    {
+      "id": 607,
+      "text": "손수건",
+      "difficulty": 2
+    },
+    {
+      "id": 608,
+      "text": "크루아상",
+      "difficulty": 2
+    },
+    {
+      "id": 609,
+      "text": "베이글",
+      "difficulty": 2
+    },
+    {
+      "id": 610,
+      "text": "케이블카",
+      "difficulty": 2
+    },
+    {
+      "id": 611,
+      "text": "금붕어",
+      "difficulty": 2
+    },
+    {
+      "id": 612,
+      "text": "지진",
+      "difficulty": 2
+    },
+    {
+      "id": 613,
+      "text": "악어",
+      "difficulty": 2
+    },
+    {
+      "id": 614,
+      "text": "주유소",
+      "difficulty": 2
+    },
+    {
+      "id": 615,
+      "text": "미이라",
+      "difficulty": 2
+    },
+    {
+      "id": 616,
+      "text": "덤프트럭",
+      "difficulty": 2
+    },
+    {
+      "id": 617,
+      "text": "딱따구리",
+      "difficulty": 2
+    },
+    {
+      "id": 618,
+      "text": "두더지",
+      "difficulty": 2
+    },
+    {
+      "id": 619,
+      "text": "패스트푸드",
+      "difficulty": 2
+    },
+    {
+      "id": 620,
+      "text": "트램펄린",
+      "difficulty": 2
+    },
+    {
+      "id": 621,
+      "text": "짬뽕",
+      "difficulty": 2
+    },
+    {
+      "id": 622,
+      "text": "고무장갑",
+      "difficulty": 2
+    },
+    {
+      "id": 623,
+      "text": "파리채",
+      "difficulty": 2
+    },
+    {
+      "id": 624,
+      "text": "아이스커피",
+      "difficulty": 2
+    },
+    {
+      "id": 625,
+      "text": "진저브레드맨",
+      "difficulty": 2
+    },
+    {
+      "id": 626,
+      "text": "인절미",
+      "difficulty": 2
+    },
+    {
+      "id": 627,
+      "text": "파일럿",
+      "difficulty": 2
+    },
+    {
+      "id": 628,
+      "text": "붕어빵",
+      "difficulty": 2
+    },
+    {
+      "id": 629,
+      "text": "딸기잼",
+      "difficulty": 2
+    },
+    {
+      "id": 630,
+      "text": "튤립",
+      "difficulty": 2
+    },
+    {
+      "id": 631,
+      "text": "순대",
+      "difficulty": 2
+    },
+    {
+      "id": 632,
+      "text": "킹크랩",
+      "difficulty": 2
+    },
+    {
+      "id": 633,
+      "text": "만리장성",
+      "difficulty": 2
+    },
+    {
+      "id": 634,
+      "text": "욕실",
+      "difficulty": 2
+    },
+    {
+      "id": 635,
+      "text": "번데기",
+      "difficulty": 2
+    },
+    {
+      "id": 636,
+      "text": "책꽂이",
+      "difficulty": 2
+    },
+    {
+      "id": 637,
+      "text": "식기세척기",
+      "difficulty": 2
+    },
+    {
+      "id": 638,
+      "text": "대나무",
+      "difficulty": 2
+    },
+    {
+      "id": 639,
+      "text": "마시멜로",
+      "difficulty": 2
+    },
+    {
+      "id": 640,
+      "text": "팬케이크",
+      "difficulty": 2
+    },
+    {
+      "id": 641,
+      "text": "고릴라",
+      "difficulty": 2
+    },
+    {
+      "id": 642,
+      "text": "드럼 세탁기",
+      "difficulty": 2
+    },
+    {
+      "id": 643,
+      "text": "고등어",
+      "difficulty": 2
+    },
+    {
+      "id": 644,
+      "text": "스파게티",
+      "difficulty": 2
+    },
+    {
+      "id": 645,
+      "text": "치타",
+      "difficulty": 2
+    },
+    {
+      "id": 646,
+      "text": "두유",
+      "difficulty": 2
+    },
+    {
+      "id": 647,
+      "text": "성냥",
+      "difficulty": 2
+    },
+    {
+      "id": 648,
+      "text": "타조",
+      "difficulty": 2
+    },
+    {
+      "id": 649,
+      "text": "귀신",
+      "difficulty": 2
+    },
+    {
+      "id": 650,
+      "text": "사슴",
+      "difficulty": 2
+    },
+    {
+      "id": 651,
+      "text": "더듬이",
+      "difficulty": 2
+    },
+    {
+      "id": 652,
+      "text": "다리미",
+      "difficulty": 2
+    },
+    {
+      "id": 653,
+      "text": "복어",
+      "difficulty": 2
+    },
+    {
+      "id": 654,
+      "text": "윷놀이",
+      "difficulty": 2
+    },
+    {
+      "id": 655,
+      "text": "독수리",
+      "difficulty": 2
+    },
+    {
+      "id": 656,
+      "text": "좀비",
+      "difficulty": 2
+    },
+    {
+      "id": 657,
+      "text": "매머드",
+      "difficulty": 2
+    },
+    {
+      "id": 658,
+      "text": "수족관",
+      "difficulty": 2
+    },
+    {
+      "id": 659,
+      "text": "드라큘라",
+      "difficulty": 2
+    },
+    {
+      "id": 660,
+      "text": "날다람쥐",
+      "difficulty": 2
+    },
+    {
+      "id": 661,
+      "text": "정원",
+      "difficulty": 2
+    },
+    {
+      "id": 662,
+      "text": "야구장",
+      "difficulty": 2
+    },
+    {
+      "id": 663,
+      "text": "보물 지도",
+      "difficulty": 2
+    },
+    {
+      "id": 664,
+      "text": "새우튀김",
+      "difficulty": 2
+    },
+    {
+      "id": 665,
+      "text": "주사기",
+      "difficulty": 2
+    },
+    {
+      "id": 666,
+      "text": "마법사",
+      "difficulty": 2
+    },
+    {
+      "id": 667,
+      "text": "사마귀",
+      "difficulty": 2
+    },
+    {
+      "id": 668,
+      "text": "넥타이",
+      "difficulty": 2
+    },
+    {
+      "id": 669,
+      "text": "반딧불이",
+      "difficulty": 2
+    },
+    {
+      "id": 670,
+      "text": "로봇 청소기",
+      "difficulty": 2
+    },
+    {
+      "id": 671,
+      "text": "피노키오",
+      "difficulty": 2
+    },
+    {
+      "id": 672,
+      "text": "축구장",
+      "difficulty": 2
+    },
+    {
+      "id": 673,
+      "text": "코알라",
+      "difficulty": 2
+    },
+    {
+      "id": 674,
+      "text": "캥거루",
+      "difficulty": 2
+    },
+    {
+      "id": 675,
+      "text": "다이너마이트",
+      "difficulty": 2
+    },
+    {
+      "id": 676,
+      "text": "농구",
+      "difficulty": 2
+    },
+    {
+      "id": 677,
+      "text": "고슴도치",
+      "difficulty": 2
+    },
+    {
+      "id": 678,
+      "text": "꿀벌",
+      "difficulty": 2
+    },
+    {
+      "id": 679,
+      "text": "드릴",
+      "difficulty": 2
+    },
+    {
+      "id": 680,
+      "text": "에펠탑",
+      "difficulty": 2
+    },
+    {
+      "id": 681,
+      "text": "호박",
+      "difficulty": 2
+    },
+    {
+      "id": 682,
+      "text": "횃불",
+      "difficulty": 2
+    },
+    {
+      "id": 683,
+      "text": "미어캣",
+      "difficulty": 2
+    },
+    {
+      "id": 684,
+      "text": "전갈",
+      "difficulty": 2
+    },
+    {
+      "id": 685,
+      "text": "박쥐",
+      "difficulty": 2
+    },
+    {
+      "id": 686,
+      "text": "다이빙",
+      "difficulty": 2
+    },
+    {
+      "id": 687,
+      "text": "제비",
+      "difficulty": 2
+    },
+    {
+      "id": 688,
+      "text": "연필깎이",
+      "difficulty": 2
+    },
+    {
+      "id": 689,
+      "text": "면봉",
+      "difficulty": 2
+    },
+    {
+      "id": 690,
+      "text": "방울뱀",
+      "difficulty": 2
+    },
+    {
+      "id": 691,
+      "text": "지우개",
+      "difficulty": 1
+    },
+    {
+      "id": 692,
+      "text": "펜",
+      "difficulty": 1
+    },
+    {
+      "id": 693,
+      "text": "접시",
+      "difficulty": 1
+    },
+    {
+      "id": 694,
+      "text": "공",
+      "difficulty": 1
+    },
+    {
+      "id": 695,
+      "text": "포도",
+      "difficulty": 1
+    },
+    {
+      "id": 696,
+      "text": "귤",
+      "difficulty": 1
+    },
+    {
+      "id": 697,
+      "text": "오렌지",
+      "difficulty": 1
+    },
+    {
+      "id": 698,
+      "text": "레몬",
+      "difficulty": 1
+    },
+    {
+      "id": 699,
+      "text": "토마토",
+      "difficulty": 1
+    },
+    {
+      "id": 700,
+      "text": "옥수수",
+      "difficulty": 1
+    },
+    {
+      "id": 701,
+      "text": "감자",
+      "difficulty": 1
+    },
+    {
+      "id": 702,
+      "text": "당근",
+      "difficulty": 1
+    },
+    {
+      "id": 703,
+      "text": "빵",
+      "difficulty": 1
+    },
+    {
+      "id": 704,
+      "text": "사탕",
+      "difficulty": 1
+    },
+    {
+      "id": 705,
+      "text": "초콜릿",
+      "difficulty": 1
+    },
+    {
+      "id": 706,
+      "text": "계란",
+      "difficulty": 1
+    },
+    {
+      "id": 707,
+      "text": "우유",
+      "difficulty": 1
+    },
+    {
+      "id": 708,
+      "text": "바다",
+      "difficulty": 1
+    },
+    {
+      "id": 709,
+      "text": "비",
+      "difficulty": 1
+    },
+    {
+      "id": 710,
+      "text": "눈",
+      "difficulty": 1
+    },
+    {
+      "id": 711,
+      "text": "새",
+      "difficulty": 1
+    },
+    {
+      "id": 712,
+      "text": "오리",
+      "difficulty": 1
+    },
+    {
+      "id": 713,
+      "text": "닭",
+      "difficulty": 1
+    },
+    {
+      "id": 714,
+      "text": "소",
+      "difficulty": 1
+    },
+    {
+      "id": 715,
+      "text": "말",
+      "difficulty": 1
+    },
+    {
+      "id": 716,
+      "text": "양",
+      "difficulty": 1
+    },
+    {
+      "id": 717,
+      "text": "곰",
+      "difficulty": 1
+    },
+    {
+      "id": 718,
+      "text": "호랑이",
+      "difficulty": 1
+    },
+    {
+      "id": 719,
+      "text": "원숭이",
+      "difficulty": 1
+    },
+    {
+      "id": 720,
+      "text": "개미",
+      "difficulty": 1
+    },
+    {
+      "id": 721,
+      "text": "달팽이",
+      "difficulty": 1
+    },
+    {
+      "id": 722,
+      "text": "개구리",
+      "difficulty": 1
+    },
+    {
+      "id": 723,
+      "text": "뱀",
+      "difficulty": 1
+    },
+    {
+      "id": 724,
+      "text": "쥐",
+      "difficulty": 1
+    },
+    {
+      "id": 725,
+      "text": "여우",
+      "difficulty": 1
+    },
+    {
+      "id": 726,
+      "text": "판다",
+      "difficulty": 1
+    },
+    {
+      "id": 727,
+      "text": "시소",
+      "difficulty": 1
+    },
+    {
+      "id": 728,
+      "text": "그네",
+      "difficulty": 1
+    },
+    {
+      "id": 729,
+      "text": "미끄럼틀",
+      "difficulty": 1
+    },
+    {
+      "id": 730,
+      "text": "얼굴",
+      "difficulty": 1
+    },
+    {
+      "id": 731,
+      "text": "코",
+      "difficulty": 1
+    },
+    {
+      "id": 732,
+      "text": "입",
+      "difficulty": 1
+    },
+    {
+      "id": 733,
+      "text": "귀",
+      "difficulty": 1
+    },
+    {
+      "id": 734,
+      "text": "머리",
+      "difficulty": 1
+    },
+    {
+      "id": 735,
+      "text": "손",
+      "difficulty": 1
+    },
+    {
+      "id": 736,
+      "text": "발",
+      "difficulty": 1
+    },
+    {
+      "id": 737,
+      "text": "물총",
+      "difficulty": 1
+    },
+    {
+      "id": 738,
+      "text": "비눗방울",
+      "difficulty": 1
+    },
+    {
+      "id": 739,
+      "text": "연",
+      "difficulty": 1
+    },
+    {
+      "id": 740,
+      "text": "팽이",
+      "difficulty": 1
+    },
+    {
+      "id": 741,
+      "text": "공주",
+      "difficulty": 1
+    },
+    {
+      "id": 742,
+      "text": "왕",
+      "difficulty": 1
+    },
+    {
+      "id": 743,
+      "text": "크리스마스",
+      "difficulty": 1
+    },
+    {
+      "id": 744,
+      "text": "마녀",
+      "difficulty": 1
+    },
+    {
+      "id": 745,
+      "text": "도넛",
+      "difficulty": 1
+    },
+    {
+      "id": 746,
+      "text": "인어",
+      "difficulty": 1
+    },
+    {
+      "id": 747,
+      "text": "생일 케이크",
+      "difficulty": 1
+    },
+    {
+      "id": 748,
+      "text": "해골",
+      "difficulty": 1
+    },
+    {
+      "id": 749,
+      "text": "할아버지",
+      "difficulty": 1
+    },
+    {
+      "id": 750,
+      "text": "드래곤",
+      "difficulty": 1
+    },
+    {
+      "id": 751,
+      "text": "곰인형",
+      "difficulty": 1
+    },
+    {
+      "id": 752,
+      "text": "할머니",
+      "difficulty": 1
+    },
+    {
+      "id": 753,
+      "text": "러버덕",
+      "difficulty": 1
+    },
+    {
+      "id": 754,
+      "text": "백설공주",
+      "difficulty": 1
+    },
+    {
+      "id": 755,
+      "text": "비눗방울 놀이",
+      "difficulty": 1
+    },
+    {
+      "id": 756,
+      "text": "별똥별",
+      "difficulty": 1
+    },
+    {
+      "id": 757,
+      "text": "핫초코",
+      "difficulty": 1
+    },
+    {
+      "id": 758,
+      "text": "꽃다발",
+      "difficulty": 1
+    },
+    {
+      "id": 759,
+      "text": "솜사탕",
+      "difficulty": 1
+    },
+    {
+      "id": 760,
+      "text": "벚꽃",
+      "difficulty": 1
+    },
+    {
+      "id": 761,
+      "text": "빨대",
+      "difficulty": 1
+    },
+    {
+      "id": 762,
+      "text": "얼룩말",
+      "difficulty": 1
+    },
+    {
+      "id": 763,
+      "text": "병아리",
+      "difficulty": 1
+    }
   ]
 }

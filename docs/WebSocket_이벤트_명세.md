@@ -151,7 +151,7 @@ payload: {
 - 처리: 100~999의 빈 방을 생성한다. creator는 host이며 초기 drawer다. MODERATOR mode creator는 moderator도 겸한다.
 - 정원: creator를 포함한 30 슬롯.
 - 성공: 발신자에게 `ROOM_SESSION`, 이어서 `PUBLIC_STATE`, `PRIVATE_STATE`, 빈 `DRAWING_SNAPSHOT`.
-- 크기/Rate: 2KiB, IP당 분당 5회·burst 5.
+- 크기/Rate: 2KiB, 연결당 분당 10회·burst 10과 IP당 분당 120회·burst 60을 함께 적용한다.
 - 오류: `ALREADY_IN_ROOM`, `INVALID_NICKNAME`, `ROOM_CODE_EXHAUSTED`, `RATE_LIMITED`.
 
 ### 5.2 `JOIN_ROOM`
@@ -172,9 +172,12 @@ payload: {
 - sessionToken과 nickname이 서로 다른 기존 슬롯을 가리키면 `INVALID_SESSION`으로 거부한다. 다른 닉네임의 새 플레이어로 들어가려는 클라이언트는 이전 token을 보내지 않는다.
 - 연결 중인 nickname/token 탈취는 거부한다.
 - 강퇴된 token 또는 같은 nickname은 방이 닫힐 때까지 거부한다.
+- 유효한 token의 슬롯이 아직 연결 중이면 그 연결에 ping을 보내 생존을 확인한다.
+  pong으로 답하면 `SESSION_IN_USE`로 거부하고, 유예 시간 안에 답이 없으면 죽은
+  연결로 보고 슬롯을 넘긴다. 죽은 소켓이 하트비트 타임아웃까지 재접속을 막지 않는다.
 - 새 슬롯은 host/moderator/drawer 권한이 없다.
 - 성공: token을 회전한 `ROOM_SESSION`, `PUBLIC_STATE`, 수신자별 `PRIVATE_STATE`, 현재 `DRAWING_SNAPSHOT`.
-- 크기/Rate: 2KiB, IP당 분당 5회·burst 5.
+- 크기/Rate: 2KiB, 연결당 분당 10회·burst 10과 IP당 분당 120회·burst 60을 함께 적용한다.
 - 오류: `INVALID_ROOM_CODE`, `ROOM_NOT_FOUND`, `ROOM_FULL`, `NICKNAME_IN_USE`, `REENTRY_BLOCKED`, `SESSION_IN_USE`, `INVALID_SESSION`, `RATE_LIMITED`.
 
 ### 5.3 `LEAVE_ROOM`
@@ -694,7 +697,7 @@ payload: {
 | `INVALID_NICKNAME` | 닉네임 규칙 위반 | false |
 | `NICKNAME_IN_USE` | 연결 중 닉네임 | false |
 | `REENTRY_BLOCKED` | 강퇴된 닉네임 또는 token | false |
-| `SESSION_IN_USE` | 연결 중 token | false |
+| `SESSION_IN_USE` | 연결 중 token(생존 확인 중 포함) | true |
 | `INVALID_SESSION` | token이 슬롯과 불일치 | false |
 | `FORBIDDEN` | 역할 권한 없음 | false |
 | `NOT_DRAWER` | 현재 drawer 아님 | false |
@@ -703,6 +706,7 @@ payload: {
 | `MIN_PLAYERS` | 연결 drawer+eligible guesser 조건 미충족 | true |
 | `INVALID_DURATION` | 20~180 정수·5초 배수 위반 | false |
 | `INVALID_KEYWORD` | keyword 문자열 규칙 위반 | false |
+| `SHUFFLE_LIMIT` | 라운드당 다시 뽑기 5회 초과 | false |
 | `INVALID_GUESS` | guess 문자열 규칙 위반 | false |
 | `GUESS_FORBIDDEN` | keyword 열람 이력/역할로 추측 불가 | false |
 | `ROUND_LOCKED` | solved/expired로 추측 잠금 | false |

@@ -91,10 +91,11 @@ export class Dispatcher {
       this.sendError(connection, command.requestId, new ProtocolError('PAYLOAD_TOO_LARGE', '이벤트 크기 제한을 넘었습니다.'));
       return;
     }
-    const rateKey = command.type === 'CREATE_ROOM' || command.type === 'JOIN_ROOM'
-      ? `ip:${connection.ip}`
-      : `connection:${connection.id}`;
-    if (!this.limiter.take(rateKey, command.type)) {
+    const entering = command.type === 'CREATE_ROOM' || command.type === 'JOIN_ROOM';
+    if (
+      !this.limiter.take(`connection:${connection.id}`, command.type) ||
+      (entering && !this.limiter.takeSharedIp(connection.ip, command.type))
+    ) {
       this.sendError(connection, command.requestId, new ProtocolError('RATE_LIMITED', '요청이 너무 빠릅니다.'));
       return;
     }

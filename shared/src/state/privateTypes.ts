@@ -9,6 +9,8 @@ export type PrivateState = {
   suggestedKeyword: string | null;
   hasSeenKeywordThisRound: boolean;
   hasAnsweredCorrectly: boolean;
+  /** 이번 라운드에 제시어를 다시 뽑을 수 있는 남은 횟수. */
+  remainingKeywordShuffles: number;
   allowedActions: AllowedAction[];
 };
 

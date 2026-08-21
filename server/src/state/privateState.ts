@@ -1,4 +1,4 @@
-import type { PrivateState } from '../../../shared/src/index.js';
+import { MAX_KEYWORD_SHUFFLES, type PrivateState } from '../../../shared/src/index.js';
 import { allowedActionsFor } from '../game/permissionService.js';
 import type { Player, RoomRuntime } from '../rooms/types.js';
 
@@ -15,6 +15,7 @@ export const buildPrivateState = (
     suggestedKeyword: maySeeKeyword ? room.suggestedKeyword : null,
     hasSeenKeywordThisRound: room.round.keywordExposedPlayerIds.has(player.playerId),
     hasAnsweredCorrectly: room.round.correctPlayerIds.has(player.playerId),
+    remainingKeywordShuffles: Math.max(0, MAX_KEYWORD_SHUFFLES - room.round.shuffleCount),
     allowedActions: allowedActionsFor(room, player, now)
   };
 };
