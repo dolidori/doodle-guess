@@ -121,7 +121,7 @@ export const DrawingCanvas = ({
   }, [send]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => flush(false), 50);
+    const timer = window.setInterval(() => flush(false), 120);
     return () => clearInterval(timer);
   }, [flush]);
 

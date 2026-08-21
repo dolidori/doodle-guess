@@ -21,6 +21,11 @@ export const MAX_KEYWORD_SHUFFLES = 5;
 export const QUEUE_CAPACITY = 200;
 export const SLOW_CONNECTION_BYTES = 256 * 1024;
 export const RECOVERED_CONNECTION_BYTES = 128 * 1024;
+/**
+ * 스냅샷은 델타보다 늦게 포기한다. 델타와 같은 기준을 쓰면 스냅샷이 매번
+ * 중간에 끊기고 처음부터 다시 시도하느라 영영 완주하지 못한다.
+ */
+export const SNAPSHOT_ABORT_BYTES = 512 * 1024;
 export const FAILED_CONNECTION_BYTES = 1024 * 1024;
 export const HEARTBEAT_INTERVAL_MS = 45_000;
 export const HEARTBEAT_TIMEOUT_MS = 90_000;

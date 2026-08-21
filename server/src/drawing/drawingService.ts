@@ -7,6 +7,7 @@ import { broadcast, envelope, sendEnvelope } from '../broadcast/roomBroadcast.js
 import { GameService } from '../game/gameService.js';
 import { ProtocolError, assertProtocol } from '../protocol/errors.js';
 import { RoomService } from '../rooms/roomService.js';
+import { buildPrivateState } from '../state/privateState.js';
 import type { ClientConnection, RoomRuntime } from '../rooms/types.js';
 import { sendDrawingSnapshot } from './snapshotService.js';
 import {
@@ -112,7 +113,18 @@ export class DrawingService {
       roomVersion: room.roomVersion,
       roundId: room.round.roundId
     }), true);
-    if (payload.isFinal) this.roomService.publishState(room);
+    // 획이 끝나면 되돌리기 권한이 생긴다. 그 사실이 필요한 사람은 그린 본인뿐이라
+    // 방 전체에 상태를 다시 뿌리지 않는다. 느린 연결에서는 그 브로드캐스트가 큐를
+    // 채워 정작 필요한 점수 갱신을 뒤로 밀어낸다.
+    if (payload.isFinal) {
+      const drawer = room.players.get(actorId);
+      if (drawer) {
+        sendEnvelope(connection, envelope('PRIVATE_STATE', buildPrivateState(room, drawer), {
+          roomVersion: room.roomVersion,
+          roundId: room.round.roundId
+        }));
+      }
+    }
   }
 
   undo(

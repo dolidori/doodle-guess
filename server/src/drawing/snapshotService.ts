@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import {
   MAX_SNAPSHOT_CHUNK_BYTES,
-  SLOW_CONNECTION_BYTES,
+  SNAPSHOT_ABORT_BYTES,
   type DrawingSnapshotPayload,
   type SnapshotFragment,
   type Stroke
@@ -61,7 +61,7 @@ export const sendDrawingSnapshot = (room: RoomRuntime, connection: ClientConnect
   const chunks = chunkFragments(fragmentsFor(canonical));
   const snapshotId = randomUUID();
   for (const [chunkIndex, fragments] of chunks.entries()) {
-    if (connection.ws.bufferedAmount >= SLOW_CONNECTION_BYTES) {
+    if (connection.ws.bufferedAmount >= SNAPSHOT_ABORT_BYTES) {
       connection.needsSnapshot = true;
       return;
     }
