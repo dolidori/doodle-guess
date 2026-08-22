@@ -629,14 +629,23 @@ h3 {
   align-items: stretch;
   gap: var(--space-2);
   max-height: min(10.5rem, 26vh);
-  overflow: visible;
+  overflow-y: auto;
 }
 
 .control-column {
   grid-area: controls;
   min-width: 0;
   min-height: 0;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* 설정 항목이 몇 개로 늘든 대기실 버튼은 패널 아래에 그대로 남는다 */
+.control-actions {
+  flex: none;
+  display: flex;
+  justify-content: center;
 }
 
 .settings-drawer-toggle {
@@ -644,6 +653,7 @@ h3 {
 }
 
 .control-column > .control-panel {
+  flex: 0 1 auto;
   min-height: 0;
 }
 

@@ -504,7 +504,9 @@ export const GameScreen = ({
                 </button>
               </section>
             )}
-            {actions.has('RETURN_TO_WAITING') && (
+          </div>
+          {actions.has('RETURN_TO_WAITING') && (
+            <div className="control-actions">
               <button
                 type="button"
                 className="secondary next-round"
@@ -512,8 +514,8 @@ export const GameScreen = ({
               >
                 대기실로 돌아가기
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </aside>
       </div>
     </main>
