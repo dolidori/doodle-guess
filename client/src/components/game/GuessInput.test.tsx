@@ -53,6 +53,45 @@ describe('GuessInput', () => {
     expect(game.send).toHaveBeenCalledTimes(2);
   });
 
+  it('한글을 조합하는 도중 남의 추측이 올라와도 치던 글자가 남아 있다', () => {
+    const { rerender } = render(<GuessInput />);
+    const input = screen.getByLabelText('정답 추측') as HTMLInputElement;
+
+    // 한글은 자모를 모아 한 글자를 만드는 동안 조합 상태로 머문다.
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: '로케' } });
+
+    // 그 사이 다른 참여자(사람이든 AI든)의 추측이 도착해 화면이 다시 그려진다.
+    game.state.publicState = {
+      guessFeed: [{ guessId: 'other', nickname: '누군가' } as unknown as GuessPublic],
+      round: { roundId: 'round-1' }
+    };
+    rerender(<GuessInput />);
+
+    // 다시 그려졌다고 입력칸을 되돌리면 조합이 끊겨 'ㄹㅗㅋㅔ'처럼 흩어진다.
+    expect(input.value).toBe('로케');
+
+    // 조합이 끝나고 이어 친 글자도 그대로 붙는다.
+    fireEvent.compositionEnd(input);
+    fireEvent.change(input, { target: { value: '로케트' } });
+    expect(input.value).toBe('로케트');
+  });
+
+  it('제출하고 나면 입력칸을 비운다', () => {
+    const { rerender } = render(<GuessInput />);
+    const input = screen.getByLabelText('정답 추측') as HTMLInputElement;
+    submit('사과');
+
+    // 서버가 내 추측을 피드에 실어 돌려주면 그때 칸을 비운다.
+    game.state.publicState = {
+      guessFeed: [{ guessId: game.send.mock.calls[0]![1].guessId } as unknown as GuessPublic],
+      round: { roundId: 'round-1' }
+    };
+    rerender(<GuessInput />);
+
+    expect(input.value).toBe('');
+  });
+
   it('응답을 기다리는 동안에는 같은 추측을 두 번 보내지 않는다', () => {
     const { rerender } = render(<GuessInput />);
     submit('사과');
