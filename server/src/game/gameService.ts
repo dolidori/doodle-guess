@@ -98,7 +98,7 @@ export class GameService {
     assertProtocol(room.drawerId === actorId, 'NOT_DRAWER', '현재 그리기 담당자만 시작할 수 있습니다.');
     assertProtocol(canStartRound(room), 'MIN_PLAYERS', '추측할 참여자가 한 명 이상 필요합니다.');
     const normalizedKeyword = normalizeGuess(keyword);
-    assertProtocol(normalizedKeyword.length > 0, 'INVALID_KEYWORD', '공백만 있는 제시어는 사용할 수 없습니다.');
+    assertProtocol(normalizedKeyword.length > 0, 'INVALID_KEYWORD', '공백과 특수문자만으로는 제시어를 만들 수 없습니다.');
     if (continuingWithSameDrawer) {
       cancelRoundTimer(room);
       this.registry.nextRound(room);

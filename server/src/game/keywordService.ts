@@ -29,4 +29,7 @@ export const pickRandomKeyword = (excluded: string | null = null): string => {
   return candidates[randomInt(0, candidates.length)]!;
 };
 
-export const normalizeGuess = (value: string): string => value.replace(/\s/gu, '');
+// 정답 비교는 글자만 본다. 공백에 더해 구두점(\p{P})과 기호(\p{S})를 지워
+// '사과, 배!'와 '사과 배'를 같은 답으로 취급한다.
+export const normalizeGuess = (value: string): string =>
+  value.replace(/[\s\p{P}\p{S}]/gu, '');

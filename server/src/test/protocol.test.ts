@@ -28,8 +28,14 @@ describe('공용 계약', () => {
     expect(STROKE_WIDTHS).toEqual({ THIN: 0.003, MEDIUM: 0.007, THICK: 0.014 });
   });
 
-  it('모든 ECMAScript 공백만 제거한다', () => {
+  it('공백과 구두점·기호를 모두 제거한다', () => {
     expect(normalizeGuess('가 나\t다\n라\u00a0마\u3000바')).toBe('가나다라마바');
+    expect(normalizeGuess('사과, 배.')).toBe('사과배');
+    expect(normalizeGuess('apple!!')).toBe('apple');
+    expect(normalizeGuess('100%')).toBe('100');
+    expect(normalizeGuess('star★')).toBe('star');
+    expect(normalizeGuess('고양이🐱')).toBe('고양이');
+    expect(normalizeGuess('e-mail')).toBe(normalizeGuess('e mail'));
     expect(normalizeGuess('Apple!')).not.toBe(normalizeGuess('apple!'));
     expect(normalizeGuess('é')).not.toBe(normalizeGuess('e\u0301'));
   });
