@@ -57,6 +57,7 @@ export class Dispatcher {
       this.drawingService
     );
     this.roomService.onStateChanged = (room) => this.aiService.onRoomChanged(room);
+    this.roomService.onRoomRemoved = (roomCode) => this.aiService.forgetRoom(roomCode);
   }
 
   /**

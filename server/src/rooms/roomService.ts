@@ -49,6 +49,12 @@ export class RoomService {
    */
   onStateChanged: ((room: RoomRuntime) => void) | null = null;
 
+  /**
+   * 방이 레지스트리에서 사라질 때 불린다. 닫는 경로는 상태를 다시 뿌리지 않으므로
+   * onStateChanged로는 알 수 없어, 방에 딸린 예약 작업을 버릴 자리가 따로 필요하다.
+   */
+  onRoomRemoved: ((roomCode: string) => void) | null = null;
+
   constructor(private readonly registry: RoomRegistry) {}
 
   private attach(room: RoomRuntime, player: Player, connection: ClientConnection): void {
@@ -322,5 +328,6 @@ export class RoomService {
     room.connections.clear();
     room.round.drawing.acceptedBatches.clear();
     this.registry.delete(room.roomCode);
+    this.onRoomRemoved?.(room.roomCode);
   }
 }

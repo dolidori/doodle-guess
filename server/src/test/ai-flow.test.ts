@@ -48,7 +48,9 @@ const setup = () => {
   const gameService = new GameService(registry, roomService);
   const drawingService = new DrawingService(gameService, roomService);
   const aiService = new AiService(registry, roomService, gameService, drawingService);
+  // 디스패처가 실제로 거는 것과 같은 두 훅을 연결한다.
   roomService.onStateChanged = (room) => aiService.onRoomChanged(room);
+  roomService.onRoomRemoved = (roomCode) => aiService.forgetRoom(roomCode);
 
   const host = createPlayer('호스트', hashSessionToken(generateSessionToken()), true, false);
   const room = registry.create('NORMAL', host);
