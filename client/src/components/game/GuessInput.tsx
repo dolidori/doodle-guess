@@ -4,27 +4,40 @@ import { useGame } from '../../state/GameContext.js';
 export const GuessInput = () => {
   const { state, send } = useGame();
   const [text, setText] = useState('');
-  const pendingGuessId = useRef<string | null>(null);
+  const pending = useRef<{ guessId: string; requestId: string } | null>(null);
   const allowed = state.privateState?.allowedActions.includes('SUBMIT_GUESS') ?? false;
   const hasAnsweredCorrectly = state.privateState?.hasAnsweredCorrectly ?? false;
   const roundId = state.publicState?.round.roundId;
+  const failedRequestId = state.failedRequestId;
 
   useEffect(() => {
-    if (!pendingGuessId.current) return;
-    if (state.publicState?.guessFeed.some((guess) => guess.guessId === pendingGuessId.current)) {
-      pendingGuessId.current = null;
+    const submitted = pending.current;
+    if (!submitted) return;
+    if (state.publicState?.guessFeed.some((guess) => guess.guessId === submitted.guessId)) {
+      pending.current = null;
       setText('');
     }
   }, [state.publicState?.guessFeed]);
+
+  // 서버가 거절한 제출은 추측 피드에 실리지 않는다. 실패한 요청까지 붙잡고 있으면
+  // 다음 제출이 조용히 막히므로, 거절 응답과 라운드 교체 때 잠금을 풀어 준다.
+  useEffect(() => {
+    if (failedRequestId && failedRequestId === pending.current?.requestId) pending.current = null;
+  }, [failedRequestId]);
+
+  useEffect(() => {
+    pending.current = null;
+  }, [roundId]);
 
   return (
     <form
       className="guess-input"
       onSubmit={(event) => {
         event.preventDefault();
-        if (!allowed || !roundId || !text.trim() || pendingGuessId.current) return;
+        if (!allowed || !roundId || !text.trim() || pending.current) return;
         const guessId = crypto.randomUUID();
-        if (send('SUBMIT_GUESS', { roundId, guessId, text })) pendingGuessId.current = guessId;
+        const requestId = send('SUBMIT_GUESS', { roundId, guessId, text });
+        if (requestId) pending.current = { guessId, requestId };
       }}
     >
       <label htmlFor="guess">정답 추측</label>

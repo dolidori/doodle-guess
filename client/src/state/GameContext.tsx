@@ -320,6 +320,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         break;
       case 'ERROR': {
         const error = event.payload as ErrorPayload;
+        if (event.requestId) dispatch({ type: 'REQUEST_FAILED', requestId: event.requestId });
         const pendingJoin = pendingJoinRef.current;
         if (pendingJoin && event.requestId === pendingJoin.requestId) {
           pendingJoinRef.current = null;

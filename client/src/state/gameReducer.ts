@@ -47,6 +47,7 @@ export type GameState = {
   toastQueue: ToastItem[];
   consumedEventIds: Set<string>;
   blockingMessage: string | null;
+  failedRequestId: string | null;
 };
 
 export const initialState: GameState = {
@@ -62,7 +63,8 @@ export const initialState: GameState = {
   modalQueue: [],
   toastQueue: [],
   consumedEventIds: new Set(),
-  blockingMessage: null
+  blockingMessage: null,
+  failedRequestId: null
 };
 
 export type GameAction =
@@ -89,6 +91,7 @@ export type GameAction =
       remainingSeconds: number | null;
       hostAbsenceRemainingSeconds: number | null;
     }
+  | { type: 'REQUEST_FAILED'; requestId: string }
   | { type: 'TOAST'; toast: ToastItem }
   | { type: 'DISMISS_TOAST'; id: string }
   | { type: 'DISMISS_MODAL' }
@@ -289,6 +292,8 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         remainingSeconds: action.remainingSeconds,
         hostAbsenceRemainingSeconds: action.hostAbsenceRemainingSeconds
       };
+    case 'REQUEST_FAILED':
+      return { ...state, failedRequestId: action.requestId };
     case 'TOAST':
       return { ...state, toastQueue: [...state.toastQueue, action.toast].slice(-3) };
     case 'DISMISS_TOAST':
