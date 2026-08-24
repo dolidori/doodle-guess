@@ -95,7 +95,8 @@ export const startServer = async (
       overloadedSince: null,
       processedRequestIds: new Map(),
       explicitlyLeft: false,
-      livenessProbeAt: null
+      livenessProbeAt: null,
+  aiAuthorized: false
     };
     connections.add(connection);
     ws.on('pong', () => {

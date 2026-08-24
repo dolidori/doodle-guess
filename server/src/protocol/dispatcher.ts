@@ -2,6 +2,9 @@ import {
   MAX_CLIENT_MESSAGE_BYTES,
   type ClientPayloadMap
 } from '../../../shared/src/index.js';
+import { AiService } from '../ai/aiService.js';
+import { passwordMatches } from '../ai/auth.js';
+import { getAiConfig } from '../ai/config.js';
 import { envelope, sendEnvelope } from '../broadcast/roomBroadcast.js';
 import { DrawingService } from '../drawing/drawingService.js';
 import { GameService } from '../game/gameService.js';
@@ -30,7 +33,10 @@ const EVENT_MAX_BYTES: Record<string, number> = {
   KICK_PLAYER: 1024,
   START_NEXT_ROUND: 1024,
   RETURN_TO_WAITING: 1024,
-  END_CEREMONY: 1024
+  END_CEREMONY: 1024,
+  AI_LOGIN: 1024,
+  ADD_AI_PLAYER: 1024,
+  REMOVE_AI_PLAYER: 1024
 };
 
 export class Dispatcher {
@@ -38,11 +44,43 @@ export class Dispatcher {
   readonly roomService: RoomService;
   readonly gameService: GameService;
   readonly drawingService: DrawingService;
+  readonly aiService: AiService;
 
   constructor(readonly registry: RoomRegistry) {
     this.roomService = new RoomService(registry);
     this.gameService = new GameService(registry, this.roomService);
     this.drawingService = new DrawingService(this.gameService, this.roomService);
+    this.aiService = new AiService(
+      registry,
+      this.roomService,
+      this.gameService,
+      this.drawingService
+    );
+    this.roomService.onStateChanged = (room) => this.aiService.onRoomChanged(room);
+  }
+
+  /**
+   * AI 로그인은 방에 들어가기 전(로비)에서도 받아야 해서 방 명령과 따로 처리한다.
+   * 성공하면 이 연결에 표시를 남기고, 이후 같은 연결에서만 AI를 추가할 수 있다.
+   */
+  private handleAiLogin(connection: ClientConnection, password: string, requestId: string): void {
+    const config = getAiConfig();
+    const available = this.aiService.isAvailable();
+    if (!available) {
+      sendEnvelope(connection, envelope('AI_SESSION', {
+        authorized: false,
+        available: false,
+        message: '이 서버에는 AI가 설정되어 있지 않습니다.'
+      }, { requestId }));
+      return;
+    }
+    const authorized = passwordMatches(password, config.password);
+    connection.aiAuthorized = authorized;
+    sendEnvelope(connection, envelope('AI_SESSION', {
+      authorized,
+      available: true,
+      message: authorized ? 'AI 참여자를 추가할 수 있습니다.' : '비밀번호가 올바르지 않습니다.'
+    }, { requestId }));
   }
 
   private sendError(
@@ -104,6 +142,9 @@ export class Dispatcher {
       if (command.type === 'CREATE_ROOM') {
         const payload = command.payload as ClientPayloadMap['CREATE_ROOM'];
         this.roomService.create(payload.nickname, payload.mode, connection, command.requestId);
+      } else if (command.type === 'AI_LOGIN') {
+        const payload = command.payload as ClientPayloadMap['AI_LOGIN'];
+        this.handleAiLogin(connection, payload.password, command.requestId);
       } else if (command.type === 'JOIN_ROOM') {
         const payload = command.payload as ClientPayloadMap['JOIN_ROOM'];
         const room = this.registry.get(payload.roomCode);
@@ -256,6 +297,22 @@ export class Dispatcher {
       case 'END_CEREMONY':
         this.gameService.endCeremony(room, actorId);
         break;
+      case 'ADD_AI_PLAYER': {
+        if (!connection.aiAuthorized) {
+          throw new ProtocolError('AI_AUTH_REQUIRED', 'AI 비밀번호를 먼저 입력해 주세요.');
+        }
+        const payload = command.payload as ClientPayloadMap['ADD_AI_PLAYER'];
+        this.aiService.addPlayers(room, actorId, payload.count);
+        break;
+      }
+      case 'REMOVE_AI_PLAYER': {
+        if (!connection.aiAuthorized) {
+          throw new ProtocolError('AI_AUTH_REQUIRED', 'AI 비밀번호를 먼저 입력해 주세요.');
+        }
+        const payload = command.payload as ClientPayloadMap['REMOVE_AI_PLAYER'];
+        this.aiService.removePlayer(room, actorId, payload.targetPlayerId);
+        break;
+      }
       default:
         throw new ProtocolError('INVALID_ENVELOPE', '알 수 없는 이벤트입니다.');
     }

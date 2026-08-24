@@ -7,3 +7,8 @@ playwright-report/
 test-results/
 .DS_Store
 *.log
+
+# API 키가 담기는 파일. 절대 커밋하지 않는다.
+*.env
+.env
+.env.*

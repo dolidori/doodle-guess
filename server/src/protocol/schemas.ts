@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   CLIENT_EVENT_TYPES,
   MAX_DURATION_SECONDS,
+  MAX_AI_PER_REQUEST,
   MAX_POINTS_PER_BATCH,
   MIN_DURATION_SECONDS,
   PALETTE,
@@ -39,6 +40,8 @@ const boundedText = (
 export const nicknameSchema = boundedText('닉네임', 20, 80, true).transform((value) => value.trim());
 export const keywordSchema = boundedText('제시어', 50, 256, false);
 export const guessSchema = boundedText('추측', 80, 512, true).transform((value) => value.trim());
+/** 비밀번호는 다듬지 않는다. 앞뒤 공백까지 그대로 비교해야 오탐이 없다. */
+export const aiPasswordSchema = z.string().min(1).max(200);
 export const uuidSchema = z.uuid();
 export const roomCodeSchema = z.string().regex(/^[1-9][0-9]{2}$/u);
 export const sessionTokenSchema = z.string().regex(/^[A-Za-z0-9_-]{43}$/u);
@@ -110,7 +113,12 @@ export const payloadSchemas = {
   KICK_PLAYER: z.object({ targetPlayerId: uuidSchema }).strict(),
   START_NEXT_ROUND: z.object({ previousRoundId: uuidSchema }).strict(),
   RETURN_TO_WAITING: z.object({ roundId: uuidSchema }).strict(),
-  END_CEREMONY: emptySchema
+  END_CEREMONY: emptySchema,
+  AI_LOGIN: z.object({ password: aiPasswordSchema }).strict(),
+  ADD_AI_PLAYER: z.object({
+    count: z.number().int().min(1).max(MAX_AI_PER_REQUEST)
+  }).strict(),
+  REMOVE_AI_PLAYER: z.object({ targetPlayerId: uuidSchema }).strict()
 } satisfies Record<(typeof CLIENT_EVENT_TYPES)[number], z.ZodType>;
 
 const envelopeSchema = z.object({

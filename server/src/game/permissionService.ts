@@ -1,4 +1,9 @@
-import { MAX_KEYWORD_SHUFFLES, type AllowedAction } from '../../../shared/src/index.js';
+import {
+  MAX_KEYWORD_SHUFFLES,
+  ROOM_CAPACITY,
+  type AllowedAction
+} from '../../../shared/src/index.js';
+import { getAiConfig, isAiAvailable } from '../ai/config.js';
 import type { Player, RoomRuntime } from '../rooms/types.js';
 
 const isBeforeDeadline = (room: RoomRuntime, now: number): boolean =>
@@ -84,5 +89,15 @@ export const allowedActionsFor = (
     actions.push('RETURN_TO_WAITING');
   }
   if (results && privileged) actions.push('END_CEREMONY');
+
+  // AI 관리는 방 권한과 별개로 서버 설정이 갖춰져야 한다. 실제로 넣을 수 있는지는
+  // 로비에서 비밀번호를 통과했는지까지 봐야 하지만, 그건 연결이 알고 있으므로
+  // 여기서는 방 쪽 조건만 본다.
+  if (privileged && !results && isAiAvailable(getAiConfig())) {
+    if (room.players.size < ROOM_CAPACITY) actions.push('ADD_AI_PLAYER');
+    if ([...room.players.values()].some((target) => target.isAI)) {
+      actions.push('REMOVE_AI_PLAYER');
+    }
+  }
   return actions;
 };

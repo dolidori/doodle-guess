@@ -29,6 +29,17 @@ export type ClientPayloadMap = {
   START_NEXT_ROUND: { previousRoundId: string };
   RETURN_TO_WAITING: { roundId: string };
   END_CEREMONY: Record<string, never>;
+  AI_LOGIN: { password: string };
+  ADD_AI_PLAYER: { count: number };
+  REMOVE_AI_PLAYER: { targetPlayerId: string };
+};
+
+export type AiSessionPayload = {
+  /** 비밀번호가 맞았는지. 틀리면 false로만 알려 주고 이유는 나누지 않는다. */
+  authorized: boolean;
+  /** 서버에 API 키와 비밀번호가 모두 설정되어 AI를 쓸 수 있는 상태인지. */
+  available: boolean;
+  message: string;
 };
 
 export type ClientEnvelope<T extends ClientEventType = ClientEventType> = {

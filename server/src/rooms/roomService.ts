@@ -25,7 +25,8 @@ export const createPlayer = (
   nickname: string,
   sessionTokenHash: string,
   isHost: boolean,
-  isModerator: boolean
+  isModerator: boolean,
+  isAI = false
 ): Player => ({
   playerId: randomUUID(),
   nickname,
@@ -34,12 +35,20 @@ export const createPlayer = (
   connected: true,
   isHost,
   isModerator,
+  isAI,
   score: 0,
   joinedAt: Date.now(),
   disconnectedAt: null
 });
 
 export class RoomService {
+  /**
+   * 방 상태가 새로 뿌려질 때마다 불리는 훅. AI 서비스가 여기에 자기를 걸어
+   * 자기 차례를 알아챈다. RoomService가 AiService를 직접 알면 서로를 참조하게
+   * 되므로 주입 방식으로 끊어 둔다.
+   */
+  onStateChanged: ((room: RoomRuntime) => void) | null = null;
+
   constructor(private readonly registry: RoomRegistry) {}
 
   private attach(room: RoomRuntime, player: Player, connection: ClientConnection): void {
@@ -106,6 +115,7 @@ export class RoomService {
   }
 
   publishState(room: RoomRuntime): void {
+    this.onStateChanged?.(room);
     const publicState = buildPublicState(room);
     broadcast(room, envelope('PUBLIC_STATE', publicState, {
       roomVersion: room.roomVersion,

@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { HOST_ABSENCE_TTL_MS } from '../../../shared/src/index.js';
 import type {
+  AiSessionPayload,
   AllowedAction,
   ClientEventType,
   ClientPayloadMap,
@@ -108,7 +109,8 @@ const roomCloseMessage = (reason: string): string => {
 };
 
 const actionForEvent = (type: ClientEventType): AllowedAction | null =>
-  type === 'CREATE_ROOM' || type === 'JOIN_ROOM' ? null : type;
+  // 방 밖(로비)에서도 보내는 이벤트라 방 안 허용 목록으로 막으면 안 된다.
+  type === 'CREATE_ROOM' || type === 'JOIN_ROOM' || type === 'AI_LOGIN' ? null : type;
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(gameReducer, initialState);
@@ -196,6 +198,12 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       roomVersion?: number;
     };
     switch (event.type) {
+      case 'AI_SESSION': {
+        const payload = event.payload as AiSessionPayload;
+        dispatch({ type: 'AI_SESSION', payload });
+        toast(payload.message, payload.authorized ? 'info' : 'error');
+        break;
+      }
       case 'ROOM_SESSION':
         clearJoinRetry();
         rememberSession(event.payload as RoomSession);

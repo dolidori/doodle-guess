@@ -4,6 +4,7 @@ import {
   removeRecentRoom,
   useGame
 } from '../state/GameContext.js';
+import { AiLoginForm } from '../components/lobby/AiLoginForm.js';
 import { CreateRoomForm } from '../components/lobby/CreateRoomForm.js';
 import { JoinRoomForm } from '../components/lobby/JoinRoomForm.js';
 import { ServerStatus } from '../components/lobby/ServerStatus.js';
@@ -44,6 +45,7 @@ export const LobbyScreen = () => {
             onJoin={() => joinRoom(roomCode, nickname.trim())}
           />
         </div>
+        <AiLoginForm disabled={disabled} />
         {recent.length > 0 && (
           <section className="recent-rooms">
             <h2>최근 접속</h2>
