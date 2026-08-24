@@ -45,8 +45,7 @@ const fakeConnection = (id: string, bufferedAmount = 0): ClientConnection => ({
   overloadedSince: null,
   processedRequestIds: new Map(),
   explicitlyLeft: false,
-  livenessProbeAt: null,
-  aiAuthorized: false
+  livenessProbeAt: null
 });
 
 const setupActiveRoom = () => {

@@ -11,9 +11,9 @@ import { parseCommand } from '../protocol/schemas.js';
 
 describe('공용 계약', () => {
   it('이벤트와 액션 개수가 기준 문서와 일치한다', () => {
-    expect(CLIENT_EVENT_TYPES).toHaveLength(21);
-    expect(SERVER_EVENT_TYPES).toHaveLength(15);
-    expect(ALLOWED_ACTIONS).toHaveLength(18);
+    expect(CLIENT_EVENT_TYPES).toHaveLength(18);
+    expect(SERVER_EVENT_TYPES).toHaveLength(14);
+    expect(ALLOWED_ACTIONS).toHaveLength(16);
   });
 
   it('팔레트와 굵기 값이 고정되어 있다', () => {

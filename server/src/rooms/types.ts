@@ -19,8 +19,6 @@ export type Player = {
   connected: boolean;
   isHost: boolean;
   isModerator: boolean;
-  /** AI 참여자는 WebSocket 연결 없이 서버 안에서만 움직인다. */
-  isAI: boolean;
   score: number;
   joinedAt: number;
   disconnectedAt: number | null;
@@ -74,8 +72,6 @@ export type ClientConnection = {
   explicitlyLeft: boolean;
   /** 인계 요청 시 이 연결이 살아 있는지 확인하려고 ping을 보낸 시각. */
   livenessProbeAt: number | null;
-  /** 로비에서 AI 비밀번호를 통과한 연결인지. 연결이 끊기면 다시 받아야 한다. */
-  aiAuthorized: boolean;
 };
 
 export type RoomRuntime = {

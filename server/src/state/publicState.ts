@@ -22,7 +22,6 @@ export const buildPublicState = (room: RoomRuntime, now = Date.now()): PublicSta
     connected: player.connected,
     isHost: player.isHost,
     isModerator: player.isModerator,
-    isAI: player.isAI,
     score: player.score
   })),
   drawerId: room.drawerId,

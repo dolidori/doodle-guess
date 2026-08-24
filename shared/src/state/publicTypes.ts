@@ -18,7 +18,6 @@ export type PublicPlayer = {
   connected: boolean;
   isHost: boolean;
   isModerator: boolean;
-  isAI: boolean;
   score: number;
 };
 

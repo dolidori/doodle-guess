@@ -30,8 +30,7 @@ const fakeConnection = (id: string): ClientConnection => ({
   overloadedSince: null,
   processedRequestIds: new Map(),
   explicitlyLeft: false,
-  livenessProbeAt: null,
-  aiAuthorized: false
+  livenessProbeAt: null
 });
 
 const sentEvents = (connection: ClientConnection): Array<{ type: string; payload: any }> =>

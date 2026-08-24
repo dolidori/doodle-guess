@@ -30,15 +30,6 @@ export const FAILED_CONNECTION_BYTES = 1024 * 1024;
 export const HEARTBEAT_INTERVAL_MS = 45_000;
 export const HEARTBEAT_TIMEOUT_MS = 90_000;
 
-/** AI 참여자가 한 획을 그릴 때 사람처럼 보이도록 배치 사이에 두는 간격. */
-export const AI_STROKE_INTERVAL_MS = 220;
-/** AI 추측자가 캔버스를 다시 보기까지 기다리는 간격. */
-export const AI_GUESS_INTERVAL_MS = 7000;
-/** AI 추측자가 라운드 시작 후 첫 추측을 내놓기까지 기다리는 시간. */
-export const AI_FIRST_GUESS_DELAY_MS = 6000;
-/** 한 번에 추가할 수 있는 AI 수. 빈 자리를 넘어설 수는 없다. */
-export const MAX_AI_PER_REQUEST = 30;
-
 export const PALETTE = {
   BLACK: { hex: '#111827', label: '검정' },
   BLUE: { hex: '#0072B2', label: '파랑' },
@@ -74,10 +65,7 @@ export const CLIENT_EVENT_TYPES = [
   'KICK_PLAYER',
   'START_NEXT_ROUND',
   'RETURN_TO_WAITING',
-  'END_CEREMONY',
-  'AI_LOGIN',
-  'ADD_AI_PLAYER',
-  'REMOVE_AI_PLAYER'
+  'END_CEREMONY'
 ] as const;
 
 export const SERVER_EVENT_TYPES = [
@@ -94,7 +82,6 @@ export const SERVER_EVENT_TYPES = [
   'KICKED',
   'PLAYER_KICKED',
   'ROOM_CLOSED',
-  'AI_SESSION',
   'ERROR'
 ] as const;
 
@@ -114,9 +101,7 @@ export const ALLOWED_ACTIONS = [
   'KICK_PLAYER',
   'START_NEXT_ROUND',
   'RETURN_TO_WAITING',
-  'END_CEREMONY',
-  'ADD_AI_PLAYER',
-  'REMOVE_AI_PLAYER'
+  'END_CEREMONY'
 ] as const;
 
 export const ERROR_CODES = [
@@ -132,6 +117,5 @@ export const ERROR_CODES = [
   'STROKE_SEQUENCE_GAP', 'STROKE_LIMIT', 'DRAWING_LIMIT',
   'NO_STROKE_TO_UNDO', 'TARGET_NOT_FOUND', 'TARGET_DISCONNECTED',
   'SHUFFLE_LIMIT',
-  'CANNOT_KICK_PRIVILEGED',
-  'AI_UNAVAILABLE', 'AI_AUTH_REQUIRED', 'AI_LIMIT', 'AI_NOT_FOUND'
+  'CANNOT_KICK_PRIVILEGED'
 ] as const;

@@ -99,9 +99,6 @@ type StrokeTool = 'PEN' | 'ERASER';
 13. `KICK_PLAYER`
 14. `START_NEXT_ROUND`
 15. `RETURN_TO_WAITING`
-16. `AI_LOGIN`
-17. `ADD_AI_PLAYER`
-18. `REMOVE_AI_PLAYER`
 
 ### S→C
 
@@ -118,8 +115,7 @@ type StrokeTool = 'PEN' | 'ERASER';
 11. `KICKED`
 12. `PLAYER_KICKED`
 13. `ROOM_CLOSED`
-14. `AI_SESSION`
-15. `ERROR`
+14. `ERROR`
 
 별도 `SET_KEYWORD_VISIBILITY`는 없다. D-11에 따라 보기/가리기는 각 권한자 화면의 로컬 상태다. `PLAYERS_UPDATED`, `DRAWER_CHANGED`, `ROUND_STARTED`, `RECONNECT_STATE`는 `PUBLIC_STATE`/`PRIVATE_STATE`로 통합한다.
 
@@ -394,26 +390,6 @@ payload: {
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `INVALID_PHASE`, `STALE_ROUND`, `RATE_LIMITED`.
 
-### 5.16 `AI_LOGIN`
-
-- payload: `{ password: string }` (1~200자)
-- 방에 들어가기 전(로비)에서도 보낼 수 있는 유일한 방 밖 명령이다. 성공하면 그 연결에만 AI 사용 표시가 남고, 연결이 끊기면 사라진다.
-- 응답: `AI_SESSION`. 비밀번호가 틀려도 오류가 아니라 `authorized: false`로 답한다.
-- 서버에 `DEEPSEEK_API_KEY`와 `AI_PASSWORD`가 모두 없으면 `available: false`로 답한다.
-
-### 5.17 `ADD_AI_PLAYER`
-
-- payload: `{ count: number }` (1 이상)
-- 권한: 호스트 또는 진행자이면서, 같은 연결이 `AI_LOGIN`을 통과했을 것.
-- 빈 자리보다 많이 요청해도 남은 자리 수만큼만 들어온다. 자리가 없으면 `ROOM_FULL`.
-- 오류: `AI_AUTH_REQUIRED`, `AI_UNAVAILABLE`, `FORBIDDEN`, `ROOM_FULL`.
-
-### 5.18 `REMOVE_AI_PLAYER`
-
-- payload: `{ targetPlayerId: string }`
-- 권한: `ADD_AI_PLAYER`와 같다. 사람 참여자를 이 명령으로 내보낼 수는 없다(`AI_NOT_FOUND`).
-- 그리는 중인 AI를 내보내면 그리기 권한이 진행자(없으면 호스트)에게 넘어가고 `drawerEpoch`가 1 올라간다.
-
 ## 6. S→C 상세 계약
 
 ### 6.1 `ROOM_SESSION`
@@ -682,13 +658,7 @@ payload: {
 
 현재 연결자 전체에 전송하고 Room을 삭제한다. 호스트 권한은 이양하지 않는다.
 
-### 6.14 `AI_SESSION`
-
-- payload: `{ authorized: boolean; available: boolean; message: string }`
-- `AI_LOGIN`을 보낸 연결에만 회신한다.
-- `available`이 false면 이 서버에는 AI가 설정되어 있지 않다는 뜻이고, 그때 `authorized`는 항상 false다.
-
-### 6.15 `ERROR`
+### 6.14 `ERROR`
 
 ```ts
 payload: {
@@ -736,10 +706,6 @@ payload: {
 | `MIN_PLAYERS` | 연결 drawer+eligible guesser 조건 미충족 | true |
 | `INVALID_DURATION` | 20~180 정수·5초 배수 위반 | false |
 | `INVALID_KEYWORD` | keyword 문자열 규칙 위반 | false |
-| `AI_UNAVAILABLE` | 서버에 AI 키나 비밀번호가 없음 | false |
-| `AI_AUTH_REQUIRED` | 이 연결이 AI 비밀번호를 통과하지 않음 | false |
-| `AI_LIMIT` | AI 추가 한도 초과 | false |
-| `AI_NOT_FOUND` | 대상이 AI 참여자가 아님 | false |
 | `SHUFFLE_LIMIT` | 라운드당 다시 뽑기 5회 초과 | false |
 | `INVALID_GUESS` | guess 문자열 규칙 위반 | false |
 | `GUESS_FORBIDDEN` | keyword 열람 이력/역할로 추측 불가 | false |

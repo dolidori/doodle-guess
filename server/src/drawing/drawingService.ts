@@ -30,15 +30,11 @@ export class DrawingService {
     private readonly roomService: RoomService
   ) {}
 
-  /**
-   * connection이 null이면 AI 참여자가 그리는 것이다. 되돌려 줄 상대가 없으므로
-   * 본인에게만 보내는 회신은 건너뛰고, 방 전체 브로드캐스트는 그대로 한다.
-   */
   draw(
     room: RoomRuntime,
     actorId: string,
     payload: StrokeBatchPayload,
-    connection: ClientConnection | null
+    connection: ClientConnection
   ): void {
     this.gameService.ensureActiveBeforeDeadline(room, payload.roundId);
     assertProtocol(room.drawerId === actorId, 'NOT_DRAWER', '현재 그리기 담당자가 아닙니다.');
@@ -48,12 +44,10 @@ export class DrawingService {
     const key = batchKey(payload);
     const duplicate = room.round.drawing.acceptedBatches.get(key);
     if (duplicate) {
-      if (connection) {
-        sendEnvelope(connection, envelope('STROKE_BATCH', duplicate, {
-          roomVersion: room.roomVersion,
-          roundId: room.round.roundId
-        }), true);
-      }
+      sendEnvelope(connection, envelope('STROKE_BATCH', duplicate, {
+        roomVersion: room.roomVersion,
+        roundId: room.round.roundId
+      }), true);
       return;
     }
 
@@ -61,7 +55,7 @@ export class DrawingService {
     let stroke = drawing.strokes.find((candidate) => candidate.strokeId === payload.strokeId);
     const expectedBatchSeq = stroke ? stroke.lastBatchSeq + 1 : 0;
     if (payload.batchSeq > expectedBatchSeq) {
-      if (connection) sendDrawingSnapshot(room, connection);
+      sendDrawingSnapshot(room, connection);
       throw new ProtocolError('STROKE_SEQUENCE_GAP', '스트로크 배치가 누락되었습니다.', {
         expected: expectedBatchSeq,
         received: payload.batchSeq,
@@ -122,7 +116,7 @@ export class DrawingService {
     // 획이 끝나면 되돌리기 권한이 생긴다. 그 사실이 필요한 사람은 그린 본인뿐이라
     // 방 전체에 상태를 다시 뿌리지 않는다. 느린 연결에서는 그 브로드캐스트가 큐를
     // 채워 정작 필요한 점수 갱신을 뒤로 밀어낸다.
-    if (payload.isFinal && connection) {
+    if (payload.isFinal) {
       const drawer = room.players.get(actorId);
       if (drawer) {
         sendEnvelope(connection, envelope('PRIVATE_STATE', buildPrivateState(room, drawer), {

@@ -269,12 +269,11 @@ export class GameService {
     }
   }
 
-  /** connection이 null이면 AI 참여자의 추측이다. 회신할 상대가 없다. */
   submitGuess(
     room: RoomRuntime,
     actorId: string,
     payload: { roundId: string; guessId: string; text: string },
-    connection: ClientConnection | null
+    connection: ClientConnection
   ): void {
     this.ensureActiveBeforeDeadline(room, payload.roundId);
     assertProtocol(!room.round.guessLocked, 'ROUND_LOCKED', '추측 입력이 잠겼습니다.');
@@ -288,13 +287,11 @@ export class GameService {
 
     const duplicate = room.guessFeed.find((guess) => guess.guessId === payload.guessId);
     if (duplicate) {
-      if (connection) {
-        sendEnvelope(connection, envelope('GUESS_SHARED', duplicate, {
-          roomVersion: room.roomVersion,
-          eventSeq: room.eventSeq,
-          roundId: room.round.roundId
-        }));
-      }
+      sendEnvelope(connection, envelope('GUESS_SHARED', duplicate, {
+        roomVersion: room.roomVersion,
+        eventSeq: room.eventSeq,
+        roundId: room.round.roundId
+      }));
       return;
     }
     assertProtocol(

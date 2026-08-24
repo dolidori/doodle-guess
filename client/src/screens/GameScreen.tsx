@@ -7,7 +7,6 @@ import {
 import { KeywordPanel } from '../components/canvas/KeywordPanel.js';
 import { GuessFeed } from '../components/game/GuessFeed.js';
 import { GuessInput } from '../components/game/GuessInput.js';
-import { AiPanel } from '../components/game/AiPanel.js';
 import { PlayerList } from '../components/game/PlayerList.js';
 import { RoundStatus } from '../components/game/RoundStatus.js';
 import { ConfirmationModal } from '../components/feedback/ConfirmationModal.js';
@@ -497,7 +496,6 @@ export const GameScreen = ({
               </section>
             )}
             <KeywordPanel />
-            <AiPanel />
             {actions.has('RECLAIM_DRAWER') && (
               <section className="panel-section">
                 <p>기존 그림과 제시어를 유지한 채 그리기 권한을 가져옵니다.</p>

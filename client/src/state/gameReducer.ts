@@ -1,5 +1,4 @@
 import type {
-  AiSessionPayload,
   AuthoritativeDrawing,
   GuessPublic,
   PrivateState,
@@ -49,8 +48,6 @@ export type GameState = {
   consumedEventIds: Set<string>;
   blockingMessage: string | null;
   failedRequestId: string | null;
-  /** 로비에서 받은 AI 사용 권한. 연결이 끊기면 다시 받아야 한다. */
-  ai: AiSessionPayload | null;
 };
 
 export const initialState: GameState = {
@@ -67,12 +64,10 @@ export const initialState: GameState = {
   toastQueue: [],
   consumedEventIds: new Set(),
   blockingMessage: null,
-  failedRequestId: null,
-  ai: null
+  failedRequestId: null
 };
 
 export type GameAction =
-  | { type: 'AI_SESSION'; payload: AiSessionPayload }
   | { type: 'CONNECTION'; status: ConnectionStatus; attempts?: number }
   | { type: 'SESSION'; session: RoomSession }
   | { type: 'PUBLIC_STATE'; state: PublicState }
@@ -297,8 +292,6 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         remainingSeconds: action.remainingSeconds,
         hostAbsenceRemainingSeconds: action.hostAbsenceRemainingSeconds
       };
-    case 'AI_SESSION':
-      return { ...state, ai: action.payload };
     case 'REQUEST_FAILED':
       return { ...state, failedRequestId: action.requestId };
     case 'TOAST':
@@ -313,7 +306,6 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       return {
         ...initialState,
         connection: state.connection,
-        ai: state.ai,
         screen: 'KICKED',
         blockingMessage: '방에서 내보내졌습니다.'
       };
@@ -321,11 +313,10 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       return {
         ...initialState,
         connection: state.connection,
-        ai: state.ai,
         screen: 'CLOSED',
         blockingMessage: action.message
       };
     case 'RESET_TO_LOBBY':
-      return { ...initialState, connection: state.connection, ai: state.ai };
+      return { ...initialState, connection: state.connection };
   }
 };
