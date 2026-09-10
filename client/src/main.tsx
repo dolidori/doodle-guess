@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { App } from './app/App.js';
+import { installPalmRejection } from './input/palmRejection.js';
 import { GameProvider } from './state/GameContext.js';
 import './styles/tokens.css';
 import './styles/global.css';
@@ -14,6 +15,8 @@ if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
     window.location.reload();
   });
 }
+
+installPalmRejection();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

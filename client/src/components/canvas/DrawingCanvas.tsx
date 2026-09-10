@@ -4,6 +4,7 @@ import {
   STROKE_WIDTHS,
   type Point
 } from '../../../../shared/src/index.js';
+import { shouldIgnoreTouchDrawing } from '../../input/palmRejection.js';
 import { useGame } from '../../state/GameContext.js';
 import { renderPreview, renderStrokes } from './canvasRenderer.js';
 import type { ToolSettings } from './DrawingToolbar.js';
@@ -169,6 +170,14 @@ export const DrawingCanvas = ({
       aria-label={enabled ? '그림을 그릴 수 있는 캔버스' : '그림 보기 캔버스'}
       onPointerDown={(event) => {
         if (!enabled || !stageRef.current) return;
+        if (shouldIgnoreTouchDrawing(event.pointerType)) return;
+        if (activeRef.current) {
+          // 진행 중인 획은 다른 포인터가 가로챌 수 없다. 단 펜은 손가락 획을 넘겨받는다.
+          if (event.pointerType !== 'pen') return;
+          flush(true);
+          stageRef.current.releasePointerCapture(activeRef.current.pointerId);
+          activeRef.current = null;
+        }
         lastPointerRef.current = { clientX: event.clientX, clientY: event.clientY };
         syncEraserCursor();
         const point = normalizedPoint(event, stageRef.current);
@@ -186,10 +195,12 @@ export const DrawingCanvas = ({
         redraw();
       }}
       onPointerEnter={(event) => {
+        if (shouldIgnoreTouchDrawing(event.pointerType)) return;
         lastPointerRef.current = { clientX: event.clientX, clientY: event.clientY };
         syncEraserCursor();
       }}
       onPointerMove={(event) => {
+        if (shouldIgnoreTouchDrawing(event.pointerType)) return;
         lastPointerRef.current = { clientX: event.clientX, clientY: event.clientY };
         syncEraserCursor();
         addPoint(event);
