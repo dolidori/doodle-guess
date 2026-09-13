@@ -107,8 +107,11 @@ const roomCloseMessage = (reason: string): string => {
   return '서버가 다시 시작되어 기존 방이 종료되었습니다.';
 };
 
+// 입퇴장과 제시어 열람 신고는 allowedActions로 관리하지 않는다.
+const UNGATED_EVENTS = new Set<ClientEventType>(['CREATE_ROOM', 'JOIN_ROOM', 'REVEAL_KEYWORD']);
+
 const actionForEvent = (type: ClientEventType): AllowedAction | null =>
-  type === 'CREATE_ROOM' || type === 'JOIN_ROOM' ? null : type;
+  UNGATED_EVENTS.has(type) ? null : (type as AllowedAction);
 
 export const GameProvider = ({ children }: { children: ReactNode }) => {
   const [state, dispatch] = useReducer(gameReducer, initialState);

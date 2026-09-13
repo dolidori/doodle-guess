@@ -80,6 +80,10 @@
         "LEAVE_ROOM",
         "SET_ROUND_DURATION",
         "SET_ANSWER_MODE",
+        "SET_DRAWER_ORDER",
+        "SHUFFLE_KEYWORD",
+        "LOCK_KEYWORD",
+        "UNLOCK_KEYWORD",
         "SET_KEYWORD_AND_START",
         "SUBMIT_GUESS",
         "DRAW_STROKE_BATCH",
@@ -88,8 +92,8 @@
         "ASSIGN_DRAWER",
         "RECLAIM_DRAWER",
         "KICK_PLAYER",
-        "START_NEXT_ROUND",
-        "RETURN_TO_WAITING"
+        "RETURN_TO_WAITING",
+        "END_CEREMONY"
       ]
     },
     "PaletteColor": {
@@ -1282,18 +1286,32 @@
       "atomicEffects": "winner remains null; expiredAt set; lastRoundEventId set; guessLocked=true; drawingLocked=true; statuses become ROUND_EXPIRED/EXPIRED"
     },
     {
-      "from": "ROUND_SOLVED/SOLVED",
-      "action": "START_NEXT_ROUND",
-      "actor": "NORMAL host or MODERATOR moderator",
+      "from": "ROUND_SOLVED/SOLVED or ROUND_EXPIRED/EXPIRED",
+      "action": "RETURN_TO_WAITING",
+      "actor": "host or moderator",
       "guard": "actor connected",
-      "atomicEffects": "new roundId and roundNumber; keyword, winner, keywordExposedPlayerIds and guessFeed cleared; drawingRevision incremented; drawingSeq reset; drawerId and durationSeconds retained; statuses become WAITING/PREPARING_KEYWORD"
+      "atomicEffects": "new roundId and roundNumber; keyword, winner, keywordExposedPlayerIds and guessFeed cleared; lockedKeyword and suggestedKeywordSeenBy cleared; shuffleCount reset; rotation order and finalRankings cleared; drawingRevision incremented; drawingSeq reset; drawerId and durationSeconds retained; statuses become WAITING/PREPARING_KEYWORD"
     },
     {
-      "from": "ROUND_EXPIRED/EXPIRED",
-      "action": "START_NEXT_ROUND",
-      "actor": "NORMAL host or MODERATOR moderator",
-      "guard": "actor connected",
-      "atomicEffects": "same reset as solved next round"
+      "from": "ROUND_SOLVED/SOLVED or ROUND_EXPIRED/EXPIRED",
+      "action": "SET_KEYWORD_AND_START",
+      "actor": "current drawer",
+      "guard": "room.status != RESULTS and canStartRound",
+      "atomicEffects": "server opens a new roundId first, then starts the round; lets the same drawer continue without visiting the waiting room"
+    },
+    {
+      "from": "ROUND_SOLVED/SOLVED or ROUND_EXPIRED/EXPIRED",
+      "action": "ASSIGN_DRAWER or RECLAIM_DRAWER",
+      "actor": "host or moderator",
+      "guard": "room.status != RESULTS",
+      "atomicEffects": "drawerId changed and drawerEpoch incremented without visiting the waiting room; suggested keyword rerolled and shuffleCount incremented only when the outgoing drawer is in suggestedKeywordSeenBy; keywordExposedPlayerIds untouched because the finished round's answer is already public"
+    },
+    {
+      "from": "RESULTS",
+      "action": "END_CEREMONY",
+      "actor": "host or moderator",
+      "guard": "room.status == RESULTS",
+      "atomicEffects": "all scores reset to 0; rotation order and finalRankings cleared; drawerId set to connected host (else any connected player); new round opened in WAITING/PREPARING_KEYWORD"
     },
     {
       "from": "any non-CLOSED",
@@ -1366,8 +1384,28 @@
       "when": "actor is connected host or moderator, target is different non-privileged same-room player"
     },
     {
-      "action": "START_NEXT_ROUND",
-      "when": "round.status in [SOLVED, EXPIRED] and actor is NORMAL host or MODERATOR moderator"
+      "action": "RETURN_TO_WAITING",
+      "when": "round.status in [DRAWING_AND_GUESSING, SOLVED, EXPIRED] and actor is connected host or moderator"
+    },
+    {
+      "action": "SHUFFLE_KEYWORD",
+      "when": "betweenRounds, actor is current drawer, canStartRound, lockedKeyword is null, shuffleCount < 5"
+    },
+    {
+      "action": "LOCK_KEYWORD",
+      "when": "betweenRounds, actor is moderator, lockedKeyword is null"
+    },
+    {
+      "action": "UNLOCK_KEYWORD",
+      "when": "betweenRounds, actor is moderator, lockedKeyword is not null"
+    },
+    {
+      "action": "SET_DRAWER_ORDER",
+      "when": "round.status == PREPARING_KEYWORD, actor is host or moderator, rotationPlayerIds is empty"
+    },
+    {
+      "action": "END_CEREMONY",
+      "when": "room.status == RESULTS and actor is connected host or moderator"
     }
   ],
   "xInvariants": [
@@ -1375,8 +1413,14 @@
     "hostId is immutable for the room lifetime; host disconnect never transfers host authority.",
     "The player whose playerId equals hostId always retains isHost=true until room deletion.",
     "An active room has exactly one drawerId and only that player can mutate the drawing or set the keyword.",
+    "betweenRounds means round.status == PREPARING_KEYWORD, or round.status in [SOLVED, EXPIRED] while room.status != RESULTS. Drawer handover and keyword commands are allowed there.",
+    "keywordExposedPlayerIds gains a newly assigned drawer only while round.status == DRAWING_AND_GUESSING.",
     "keyword and normalizedKeyword never appear in PublicState, logs, errors, drawing snapshots, or other rooms.",
-    "Only the current drawer and moderator receive keyword in PrivateState.",
+    "Only the current drawer and moderator receive keyword, suggestedKeyword and lockedKeyword in PrivateState.",
+    "PublicState exposes keywordLocked as a boolean only; the locked keyword text never leaves PrivateState.",
+    "Handing drawing authority over reroll the suggested keyword whenever the outgoing drawer is in suggestedKeywordSeenBy, and the outgoing drawer never receives the new one.",
+    "A locked keyword changes only through UNLOCK_KEYWORD by a moderator; SET_KEYWORD_AND_START payloads are ignored while locked.",
+    "LOCK_KEYWORD and UNLOCK_KEYWORD are moderator-only; a NORMAL mode host can hand over drawing authority but never touches the keyword.",
     "Once a playerId enters keywordExposedPlayerIds, it stays there for that round and cannot submit guesses.",
     "Only server-accepted guesses enter guessFeed; every accepted guess is shared to the entire room in guessSeq order.",
     "Exactly one of SOLVED or EXPIRED terminates an active round.",
@@ -1392,7 +1436,9 @@
   "xProtocolBindings": {
     "clearDrawingCommand": "CLEAR_DRAWING",
     "clearDrawingBroadcast": "DRAWING_CLEARED",
-    "nextRoundCommand": "START_NEXT_ROUND",
+    "nextRoundCommand": "RETURN_TO_WAITING",
+    "revealKeywordCommand": "REVEAL_KEYWORD",
+    "lockKeywordCommands": ["LOCK_KEYWORD", "UNLOCK_KEYWORD"],
     "kickedTargetEvent": "KICKED",
     "kickedRoomEvent": "PLAYER_KICKED"
   },

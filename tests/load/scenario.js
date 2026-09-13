@@ -270,7 +270,7 @@ export default function () {
         }
         if (isHost && nextRoundRequestedFor !== roundId) {
           nextRoundRequestedFor = roundId;
-          send(socket, 'START_NEXT_ROUND', { previousRoundId: roundId });
+          send(socket, 'RETURN_TO_WAITING', { roundId });
         }
       }
     });

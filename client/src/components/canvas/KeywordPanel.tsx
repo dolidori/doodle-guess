@@ -1,14 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MAX_KEYWORD_SHUFFLES } from '../../../../shared/src/index.js';
 import { useGame } from '../../state/GameContext.js';
 
 export const KeywordPanel = () => {
   const { state, send, dispatch } = useGame();
-  const keywordInputRef = useRef<HTMLInputElement>(null);
+  // 직접 쓴 제시어. 다시 뽑기로 추천 제시어가 바뀌면 자동으로 무효가 된다.
+  const [draft, setDraft] = useState<{ base: string | null; text: string } | null>(null);
   const [shufflePending, setShufflePending] = useState(false);
   const mayStart = state.privateState?.allowedActions.includes('SET_KEYWORD_AND_START') ?? false;
+  const mayLock = state.privateState?.allowedActions.includes('LOCK_KEYWORD') ?? false;
+  const mayUnlock = state.privateState?.allowedActions.includes('UNLOCK_KEYWORD') ?? false;
   const privateKeyword = state.privateState?.keyword;
   const suggestedKeyword = state.privateState?.suggestedKeyword;
+  const lockedKeyword = state.privateState?.lockedKeyword ?? null;
+  const keywordLocked = state.publicState?.keywordLocked ?? false;
   const roundId = state.publicState?.round.roundId;
   const continuing = state.publicState?.round.status === 'SOLVED' ||
     state.publicState?.round.status === 'EXPIRED';
@@ -38,6 +43,51 @@ export const KeywordPanel = () => {
     );
   }
 
+  // 잠긴 제시어는 그리기 담당자도 바꿀 수 없다. 진행자만 잠금을 풀 수 있다.
+  if (keywordLocked) {
+    return (
+      <section className="keyword-panel keyword-locked-panel panel-section">
+        <h3>
+          {continuing ? '다음 라운드 제시어' : '제시어'}
+          <span aria-hidden="true"> 🔒</span>
+        </h3>
+        {lockedKeyword && !state.keywordHidden ? (
+          <p className="keyword-value">{lockedKeyword}</p>
+        ) : (
+          <p className="keyword-hidden">진행자가 제시어를 잠갔습니다.</p>
+        )}
+        <div className="locked-actions">
+          {lockedKeyword && (
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => dispatch({ type: 'TOGGLE_KEYWORD' })}
+            >
+              {state.keywordHidden ? '제시어 보기' : '제시어 가리기'}
+            </button>
+          )}
+          {mayUnlock && (
+            <button type="button" className="secondary" onClick={() => send('UNLOCK_KEYWORD', {})}>
+              잠금 해제
+            </button>
+          )}
+          {mayStart && (
+            <button
+              type="button"
+              className="primary"
+              onClick={() => {
+                if (!roundId || !lockedKeyword) return;
+                send('SET_KEYWORD_AND_START', { roundId, keyword: lockedKeyword });
+              }}
+            >
+              {continuing ? '다음 라운드 시작' : '시작'}
+            </button>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   if (!mayStart) {
     return (
       <section className="keyword-panel panel-section">
@@ -47,27 +97,51 @@ export const KeywordPanel = () => {
     );
   }
 
+  const keyword = draft && draft.base === suggestedKeyword ? draft.text : suggestedKeyword ?? '';
+
   return (
     <form
-      className="keyword-panel keyword-entry-panel panel-section"
+      className={`keyword-panel keyword-entry-panel panel-section ${mayLock ? 'lockable' : ''}`}
       onSubmit={(event) => {
         event.preventDefault();
-        const keyword = keywordInputRef.current?.value ?? '';
         if (!roundId || !keyword.trim()) return;
-        if (send('SET_KEYWORD_AND_START', { roundId, keyword }) && keywordInputRef.current) {
-          keywordInputRef.current.value = '';
-        }
+        send('SET_KEYWORD_AND_START', { roundId, keyword });
       }}
     >
       <label htmlFor="keyword">{continuing ? '다음 라운드 제시어' : '제시어'}</label>
-      <input
-        key={suggestedKeyword}
-        ref={keywordInputRef}
-        id="keyword"
-        defaultValue={suggestedKeyword ?? ''}
-        maxLength={50}
-        autoComplete="off"
-      />
+      {/* 방장이 기본 담당자라 제시어가 그냥 보이면 추측에 낄 수 없다. 기본은 가림. */}
+      <div className="keyword-input-row">
+        {state.keywordHidden ? (
+          <p className="keyword-masked" aria-label="제시어가 가려져 있습니다">••••••</p>
+        ) : (
+          <input
+            id="keyword"
+            value={keyword}
+            onChange={(event) => setDraft({
+              base: suggestedKeyword ?? null,
+              text: event.target.value
+            })}
+            maxLength={50}
+            autoComplete="off"
+          />
+        )}
+        <button
+          type="button"
+          className="secondary reveal-button"
+          title={
+            state.keywordHidden
+              ? '제시어를 보고 나서 그리기 권한을 넘기면, 제시어가 새로 뽑히고 다시 뽑기 횟수를 한 번 씁니다.'
+              : undefined
+          }
+          onClick={() => {
+            // 서버가 열람 사실을 알아야 인계할 때 재추첨 여부를 판단할 수 있다.
+            if (state.keywordHidden) send('REVEAL_KEYWORD', {});
+            dispatch({ type: 'TOGGLE_KEYWORD' });
+          }}
+        >
+          {state.keywordHidden ? '보기' : '가리기'}
+        </button>
+      </div>
       <button
         type="button"
         className="secondary shuffle-button"
@@ -91,6 +165,19 @@ export const KeywordPanel = () => {
           {remainingShuffles}／{MAX_KEYWORD_SHUFFLES}
         </span>
       </button>
+      {mayLock && (
+        <button
+          type="button"
+          className="secondary lock-button"
+          aria-label="제시어 잠그기, 그리기 권한을 받은 참여자가 바꿀 수 없게 합니다"
+          onClick={() => {
+            if (!keyword.trim()) return;
+            send('LOCK_KEYWORD', { keyword });
+          }}
+        >
+          잠금
+        </button>
+      )}
       <button
         type="submit"
         className="primary"

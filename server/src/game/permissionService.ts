@@ -36,8 +36,13 @@ export const allowedActionsFor = (
   if (preparing && isDrawer && canStartRound(room)) actions.push('SET_KEYWORD_AND_START');
   if (ended && !results && isDrawer && canStartRound(room)) actions.push('SET_KEYWORD_AND_START');
   if ((preparing || (ended && !results)) && isDrawer && canStartRound(room) &&
+      room.lockedKeyword === null &&
       room.round.shuffleCount < MAX_KEYWORD_SHUFFLES) {
     actions.push('SHUFFLE_KEYWORD');
+  }
+  // 제시어 잠금은 추측에 참여하지 않는 진행자만 쓸 수 있다.
+  if ((preparing || (ended && !results)) && player.isModerator) {
+    actions.push(room.lockedKeyword === null ? 'LOCK_KEYWORD' : 'UNLOCK_KEYWORD');
   }
 
   if (active && isBeforeDeadline(room, now) && !room.round.guessLocked &&
@@ -55,7 +60,9 @@ export const allowedActionsFor = (
     actions.push('CLEAR_DRAWING');
   }
 
-  const canManageDrawer = preparing
+  // 라운드가 돌지 않는 준비·종료 구간에서는 방장·진행자가 담당자를 바꿀 수 있다.
+  const betweenRounds = preparing || (ended && !results);
+  const canManageDrawer = betweenRounds
     ? privileged
     : active && room.mode === 'MODERATOR' && player.isModerator;
   if (canManageDrawer) {
@@ -63,7 +70,7 @@ export const allowedActionsFor = (
       target.connected &&
       !target.isModerator &&
       target.playerId !== room.drawerId &&
-      (preparing || !target.isHost)
+      (betweenRounds || !target.isHost)
     );
     if (hasAssignablePlayer) actions.push('ASSIGN_DRAWER');
     if (room.drawerId !== player.playerId) actions.push('RECLAIM_DRAWER');
@@ -75,11 +82,6 @@ export const allowedActionsFor = (
     actions.push('KICK_PLAYER');
   }
 
-  if (ended && !results && room.drawerOrderMode === 'FIXED' &&
-      ((room.mode === 'NORMAL' && player.isHost) ||
-       (room.mode === 'MODERATOR' && player.isModerator))) {
-    actions.push('START_NEXT_ROUND');
-  }
   if ((active || (ended && !results)) && privileged) {
     actions.push('RETURN_TO_WAITING');
   }

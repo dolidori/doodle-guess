@@ -63,6 +63,8 @@ export type PublicState = {
   mode: RoomMode;
   answerMode: AnswerMode;
   drawerOrderMode: DrawerOrderMode;
+  /** 진행자가 다음 제시어를 잠갔는지. 잠기면 그리기 담당자가 바꿀 수 없다. */
+  keywordLocked: boolean;
   rotationLaps: number;
   rotationCurrentTurn: number;
   rotationTotalTurns: number;

@@ -8,6 +8,7 @@ const publicState = (): PublicState => ({
   mode: 'NORMAL',
   answerMode: 'FIRST_CORRECT',
   drawerOrderMode: 'FIXED',
+  keywordLocked: false,
   rotationLaps: 1,
   rotationCurrentTurn: 0,
   rotationTotalTurns: 0,

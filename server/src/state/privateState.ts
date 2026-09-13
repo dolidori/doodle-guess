@@ -13,6 +13,7 @@ export const buildPrivateState = (
     roundId: room.round.roundId,
     keyword: maySeeKeyword ? room.round.keyword : null,
     suggestedKeyword: maySeeKeyword ? room.suggestedKeyword : null,
+    lockedKeyword: maySeeKeyword ? room.lockedKeyword : null,
     hasSeenKeywordThisRound: room.round.keywordExposedPlayerIds.has(player.playerId),
     hasAnsweredCorrectly: room.round.correctPlayerIds.has(player.playerId),
     remainingKeywordShuffles: Math.max(0, MAX_KEYWORD_SHUFFLES - room.round.shuffleCount),

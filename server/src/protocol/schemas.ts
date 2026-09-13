@@ -92,6 +92,9 @@ export const payloadSchemas = {
     rotationLaps: z.number().int().min(1).max(10)
   }).strict(),
   SHUFFLE_KEYWORD: emptySchema,
+  REVEAL_KEYWORD: emptySchema,
+  LOCK_KEYWORD: z.object({ keyword: keywordSchema }).strict(),
+  UNLOCK_KEYWORD: emptySchema,
   SET_KEYWORD_AND_START: z.object({ roundId: uuidSchema, keyword: keywordSchema }).strict(),
   SUBMIT_GUESS: z.object({ roundId: uuidSchema, guessId: uuidSchema, text: guessSchema }).strict(),
   DRAW_STROKE_BATCH: strokeBatchSchema,
@@ -108,7 +111,6 @@ export const payloadSchemas = {
   ASSIGN_DRAWER: z.object({ targetPlayerId: uuidSchema }).strict(),
   RECLAIM_DRAWER: emptySchema,
   KICK_PLAYER: z.object({ targetPlayerId: uuidSchema }).strict(),
-  START_NEXT_ROUND: z.object({ previousRoundId: uuidSchema }).strict(),
   RETURN_TO_WAITING: z.object({ roundId: uuidSchema }).strict(),
   END_CEREMONY: emptySchema
 } satisfies Record<(typeof CLIENT_EVENT_TYPES)[number], z.ZodType>;

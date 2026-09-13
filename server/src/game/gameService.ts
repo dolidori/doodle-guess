@@ -77,6 +77,7 @@ export class GameService {
       room.round.status === 'EXPIRED';
     assertProtocol(canPrepareKeyword, 'INVALID_PHASE', '지금은 제시어를 다시 뽑을 수 없습니다.');
     assertProtocol(room.drawerId === actorId, 'NOT_DRAWER', '현재 그리기 담당자만 제시어를 다시 뽑을 수 있습니다.');
+    assertProtocol(room.lockedKeyword === null, 'KEYWORD_LOCKED', '잠긴 제시어는 다시 뽑을 수 없습니다.');
     assertProtocol(
       room.round.shuffleCount < MAX_KEYWORD_SHUFFLES,
       'SHUFFLE_LIMIT',
@@ -85,6 +86,63 @@ export class GameService {
     room.round.shuffleCount += 1;
     room.lastSuggestedKeyword = room.suggestedKeyword;
     room.suggestedKeyword = pickRandomKeyword(room.lastSuggestedKeyword);
+    room.suggestedKeywordSeenBy.clear();
+    room.roomVersion += 1;
+    room.eventSeq += 1;
+    this.roomService.publishState(room);
+  }
+
+  /** 추천 제시어를 실제로 열어 봤다는 신고. 인계 시 재추첨 여부를 가르는 기준이 된다. */
+  revealKeyword(room: RoomRuntime, actorId: string): void {
+    const actor = room.players.get(actorId);
+    assertProtocol(
+      actor?.connected && (room.drawerId === actorId || actor.isModerator),
+      'FORBIDDEN',
+      '제시어를 볼 권한이 없습니다.'
+    );
+    room.suggestedKeywordSeenBy.add(actorId);
+  }
+
+  /** 라운드가 돌지 않는 준비·종료 구간. 제시어와 담당자를 손댈 수 있다. */
+  private betweenRounds(room: RoomRuntime): boolean {
+    return room.round.status === 'PREPARING_KEYWORD' ||
+      ((room.round.status === 'SOLVED' || room.round.status === 'EXPIRED') &&
+        room.status !== 'RESULTS');
+  }
+
+  private assertKeywordPhase(room: RoomRuntime): void {
+    assertProtocol(this.betweenRounds(room), 'INVALID_PHASE', '지금은 제시어를 잠글 수 없습니다.');
+  }
+
+  lockKeyword(room: RoomRuntime, actorId: string, keyword: string): void {
+    this.assertKeywordPhase(room);
+    const actor = room.players.get(actorId);
+    assertProtocol(
+      actor?.connected && actor.isModerator,
+      'FORBIDDEN',
+      '제시어는 진행자만 잠글 수 있습니다.'
+    );
+    assertProtocol(room.lockedKeyword === null, 'KEYWORD_LOCKED', '이미 잠긴 제시어가 있습니다.');
+    assertProtocol(
+      normalizeGuess(keyword).length > 0,
+      'INVALID_KEYWORD',
+      '공백과 특수문자만으로는 제시어를 만들 수 없습니다.'
+    );
+    room.lockedKeyword = keyword;
+    room.roomVersion += 1;
+    room.eventSeq += 1;
+    this.roomService.publishState(room);
+  }
+
+  unlockKeyword(room: RoomRuntime, actorId: string): void {
+    this.assertKeywordPhase(room);
+    const actor = room.players.get(actorId);
+    assertProtocol(
+      actor?.connected && actor.isModerator,
+      'FORBIDDEN',
+      '제시어 잠금은 진행자만 풀 수 있습니다.'
+    );
+    room.lockedKeyword = null;
     room.roomVersion += 1;
     room.eventSeq += 1;
     this.roomService.publishState(room);
@@ -97,7 +155,9 @@ export class GameService {
     if (!continuingWithSameDrawer) assertPreparing(room);
     assertProtocol(room.drawerId === actorId, 'NOT_DRAWER', '현재 그리기 담당자만 시작할 수 있습니다.');
     assertProtocol(canStartRound(room), 'MIN_PLAYERS', '추측할 참여자가 한 명 이상 필요합니다.');
-    const normalizedKeyword = normalizeGuess(keyword);
+    // 잠겨 있으면 요청에 실려 온 제시어는 무시하고 잠근 제시어로 시작한다.
+    const effectiveKeyword = room.lockedKeyword ?? keyword;
+    const normalizedKeyword = normalizeGuess(effectiveKeyword);
     assertProtocol(normalizedKeyword.length > 0, 'INVALID_KEYWORD', '공백과 특수문자만으로는 제시어를 만들 수 없습니다.');
     if (continuingWithSameDrawer) {
       cancelRoundTimer(room);
@@ -115,7 +175,8 @@ export class GameService {
       room.rotationTurnIndex = 0;
     }
     const startedAt = Date.now();
-    room.round.keyword = keyword;
+    room.lockedKeyword = null;
+    room.round.keyword = effectiveKeyword;
     room.round.normalizedKeyword = normalizedKeyword;
     room.round.hasKeyword = true;
     room.round.keywordExposedPlayerIds.add(room.drawerId);
@@ -135,6 +196,7 @@ export class GameService {
   private refreshSuggestedKeyword(room: RoomRuntime): void {
     room.lastSuggestedKeyword = room.round.keyword;
     room.suggestedKeyword = pickRandomKeyword(room.lastSuggestedKeyword);
+    room.suggestedKeywordSeenBy.clear();
   }
 
   private rankings(room: RoomRuntime): Array<{
@@ -381,14 +443,29 @@ export class GameService {
     this.roomService.publishState(room);
   }
 
+  /**
+   * 제시어를 열어 본 사람이 그리기 권한을 넘기면, 그 사람이 답을 아는 채로 추측하게
+   * 되므로 제시어를 새로 뽑고 다시 뽑기 횟수를 한 번 쓴 것으로 친다.
+   * 보지 않고 넘겼다면 아무 대가 없이 그대로 간다.
+   * 잠긴 제시어는 진행자가 일부러 고정한 것이므로 건드리지 않는다.
+   */
+  private rerollSuggestedOnHandover(room: RoomRuntime): void {
+    if (room.round.status === 'DRAWING_AND_GUESSING' || room.lockedKeyword !== null) return;
+    if (!room.suggestedKeywordSeenBy.has(room.drawerId)) return;
+    room.round.shuffleCount = Math.min(MAX_KEYWORD_SHUFFLES, room.round.shuffleCount + 1);
+    room.lastSuggestedKeyword = room.suggestedKeyword;
+    room.suggestedKeyword = pickRandomKeyword(room.lastSuggestedKeyword);
+    room.suggestedKeywordSeenBy.clear();
+  }
+
   assignDrawer(room: RoomRuntime, actorId: string, targetPlayerId: string): void {
     const actor = room.players.get(actorId);
-    const preparing = room.round.status === 'PREPARING_KEYWORD';
+    const betweenRounds = this.betweenRounds(room);
     const activeModerator = room.round.status === 'DRAWING_AND_GUESSING' &&
       room.mode === 'MODERATOR' && actor?.isModerator;
-    assertProtocol(preparing || activeModerator, 'INVALID_PHASE', '현재 단계에서는 그리기 담당자를 바꿀 수 없습니다.');
+    assertProtocol(betweenRounds || activeModerator, 'INVALID_PHASE', '현재 단계에서는 그리기 담당자를 바꿀 수 없습니다.');
     assertProtocol(
-      actor?.connected && (preparing ? actor.isHost || actor.isModerator : actor.isModerator),
+      actor?.connected && (betweenRounds ? actor.isHost || actor.isModerator : actor.isModerator),
       'FORBIDDEN',
       '그리기 담당자 지정 권한이 없습니다.'
     );
@@ -396,13 +473,17 @@ export class GameService {
     assertProtocol(target, 'TARGET_NOT_FOUND', '대상 참여자를 찾을 수 없습니다.');
     assertProtocol(target.connected, 'TARGET_DISCONNECTED', '연결된 참여자만 지정할 수 있습니다.');
     assertProtocol(
-      !target.isModerator && (preparing || !target.isHost),
+      !target.isModerator && (betweenRounds || !target.isHost),
       'FORBIDDEN',
       '현재 선택할 수 없는 참여자입니다.'
     );
+    if (room.drawerId !== targetPlayerId) this.rerollSuggestedOnHandover(room);
     room.drawerId = targetPlayerId;
     room.round.drawing.drawerEpoch += 1;
-    if (room.round.hasKeyword) room.round.keywordExposedPlayerIds.add(targetPlayerId);
+    // 진행 중인 라운드에 끼어든 담당자만 정답을 보게 된다.
+    if (room.round.status === 'DRAWING_AND_GUESSING') {
+      room.round.keywordExposedPlayerIds.add(targetPlayerId);
+    }
     room.roomVersion += 1;
     room.eventSeq += 1;
     this.roomService.publishState(room);
@@ -410,36 +491,25 @@ export class GameService {
 
   reclaimDrawer(room: RoomRuntime, actorId: string): void {
     const actor = room.players.get(actorId);
-    const preparing = room.round.status === 'PREPARING_KEYWORD';
+    const betweenRounds = this.betweenRounds(room);
     const activeModerator = room.round.status === 'DRAWING_AND_GUESSING' &&
       room.mode === 'MODERATOR' && actor?.isModerator;
-    assertProtocol(preparing || activeModerator, 'INVALID_PHASE', '현재 단계에서는 그리기 권한을 회수할 수 없습니다.');
+    assertProtocol(betweenRounds || activeModerator, 'INVALID_PHASE', '현재 단계에서는 그리기 권한을 회수할 수 없습니다.');
     assertProtocol(
-      actor?.connected && (preparing ? actor.isHost || actor.isModerator : actor.isModerator),
+      actor?.connected && (betweenRounds ? actor.isHost || actor.isModerator : actor.isModerator),
       'FORBIDDEN',
       '그리기 권한 회수 권한이 없습니다.'
     );
     if (room.drawerId === actorId) return;
+    this.rerollSuggestedOnHandover(room);
     room.drawerId = actorId;
     room.round.drawing.drawerEpoch += 1;
-    if (room.round.hasKeyword) room.round.keywordExposedPlayerIds.add(actorId);
+    if (room.round.status === 'DRAWING_AND_GUESSING') {
+      room.round.keywordExposedPlayerIds.add(actorId);
+    }
     room.roomVersion += 1;
     room.eventSeq += 1;
     this.roomService.publishState(room);
-  }
-
-  startNextRound(room: RoomRuntime, actorId: string, previousRoundId: string): void {
-    assertRound(room, previousRoundId);
-    assertProtocol(
-      room.round.status === 'SOLVED' || room.round.status === 'EXPIRED',
-      'INVALID_PHASE',
-      '종료된 라운드에서만 다음 라운드를 준비할 수 있습니다.'
-    );
-    const actor = room.players.get(actorId);
-    const permitted = room.mode === 'NORMAL' ? actor?.isHost : actor?.isModerator;
-    assertProtocol(permitted, 'FORBIDDEN', '다음 라운드 권한이 없습니다.');
-    assertProtocol(room.drawerOrderMode === 'FIXED', 'INVALID_PHASE', '순환 그리기는 다음 차례가 자동으로 준비됩니다.');
-    this.prepareWaitingRoom(room);
   }
 
   returnToWaiting(room: RoomRuntime, actorId: string, roundId: string): void {

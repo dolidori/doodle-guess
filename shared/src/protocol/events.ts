@@ -18,6 +18,9 @@ export type ClientPayloadMap = {
   SET_ANSWER_MODE: { answerMode: AnswerMode };
   SET_DRAWER_ORDER: { drawerOrderMode: DrawerOrderMode; rotationLaps: number };
   SHUFFLE_KEYWORD: Record<string, never>;
+  REVEAL_KEYWORD: Record<string, never>;
+  LOCK_KEYWORD: { keyword: string };
+  UNLOCK_KEYWORD: Record<string, never>;
   SET_KEYWORD_AND_START: { roundId: string; keyword: string };
   SUBMIT_GUESS: { roundId: string; guessId: string; text: string };
   DRAW_STROKE_BATCH: StrokeBatchPayload;
@@ -26,7 +29,6 @@ export type ClientPayloadMap = {
   ASSIGN_DRAWER: { targetPlayerId: string };
   RECLAIM_DRAWER: Record<string, never>;
   KICK_PLAYER: { targetPlayerId: string };
-  START_NEXT_ROUND: { previousRoundId: string };
   RETURN_TO_WAITING: { roundId: string };
   END_CEREMONY: Record<string, never>;
 };

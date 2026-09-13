@@ -14,6 +14,21 @@
 - 호스트/진행자는 활성·종료 라운드에서 `RETURN_TO_WAITING`으로 방 전체를 대기실로 되돌릴 수 있다.
 - 대기실에서는 일반 모드 호스트도 drawer 지정·회수가 가능하다.
 - C→S는 `SET_ANSWER_MODE`, `RETURN_TO_WAITING`을 포함한 15개, allowedActions는 13개다.
+
+## 2026-09-13 대표님 후속 확정 변경
+
+아래 변경은 위 2026-07-24 문구와 본문의 15개 C→S·13개 allowedActions 기술보다 우선합니다. 상세 계약은 `WebSocket_이벤트_명세.md`, 규칙은 `게임_규칙_문서.md`, 배경은 `결정_기록.md` D-25~D-28을 따릅니다.
+
+- **C→S 20개, allowedActions 17개, 오류 코드 43개**다. S→C 14개는 그대로다.
+- 정답 모드 기본값은 `UNTIL_TIMER`다. 정답자는 `연결 참여자 수 - 정답 순위 + 1`점(최소 1점), 그림 담당자는 정답이 나올 때마다 +1점이다.
+- `SET_DRAWER_ORDER`로 `FIXED`/`ROTATE`와 순환 바퀴 수(1~10)를 정한다. 순환을 다 돌면 방이 `RESULTS`가 되고 `END_CEREMONY`로 끝낸다.
+- `SHUFFLE_KEYWORD`로 추천 제시어를 라운드당 5회까지 다시 뽑는다.
+- **준비 단계 추천 제시어는 기본 가림**이다. 「보기」를 누르면 `REVEAL_KEYWORD`로 서버에 열람을 신고한다. 방장이 기본 담당자라 그냥 보이면 답을 아는 채로 추측하게 되기 때문이다.
+- **제시어를 본 사람이 그리기 권한을 넘기면** 서버가 추천 제시어를 새로 뽑고 다시 뽑기 횟수를 1회 소모시킨다. 보지 않고 넘기면 그대로다. 지정·회수 양쪽 대칭이다.
+- **`LOCK_KEYWORD`/`UNLOCK_KEYWORD`는 진행자 모드의 진행자 전용**이다. 일반 모드 호스트는 제시어에 관여하지 않고 그리기 권한만 넘긴다. 잠긴 제시어는 담당자가 바꾸거나 다시 뽑을 수 없고, 조작된 `SET_KEYWORD_AND_START` payload도 무시된다.
+- 그리기 담당자 지정·회수는 **라운드가 끝난 화면에서도** 가능하다. 대기실을 거칠 필요가 없다. 시상식(`RESULTS`) 중에는 막는다.
+- `keywordExposedPlayerIds`에는 **라운드 진행 중**에 인계받은 담당자만 넣는다. 끝난 라운드의 정답은 지킬 대상이 아니고, 넣으면 다음 라운드 시작 조건이 잘못 막힌다.
+- **`START_NEXT_ROUND`는 제거**했다. `RETURN_TO_WAITING`과 효과가 같고 조건만 좁았다. 라운드 종료 화면에서 같은 담당자가 바로 다음 라운드를 여는 경로는 `SET_KEYWORD_AND_START`가 처리한다.
 - 배경음 5곡은 로비가 아닌 방 대기실부터 방장 기기에서만 무작위 무한 재생한다. 음표 버튼의 볼륨 팝업은 바깥 클릭 또는 Esc로 닫힌다.
 
 당신은 **Doodle Guess**의 웹 멀티플레이어 구현을 책임지는 **구현 단계 리더 에이전트**입니다. `/Users/sunwoo/Desktop/Apps/doodle-guess/`에서 계획 산출물을 기준으로 서버 권위 게임 엔진, 실시간 벡터 캔버스, React 클라이언트, WebSocket 프로토콜, PWA, 테스트와 배포 구성을 완성하세요.
@@ -211,7 +226,9 @@ ROUND_ACTIVE
 
 ### 다음 라운드
 
-`ROUND_SOLVED` 또는 `ROUND_EXPIRED`에서 일반 모드는 host, 진행자 모드는 moderator가 `START_NEXT_ROUND`를 요청합니다. 새 roundId를 만들고 제시어, winner, `keywordExposedPlayerIds`, `guessFeed`, 그림을 비웁니다. 기존 drawer와 `durationSeconds`는 유지합니다.
+`ROUND_SOLVED` 또는 `ROUND_EXPIRED`에서 host 또는 moderator가 `RETURN_TO_WAITING`을 요청합니다. 새 roundId를 만들고 제시어, winner, `keywordExposedPlayerIds`, `guessFeed`, 그림을 비웁니다. 기존 drawer와 `durationSeconds`는 유지합니다. 다시 뽑기 횟수와 제시어 잠금·열람 기록도 함께 초기화됩니다.
+
+같은 담당자가 이어서 그릴 경우 대기실을 거치지 않고 `SET_KEYWORD_AND_START`를 바로 보낼 수 있습니다. 서버가 먼저 새 roundId를 만든 뒤 시작합니다. 담당자를 바꿀 때도 이 화면에서 `ASSIGN_DRAWER`를 바로 쓸 수 있습니다.
 
 ## 6. 역할과 권한
 
@@ -224,12 +241,16 @@ ROUND_ACTIVE
 | 일반 참여자 | 공개 그림 열람, 추측 제출·피드 열람 |
 | 제시어를 본 이전 drawer | 그림 열람, 해당 라운드 추측 불가 |
 
-서버가 수신자별로 계산하는 `allowedActions` enum은 정확히 다음 13개입니다.
+서버가 수신자별로 계산하는 `allowedActions` enum은 정확히 다음 17개입니다.
 
 ```text
 LEAVE_ROOM
 SET_ROUND_DURATION
 SET_ANSWER_MODE
+SET_DRAWER_ORDER
+SHUFFLE_KEYWORD
+LOCK_KEYWORD
+UNLOCK_KEYWORD
 SET_KEYWORD_AND_START
 SUBMIT_GUESS
 DRAW_STROKE_BATCH
@@ -238,9 +259,11 @@ CLEAR_DRAWING
 ASSIGN_DRAWER
 RECLAIM_DRAWER
 KICK_PLAYER
-START_NEXT_ROUND
 RETURN_TO_WAITING
+END_CEREMONY
 ```
+
+`REVEAL_KEYWORD`는 여기에 없습니다. 상태를 바꾸지 않는 열람 신고라 클라이언트도 이 목록으로 막지 않습니다.
 
 클라이언트는 이 목록으로 버튼과 입력을 사전 비활성화하지만 서버는 매 요청을 다시 검증합니다.
 
@@ -304,7 +327,7 @@ type ServerEnvelope = {
 };
 ```
 
-### C→S 15개
+### C→S 20개
 
 ```text
 CREATE_ROOM
@@ -312,6 +335,11 @@ JOIN_ROOM
 LEAVE_ROOM
 SET_ROUND_DURATION
 SET_ANSWER_MODE
+SET_DRAWER_ORDER
+SHUFFLE_KEYWORD
+REVEAL_KEYWORD
+LOCK_KEYWORD
+UNLOCK_KEYWORD
 SET_KEYWORD_AND_START
 SUBMIT_GUESS
 DRAW_STROKE_BATCH
@@ -320,8 +348,8 @@ CLEAR_DRAWING
 ASSIGN_DRAWER
 RECLAIM_DRAWER
 KICK_PLAYER
-START_NEXT_ROUND
 RETURN_TO_WAITING
+END_CEREMONY
 ```
 
 ### S→C 14개
@@ -725,7 +753,7 @@ Room 상태를 handler나 WebSocket 객체에서 직접 변경하지 않습니�
 - GUESS_SHARED
 - 최초 정답 확정
 - ROUND_SOLVED·ROUND_EXPIRED
-- START_NEXT_ROUND
+- RETURN_TO_WAITING
 
 검증:
 

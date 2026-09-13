@@ -9,6 +9,9 @@ const RULES: Record<string, { ratePerMs: number; burst: number }> = {
   SET_ANSWER_MODE: { ratePerMs: 5 / 10_000, burst: 5 },
   SET_DRAWER_ORDER: { ratePerMs: 5 / 10_000, burst: 5 },
   SHUFFLE_KEYWORD: { ratePerMs: 3 / 1000, burst: 4 },
+  REVEAL_KEYWORD: { ratePerMs: 3 / 1000, burst: 5 },
+  LOCK_KEYWORD: { ratePerMs: 5 / 10_000, burst: 5 },
+  UNLOCK_KEYWORD: { ratePerMs: 5 / 10_000, burst: 5 },
   SUBMIT_GUESS: { ratePerMs: 4 / 1000, burst: 8 },
   DRAW_STROKE_BATCH: { ratePerMs: 25 / 1000, burst: 40 },
   UNDO_LAST_STROKE: { ratePerMs: 3 / 1000, burst: 5 },
@@ -16,7 +19,6 @@ const RULES: Record<string, { ratePerMs: number; burst: number }> = {
   ASSIGN_DRAWER: { ratePerMs: 5 / 10_000, burst: 5 },
   RECLAIM_DRAWER: { ratePerMs: 5 / 10_000, burst: 5 },
   KICK_PLAYER: { ratePerMs: 5 / 10_000, burst: 5 },
-  START_NEXT_ROUND: { ratePerMs: 5 / 10_000, burst: 5 },
   RETURN_TO_WAITING: { ratePerMs: 5 / 10_000, burst: 5 },
   END_CEREMONY: { ratePerMs: 2 / 10_000, burst: 2 }
 };

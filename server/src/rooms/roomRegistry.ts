@@ -74,6 +74,8 @@ export class RoomRegistry {
       rotationTurnIndex: 0,
       suggestedKeyword: pickRandomKeyword(),
       lastSuggestedKeyword: null,
+      suggestedKeywordSeenBy: new Set(),
+      lockedKeyword: null,
       finalRankings: null,
       status: 'WAITING',
       roomVersion: 1,
@@ -115,6 +117,7 @@ export class RoomRegistry {
       room.round.drawing.drawerEpoch
     );
     room.guessFeed = [];
+    room.lockedKeyword = null;
     room.status = 'WAITING';
   }
 

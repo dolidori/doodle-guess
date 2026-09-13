@@ -172,11 +172,11 @@ describe('방·세션·권한 강화 검증', () => {
       guessId: crypto.randomUUID(),
       text: '고양이'
     }, room.connections.get(guest.playerId)!);
-    expect(allowedActionsFor(room, host)).toContain('START_NEXT_ROUND');
+    expect(allowedActionsFor(room, host)).toContain('RETURN_TO_WAITING');
     expect(allowedActionsFor(room, guest)).toEqual(['LEAVE_ROOM']);
     const previousRoundId = room.round.roundId;
     const previousRevision = room.round.drawing.drawingRevision;
-    gameService.startNextRound(room, host.playerId, previousRoundId);
+    gameService.returnToWaiting(room, host.playerId, previousRoundId);
     expect(room.round.roundNumber).toBe(2);
     expect(room.durationSeconds).toBe(20);
     expect(room.drawerId).toBe(host.playerId);
@@ -314,7 +314,7 @@ describe('방·세션·권한 강화 검증', () => {
 
     room.round.status = 'SOLVED';
     room.status = 'ROUND_SOLVED';
-    expect(() => gameService.startNextRound(room, guest.playerId, room.round.roundId))
+    expect(() => gameService.returnToWaiting(room, guest.playerId, room.round.roundId))
       .toThrowError(expect.objectContaining({ code: 'FORBIDDEN' }));
   });
 

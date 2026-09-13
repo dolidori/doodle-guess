@@ -1,6 +1,8 @@
 # Doodle Guess(가칭) 멀티룸 실시간 그림 맞히기 웹 게임 — 계획 단계 프롬프트
 
 > 2026-07-24 후속 결정: 본 문서의 선착순 전용·점수 제외 문구는 `결정_기록.md` D-22~D-24로 대체한다. 구현은 선착순/타이머 정답 모드, 방 수명 동안 누적되는 정답자·그림 담당자 점수, 대기실 복귀·drawer 지정, 방장 전용 랜덤 BGM을 포함한다.
+>
+> 2026-09-13 후속 결정: 아래 「이벤트 후보」 목록은 계획 착수 시점의 초안이며 최종 계약과 다르다. 확정된 계약은 `WebSocket_이벤트_명세.md`(C→S 20개, S→C 14개, `allowedActions` 17개, 오류 코드 43개)다. 순환 그리기, 시상식, 제시어 다시 뽑기·가리기·잠금은 `결정_기록.md` D-25~D-28을 따른다. 이 문서로 다시 계획할 때는 초안이 아니라 확정 계약에서 출발할 것.
 
 당신은 **Doodle Guess(가칭)**를 웹 기반 멀티플레이어 게임으로 구현하기 위한 **계획 단계 리더 에이전트**입니다. 에이전트 팀을 구성하고, 팀원들이 게임 설명과 공통 지침서를 직접 확인한 뒤 구현 단계에서 바로 사용할 수 있는 설계 산출물을 작성하도록 지시하세요.
 
@@ -347,32 +349,43 @@ QA는 §6.3 Tier 1 각 항목을 `충족 / 이 프로젝트 요구로 대체 / �
 이벤트 후보:
 
 ```text
-C→S
+C→S (확정 20개)
 CREATE_ROOM
 JOIN_ROOM
 LEAVE_ROOM
-SET_KEYWORD
-SET_KEYWORD_VISIBILITY
-START_ROUND
-DRAW_STROKE_BATCH
+SET_ROUND_DURATION
+SET_ANSWER_MODE
+SET_DRAWER_ORDER
+SHUFFLE_KEYWORD
+REVEAL_KEYWORD
+LOCK_KEYWORD
+UNLOCK_KEYWORD
+SET_KEYWORD_AND_START
 SUBMIT_GUESS
+DRAW_STROKE_BATCH
+UNDO_LAST_STROKE
+CLEAR_DRAWING
 ASSIGN_DRAWER
 RECLAIM_DRAWER
 KICK_PLAYER
-START_NEXT_ROUND
+RETURN_TO_WAITING
+END_CEREMONY
 
-S→C
-ROOM_CREATED
-ROOM_JOINED
+S→C (확정 14개)
+ROOM_SESSION
 PUBLIC_STATE
 PRIVATE_STATE
-PLAYERS_UPDATED
-DRAWER_CHANGED
-ROUND_STARTED
-STROKE_BATCH
-DRAWING_SNAPSHOT
-GUESS_RESULT
+GUESS_SHARED
 ROUND_SOLVED
+ROUND_EXPIRED
+STROKE_BATCH
+STROKE_UNDONE
+DRAWING_CLEARED
+DRAWING_SNAPSHOT
+KICKED
+PLAYER_KICKED
+ROOM_CLOSED
+ERROR
 PLAYER_KICKED
 RECONNECT_STATE
 ERROR

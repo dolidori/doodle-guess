@@ -56,7 +56,10 @@ type RoomStatus =
   | 'ROUND_ACTIVE'
   | 'ROUND_SOLVED'
   | 'ROUND_EXPIRED'
+  | 'RESULTS'      // 순환 그리기 바퀴 완주 후 시상식
   | 'CLOSED';
+type AnswerMode = 'FIRST_CORRECT' | 'UNTIL_TIMER';
+type DrawerOrderMode = 'FIXED' | 'ROTATE';
 type RoundStatus =
   | 'PREPARING_KEYWORD'
   | 'DRAWING_AND_GUESSING'
@@ -78,7 +81,7 @@ type StrokeTool = 'PEN' | 'ERASER';
 | guess | 1~80 | 512B | 앞뒤 공백 제거 후 비어 있지 않음, 제어 문자 금지 |
 | sessionToken | 고정 43자 | 43B | 256-bit base64url |
 
-정답 비교는 keyword와 guess에서 ECMAScript Unicode 공백 문자만 `/\s/gu`로 모두 제거하고 그 밖의 대소문자·구두점·Unicode 형식은 바꾸지 않는다(D-09).
+정답 비교는 keyword와 guess에서 공백에 더해 구두점(`\p{P}`)과 기호(`\p{S}`)까지 `/[\s\p{P}\p{S}]/gu`로 제거한다. '사과, 배!'와 '사과 배'를 같은 답으로 본다. 대소문자와 그 밖의 Unicode 형식은 바꾸지 않는다(D-09 개정).
 
 ## 4. 이벤트 목록
 
@@ -89,16 +92,21 @@ type StrokeTool = 'PEN' | 'ERASER';
 3. `LEAVE_ROOM`
 4. `SET_ROUND_DURATION`
 5. `SET_ANSWER_MODE`
-6. `SET_KEYWORD_AND_START`
-7. `SUBMIT_GUESS`
-8. `DRAW_STROKE_BATCH`
-9. `UNDO_LAST_STROKE`
-10. `CLEAR_DRAWING`
-11. `ASSIGN_DRAWER`
-12. `RECLAIM_DRAWER`
-13. `KICK_PLAYER`
-14. `START_NEXT_ROUND`
-15. `RETURN_TO_WAITING`
+6. `SET_DRAWER_ORDER`
+7. `SHUFFLE_KEYWORD`
+8. `REVEAL_KEYWORD`
+9. `LOCK_KEYWORD`
+10. `UNLOCK_KEYWORD`
+11. `SET_KEYWORD_AND_START`
+12. `SUBMIT_GUESS`
+13. `DRAW_STROKE_BATCH`
+14. `UNDO_LAST_STROKE`
+15. `CLEAR_DRAWING`
+16. `ASSIGN_DRAWER`
+17. `RECLAIM_DRAWER`
+18. `KICK_PLAYER`
+19. `RETURN_TO_WAITING`
+20. `END_CEREMONY`
 
 ### S→C
 
@@ -117,7 +125,11 @@ type StrokeTool = 'PEN' | 'ERASER';
 13. `ROOM_CLOSED`
 14. `ERROR`
 
-별도 `SET_KEYWORD_VISIBILITY`는 없다. D-11에 따라 보기/가리기는 각 권한자 화면의 로컬 상태다. `PLAYERS_UPDATED`, `DRAWER_CHANGED`, `ROUND_STARTED`, `RECONNECT_STATE`는 `PUBLIC_STATE`/`PRIVATE_STATE`로 통합한다.
+`PLAYERS_UPDATED`, `DRAWER_CHANGED`, `ROUND_STARTED`, `RECONNECT_STATE`는 `PUBLIC_STATE`/`PRIVATE_STATE`로 통합한다.
+
+**제시어 가리기 규칙 변경(D-11 개정).** 확정된 라운드 제시어의 보기/가리기는 여전히 화면 로컬 상태다. 그러나 준비 단계의 **추천 제시어**는 기본이 가림이고, 열어 보는 순간 `REVEAL_KEYWORD`로 서버에 신고한다. 서버가 열람 사실을 알아야 그리기 권한을 넘길 때 제시어를 새로 뽑을지 판단할 수 있기 때문이다(5.8 참조).
+
+`START_NEXT_ROUND`는 제거했다. `RETURN_TO_WAITING`과 효과가 완전히 같고(둘 다 새 라운드를 준비 상태로 연다) 조건만 더 좁았다. 다음 라운드 준비는 `RETURN_TO_WAITING` 하나로 처리한다.
 
 ### 4.1 S→C 크기와 발생 상한
 
@@ -220,7 +232,84 @@ payload: {
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `INVALID_PHASE`, `INVALID_PAYLOAD`, `RATE_LIMITED`.
 
-### 5.6 `SET_KEYWORD_AND_START`
+### 5.6 `SET_DRAWER_ORDER`
+
+```ts
+payload: {
+  drawerOrderMode: 'FIXED' | 'ROTATE';
+  rotationLaps: number; // integer, min 1, max 10
+}
+```
+
+- 권한: host 또는 moderator.
+- 허용 phase: `PREPARING_KEYWORD`만. 이미 시작된 순환 순서(`rotationPlayerIds`가 비어 있지 않음)는 바꿀 수 없다.
+- `FIXED`는 지정한 한 사람이 계속 그린다. `ROTATE`는 라운드가 끝날 때마다 참여자에게 차례가 넘어가고, 정해진 바퀴 수를 다 돌면 방이 `RESULTS`로 넘어간다.
+- 순환 순서는 첫 라운드가 시작될 때 연결된 참여자를 입장 순으로 세우고 현재 drawer를 맨 앞에 두어 확정한다.
+- 성공: `roomVersion` 증가 후 방 전체 `PUBLIC_STATE`.
+- 크기/Rate: 1KiB, 10초당 5회·burst 5.
+- 오류: `FORBIDDEN`, `INVALID_PHASE`, `INVALID_DURATION`(바퀴 수 범위 위반), `RATE_LIMITED`.
+
+### 5.7 `SHUFFLE_KEYWORD`
+
+```ts
+payload: {}
+```
+
+- 권한: 현재 drawer.
+- 허용 phase: `PREPARING_KEYWORD`, `SOLVED`, `EXPIRED`.
+- 서버가 기본 제시어 목록에서 추천 제시어를 새로 뽑는다. 직전 추천 제시어는 후보에서 제외해 같은 값이 연속으로 나오지 않게 한다.
+- **라운드당 `MAX_KEYWORD_SHUFFLES`(5)회**로 제한한다. 소진하면 액션 자체가 `allowedActions`에서 빠지고, 그래도 들어온 요청은 `SHUFFLE_LIMIT`으로 거부한다. 라운드가 바뀌면 횟수가 다시 찬다.
+- 새 제시어를 뽑았으므로 **열람 기록(`suggestedKeywordSeenBy`)을 비운다**.
+- 잠긴 제시어가 있으면 `KEYWORD_LOCKED`로 거부한다.
+- 성공: `roomVersion` 증가, 방 전체 `PUBLIC_STATE`, 수신자별 `PRIVATE_STATE`.
+- 크기/Rate: 1KiB, 초당 3회·burst 4.
+- 오류: `NOT_DRAWER`, `INVALID_PHASE`, `SHUFFLE_LIMIT`, `KEYWORD_LOCKED`, `RATE_LIMITED`.
+
+### 5.8 `REVEAL_KEYWORD`
+
+```ts
+payload: {}
+```
+
+- 권한: 현재 drawer 또는 moderator. 그 외에는 `FORBIDDEN`.
+- 준비 단계의 추천 제시어를 **실제로 열어 봤다는 신고**다. 화면은 기본적으로 제시어를 `••••••`로 가려 두고, 사용자가 「보기」를 누를 때 이 이벤트를 보낸다.
+- 서버는 `suggestedKeywordSeenBy`에 해당 playerId를 넣는다. 이 기록은 추천 제시어가 바뀔 때마다(다시 뽑기, 인계 재추첨, 라운드 종료) 비워진다.
+- 이 기록이 필요한 이유: **제시어를 본 사람이 그리기 권한을 넘기면** 그 사람이 답을 아는 채로 추측하게 되므로, 서버가 제시어를 새로 뽑고 다시 뽑기 횟수를 1회 소모시킨다(5.16 참조).
+- `allowedActions`에는 넣지 않는다. 상태를 바꾸는 명령이 아니라 열람 사실만 남기므로 state event도 보내지 않는다.
+- 크기/Rate: 1KiB, 초당 3회·burst 5.
+- 오류: `FORBIDDEN`, `RATE_LIMITED`.
+
+### 5.9 `LOCK_KEYWORD`
+
+```ts
+payload: {
+  keyword: string; // 1~50 code points, 256 bytes 이하, 제어문자 금지
+}
+```
+
+- 권한: **moderator만**. 즉 진행자 모드 전용이다. 일반 모드 host는 제시어에 관여할 수 없고 그리기 권한만 넘긴다.
+- 허용 phase: `PREPARING_KEYWORD`, 또는 `RESULTS`가 아닌 `SOLVED`/`EXPIRED`.
+- 제시어를 방 상태(`lockedKeyword`)에 확정해 둔다. 잠긴 동안 drawer는 제시어를 바꿀 수도, 다시 뽑을 수도 없다.
+- 진행자는 내용을 보지 않은 채로도 잠글 수 있다. 화면의 가려진 값을 그대로 실어 보내면 된다.
+- 이미 잠겨 있으면 `KEYWORD_LOCKED`로 거부한다. 공백·기호만 남는 제시어는 `INVALID_KEYWORD`.
+- 잠금은 라운드가 시작될 때 소비되고(그 라운드의 제시어가 된다), 라운드가 바뀌면 해제된다.
+- 성공: `roomVersion` 증가, 방 전체 `PUBLIC_STATE`(`keywordLocked: true`), drawer와 moderator에게 `lockedKeyword`가 든 `PRIVATE_STATE`.
+- 크기/Rate: 1KiB, 10초당 5회·burst 5.
+- 오류: `FORBIDDEN`, `INVALID_PHASE`, `KEYWORD_LOCKED`, `INVALID_KEYWORD`, `RATE_LIMITED`.
+
+### 5.10 `UNLOCK_KEYWORD`
+
+```ts
+payload: {}
+```
+
+- 권한과 phase: `LOCK_KEYWORD`와 동일(moderator 전용).
+- `lockedKeyword`를 비운다. drawer의 다시 뽑기와 제시어 입력이 다시 열린다.
+- 성공: `roomVersion` 증가, 방 전체 `PUBLIC_STATE`(`keywordLocked: false`), 수신자별 `PRIVATE_STATE`.
+- 크기/Rate: 1KiB, 10초당 5회·burst 5.
+- 오류: `FORBIDDEN`, `INVALID_PHASE`, `RATE_LIMITED`.
+
+### 5.11 `SET_KEYWORD_AND_START`
 
 ```ts
 payload: {
@@ -230,15 +319,16 @@ payload: {
 ```
 
 - 권한: 현재 drawer.
-- 허용 phase: `PREPARING_KEYWORD`.
+- 허용 phase: `PREPARING_KEYWORD`, 또는 `RESULTS`가 아닌 `SOLVED`/`EXPIRED`(대기실을 거치지 않고 바로 다음 라운드를 여는 경로). 후자에서는 먼저 새 roundId를 만든 뒤 시작한다.
 - 시작 조건: 연결된 drawer 1명과, keyword를 본 적 없는 연결 추측자 1명 이상.
-- 원자 처리: keyword 저장, 정규화 값 서버 전용 저장, drawer와 moderator를 `keywordExposedPlayerIds`에 추가, status를 `DRAWING_AND_GUESSING`으로 전환, `startedAt`과 `roundEndsAt=serverNow+durationSeconds*1000` 설정, 서버 타이머 시작.
+- **잠긴 제시어가 있으면 payload의 `keyword`는 무시하고 `lockedKeyword`로 시작한다.** 조작된 클라이언트가 잠금을 우회할 수 없다.
+- 원자 처리: keyword 저장, 정규화 값 서버 전용 저장, drawer와 moderator를 `keywordExposedPlayerIds`에 추가, `lockedKeyword` 소비(해제), status를 `DRAWING_AND_GUESSING`으로 전환, `startedAt`과 `roundEndsAt=serverNow+durationSeconds*1000` 설정, 서버 타이머 시작.
 - 성공: `roomVersion` 증가, 방 전체 `PUBLIC_STATE`, 현재 drawer와 moderator에게 keyword가 든 `PRIVATE_STATE`, 나머지에게 keyword 없는 `PRIVATE_STATE`.
 - keyword 원문과 정규화 값은 PUBLIC 또는 로그에 쓰지 않는다.
 - 크기/Rate: 1KiB, 10초당 2회·burst 2.
 - 오류: `FORBIDDEN`, `NOT_DRAWER`, `STALE_ROUND`, `INVALID_PHASE`, `MIN_PLAYERS`, `INVALID_KEYWORD`, `RATE_LIMITED`.
 
-### 5.7 `SUBMIT_GUESS`
+### 5.12 `SUBMIT_GUESS`
 
 ```ts
 payload: {
@@ -261,7 +351,7 @@ payload: {
 - 크기/Rate: 1KiB, 초당 4회·burst 8.
 - 오류: `GUESS_FORBIDDEN`, `STALE_ROUND`, `ROUND_LOCKED`, `ROUND_EXPIRED`, `INVALID_GUESS`, `RATE_LIMITED`.
 
-### 5.8 `DRAW_STROKE_BATCH`
+### 5.13 `DRAW_STROKE_BATCH`
 
 ```ts
 payload: {
@@ -289,7 +379,7 @@ payload: {
 - 상한: batch 64점, stroke 2,048점, revision 1,000 stroke·50,000점·4MiB.
 - 오류: `NOT_DRAWER`, `INVALID_PHASE`, `ROUND_EXPIRED`, `STALE_ROUND`, `STALE_DRAWING_REVISION`, `STALE_DRAWER_EPOCH`, `INVALID_STROKE`, `STROKE_STYLE_MISMATCH`, `STROKE_SEQUENCE_GAP`, `STROKE_LIMIT`, `DRAWING_LIMIT`, `RATE_LIMITED`.
 
-### 5.9 `UNDO_LAST_STROKE`
+### 5.14 `UNDO_LAST_STROKE`
 
 ```ts
 payload: {
@@ -305,7 +395,7 @@ payload: {
 - 크기/Rate: 1KiB, 초당 3회·burst 5.
 - 오류: `NOT_DRAWER`, `INVALID_PHASE`, `ROUND_EXPIRED`, stale 계열, `NO_STROKE_TO_UNDO`, `RATE_LIMITED`.
 
-### 5.10 `CLEAR_DRAWING`
+### 5.15 `CLEAR_DRAWING`
 
 ```ts
 payload: {
@@ -321,7 +411,7 @@ payload: {
 - 크기/Rate: 1KiB, 초당 3회·burst 5.
 - 오류: `NOT_DRAWER`, `INVALID_PHASE`, `ROUND_EXPIRED`, stale 계열, `RATE_LIMITED`.
 
-### 5.11 `ASSIGN_DRAWER`
+### 5.16 `ASSIGN_DRAWER`
 
 ```ts
 payload: {
@@ -329,25 +419,29 @@ payload: {
 }
 ```
 
-- 권한: 준비 중 host/moderator, 활성 중 MODERATOR mode moderator.
-- 허용 phase: `PREPARING_KEYWORD` 또는 `DRAWING_AND_GUESSING`.
-- 대상: 같은 방의 연결된 일반 참여자.
-- 성공: 기존 그림·keyword 유지, `drawerEpoch+1`, target을 `keywordExposedPlayerIds`에 추가, `roomVersion+1`, 방 전체 `PUBLIC_STATE`, 새 drawer와 moderator에게 keyword가 든 `PRIVATE_STATE`, 이전 drawer에게 keyword 없는 `PRIVATE_STATE`.
+- 권한: **라운드 사이**(`PREPARING_KEYWORD`, 그리고 `RESULTS`가 아닌 `SOLVED`/`EXPIRED`)에는 host 또는 moderator, **라운드 진행 중**에는 MODERATOR mode moderator만.
+- 대상: 같은 방의 연결된 일반 참여자. moderator는 대상이 될 수 없다. 라운드 진행 중에는 host도 대상에서 제외한다(추측자가 답을 보게 되므로). 라운드 사이에는 host도 지정할 수 있다.
+- 라운드가 끝난 화면에서도 바로 다음 담당자에게 넘길 수 있다. 대기실을 거칠 필요가 없다. 시상식(`RESULTS`) 중에는 막는다.
+- **추천 제시어 재추첨**: 넘겨주는 쪽(현재 drawer)이 `suggestedKeywordSeenBy`에 있으면, 그 사람이 답을 아는 채로 추측하게 되므로 추천 제시어를 새로 뽑고 `shuffleCount`를 1 올린다(상한 `MAX_KEYWORD_SHUFFLES`에서 멈춘다). 보지 않고 넘겼다면 제시어도 횟수도 그대로다. 라운드 진행 중이거나 제시어가 잠겨 있으면 재추첨하지 않는다.
+- 성공: 기존 그림·keyword 유지, `drawerEpoch+1`, `roomVersion+1`, 방 전체 `PUBLIC_STATE`, 새 drawer와 moderator에게 keyword가 든 `PRIVATE_STATE`, 이전 drawer에게 keyword 없는 `PRIVATE_STATE`.
+- `keywordExposedPlayerIds`에는 **라운드 진행 중일 때만** 새 drawer를 넣는다. 끝난 라운드의 정답은 이미 공개되었으므로 지킬 대상이 아니고, 여기에 넣으면 다음 라운드 시작 조건(`canStartRound`)이 잘못 막힌다.
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `INVALID_MODE`, `INVALID_PHASE`, `TARGET_NOT_FOUND`, `TARGET_DISCONNECTED`, `RATE_LIMITED`.
 
-### 5.12 `RECLAIM_DRAWER`
+### 5.17 `RECLAIM_DRAWER`
 
 ```ts
 payload: {}
 ```
 
 - 권한과 phase: `ASSIGN_DRAWER`와 동일.
-- 성공: moderator를 drawer로 지정, `drawerEpoch+1`, 기존 그림·keyword 유지, state events 전송.
+- 성공: 요청자를 drawer로 지정, `drawerEpoch+1`, 기존 그림·keyword 유지, state events 전송.
+- 재추첨 규칙도 `ASSIGN_DRAWER`와 대칭이다. 직전 담당자가 제시어를 봤다면 회수할 때 새로 뽑고 다시 뽑기 횟수를 1회 쓴다.
+- 이미 자신이 drawer면 아무 일도 하지 않는다.
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `INVALID_MODE`, `INVALID_PHASE`, `RATE_LIMITED`.
 
-### 5.13 `KICK_PLAYER`
+### 5.18 `KICK_PLAYER`
 
 ```ts
 payload: {
@@ -362,21 +456,7 @@ payload: {
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `TARGET_NOT_FOUND`, `CANNOT_KICK_PRIVILEGED`, `RATE_LIMITED`.
 
-### 5.14 `START_NEXT_ROUND`
-
-```ts
-payload: {
-  previousRoundId: string;
-}
-```
-
-- 권한: NORMAL mode host, MODERATOR mode moderator.
-- 허용 phase: `SOLVED` 또는 `EXPIRED`.
-- 성공: 기존 deadline timer 취소, 새 roundId, `PREPARING_KEYWORD`, keyword·winner·`guessFeed`·`keywordExposedPlayerIds`·정답자 목록 초기화, 그림 비움, `drawingRevision+1`, `drawingSeq=0`; drawer·durationSeconds·answerMode·누적 점수는 유지. `roomVersion+1`, `PUBLIC_STATE`, 수신자별 `PRIVATE_STATE`, `DRAWING_CLEARED`.
-- 크기/Rate: 1KiB, 10초당 5회·burst 5.
-- 오류: `FORBIDDEN`, `INVALID_PHASE`, `STALE_ROUND`, `RATE_LIMITED`.
-
-### 5.15 `RETURN_TO_WAITING`
+### 5.19 `RETURN_TO_WAITING`
 
 ```ts
 payload: {
@@ -386,9 +466,22 @@ payload: {
 
 - 권한: host 또는 moderator.
 - 허용 phase: `DRAWING_AND_GUESSING`, `SOLVED`, `EXPIRED`.
-- 성공: 타이머를 취소하고 새 roundId의 `PREPARING_KEYWORD`로 복귀한다. 참가자·drawer·durationSeconds·answerMode·누적 점수는 유지하며 라운드 데이터와 그림만 초기화한다.
+- 성공: 타이머를 취소하고 새 roundId의 `PREPARING_KEYWORD`로 복귀한다. 참가자·drawer·durationSeconds·answerMode·누적 점수는 유지하며 라운드 데이터와 그림만 초기화한다. 순환 순서(`rotationPlayerIds`)와 최종 순위도 비운다.
+- 새 라운드가 열리므로 다시 뽑기 횟수가 다시 차고, 제시어 잠금과 열람 기록도 해제된다.
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `INVALID_PHASE`, `STALE_ROUND`, `RATE_LIMITED`.
+
+### 5.20 `END_CEREMONY`
+
+```ts
+payload: {}
+```
+
+- 권한: host 또는 moderator.
+- 허용 phase: 방 상태가 `RESULTS`일 때만. 순환 그리기에서 정해진 바퀴를 다 돌면 이 상태가 된다.
+- 성공: 모든 참여자 점수를 0으로 되돌리고 순환 순서·최종 순위를 비운 뒤, 연결된 host(없으면 연결된 아무나)를 drawer로 삼아 새 라운드를 준비 상태로 연다.
+- 크기/Rate: 1KiB, 10초당 2회·burst 2.
+- 오류: `FORBIDDEN`, `INVALID_PHASE`, `RATE_LIMITED`.
 
 ## 6. S→C 상세 계약
 
@@ -417,6 +510,18 @@ token은 PUBLIC/PRIVATE state, 로그, 다른 사용자에게 포함하지 않�
 payload: {
   roomCode: RoomCode;
   mode: RoomMode;
+  answerMode: 'FIRST_CORRECT' | 'UNTIL_TIMER';
+  drawerOrderMode: 'FIXED' | 'ROTATE';
+  keywordLocked: boolean;   // 진행자가 다음 제시어를 잠갔는지
+  rotationLaps: number;     // 순환 바퀴 수 설정값
+  rotationCurrentTurn: number;  // 순환이 돌지 않으면 0
+  rotationTotalTurns: number;
+  finalRankings: Array<{
+    rank: number;
+    playerId: string;
+    nickname: string;
+    score: number;
+  }> | null;                // RESULTS에서만 채워진다
   status: RoomStatus;
   roomVersion: number;
   eventSeq: number;
@@ -429,23 +534,27 @@ payload: {
     connected: boolean;
     isHost: boolean;
     isModerator: boolean;
+    score: number;
   }>;
   drawerId: string;
   drawerEpoch: number;
   round: {
     roundId: string;
+    roundNumber: number;
     status: RoundStatus;
     durationSeconds: number;
     startedAt: number | null;
     roundEndsAt: number | null;
     hasKeyword: boolean;
     guessLocked: boolean;
+    drawingLocked: boolean;
     winnerId: string | null;
     winnerNickname: string | null;
     solvedAt: number | null;
     expiredAt: number | null;
     lastRoundEventId: string | null;
     guessSeq: number;
+    correctCount: number;
   };
   drawing: {
     drawingRevision: number;
@@ -457,7 +566,9 @@ payload: {
 }
 ```
 
-Room status와 Round status의 대응은 `WAITING/PREPARING_KEYWORD`, `ROUND_ACTIVE/DRAWING_AND_GUESSING`, `ROUND_SOLVED/SOLVED`, `ROUND_EXPIRED/EXPIRED`다. Room 삭제 직전만 `CLOSED`를 사용한다.
+Room status와 Round status의 대응은 `WAITING/PREPARING_KEYWORD`, `ROUND_ACTIVE/DRAWING_AND_GUESSING`, `ROUND_SOLVED/SOLVED`, `ROUND_EXPIRED/EXPIRED`다. 순환 그리기가 바퀴를 다 돌면 Room만 `RESULTS`가 되고 Round는 `SOLVED`/`EXPIRED`로 남는다. Room 삭제 직전만 `CLOSED`를 사용한다.
+
+`keywordLocked`는 잠금 여부만 알리고 제시어 내용은 담지 않는다. 내용은 `PRIVATE_STATE.lockedKeyword`로만 나간다.
 
 `serverNow`는 Unix epoch 밀리초의 상태 생성 시각이며 진단·초기 임시 표시에 사용한다. 정확한 clock offset은 §8의 왕복 시간 동기화로 계산하고 `roundEndsAt`까지의 남은 시간을 표시한다. 표시 타이머는 권위가 아니며 0이 되어도 서버의 `ROUND_EXPIRED` 또는 state를 기다린다.
 
@@ -469,12 +580,20 @@ Room status와 Round status의 대응은 `WAITING/PREPARING_KEYWORD`, `ROUND_ACT
 payload: {
   playerId: string;
   roundId: string;
-  keyword: string | null;
+  keyword: string | null;          // 확정된 라운드 제시어
+  suggestedKeyword: string | null; // 준비 단계 추천 제시어
+  lockedKeyword: string | null;    // 진행자가 잠가 둔 제시어
   hasSeenKeywordThisRound: boolean;
+  hasAnsweredCorrectly: boolean;
+  remainingKeywordShuffles: number; // MAX_KEYWORD_SHUFFLES - shuffleCount
   allowedActions: Array<
     | 'LEAVE_ROOM'
     | 'SET_ROUND_DURATION'
     | 'SET_ANSWER_MODE'
+    | 'SET_DRAWER_ORDER'
+    | 'SHUFFLE_KEYWORD'
+    | 'LOCK_KEYWORD'
+    | 'UNLOCK_KEYWORD'
     | 'SET_KEYWORD_AND_START'
     | 'SUBMIT_GUESS'
     | 'DRAW_STROKE_BATCH'
@@ -483,14 +602,17 @@ payload: {
     | 'ASSIGN_DRAWER'
     | 'RECLAIM_DRAWER'
     | 'KICK_PLAYER'
-    | 'START_NEXT_ROUND'
     | 'RETURN_TO_WAITING'
+    | 'END_CEREMONY'
   >;
-  hasAnsweredCorrectly: boolean;
 }
 ```
 
-keyword는 현재 drawer 또는 moderator에게만 원문, 나머지는 null이다. 이전 drawer는 null이지만 `hasSeenKeywordThisRound:true`이고 추측 권한이 없다.
+`keyword`, `suggestedKeyword`, `lockedKeyword` 셋 다 **현재 drawer 또는 moderator에게만** 원문이 가고 나머지는 null이다. 이전 drawer는 null이지만 `hasSeenKeywordThisRound:true`이고 추측 권한이 없다.
+
+`allowedActions`는 17개다. `REVEAL_KEYWORD`는 상태를 바꾸지 않는 열람 신고라 여기에 넣지 않으며, 클라이언트도 이 목록으로 막지 않는다. `CREATE_ROOM`/`JOIN_ROOM`도 방 밖의 명령이라 제외한다.
+
+`LOCK_KEYWORD`와 `UNLOCK_KEYWORD`는 동시에 나오지 않는다. 잠겨 있으면 `UNLOCK_KEYWORD`만, 아니면 `LOCK_KEYWORD`만 담긴다. 둘 다 moderator에게만 나간다.
 
 ### 6.4 `GUESS_SHARED`
 
@@ -707,6 +829,7 @@ payload: {
 | `INVALID_DURATION` | 20~180 정수·5초 배수 위반 | false |
 | `INVALID_KEYWORD` | keyword 문자열 규칙 위반 | false |
 | `SHUFFLE_LIMIT` | 라운드당 다시 뽑기 5회 초과 | false |
+| `KEYWORD_LOCKED` | 진행자가 잠근 제시어를 바꾸거나 다시 뽑으려 함 | false |
 | `INVALID_GUESS` | guess 문자열 규칙 위반 | false |
 | `GUESS_FORBIDDEN` | keyword 열람 이력/역할로 추측 불가 | false |
 | `ROUND_LOCKED` | solved/expired로 추측 잠금 | false |
@@ -811,3 +934,6 @@ const estimatedServerNow =
 8. host disconnect 후 host 변경 이벤트와 일반 사용자 isHost 승격은 0건이다.
 9. 30명 방에 신규 JOIN은 `ROOM_FULL`, 기존 slot 복구는 성공한다.
 10. 모든 event의 문서상 크기·Rate Limit과 Zod schema 상수가 동일하다.
+11. C→S 20개, S→C 14개, `allowedActions` 17개, 오류 코드 43개가 코드 상수와 일치한다(`server/src/test/protocol.test.ts`).
+12. 잠긴 제시어는 조작된 `SET_KEYWORD_AND_START` payload로 바뀌지 않는다.
+13. 제시어를 보지 않고 넘긴 인계는 추천 제시어도 다시 뽑기 횟수도 바꾸지 않는다.

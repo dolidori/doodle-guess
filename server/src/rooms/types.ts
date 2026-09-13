@@ -84,6 +84,13 @@ export type RoomRuntime = {
   rotationTurnIndex: number;
   suggestedKeyword: string;
   lastSuggestedKeyword: string | null;
+  /**
+   * 지금 추천 제시어를 실제로 열어 본 사람들. 그리기 권한을 넘길 때 넘기는 사람이
+   * 여기 있으면 제시어를 새로 뽑는다. 제시어가 바뀔 때마다 비운다.
+   */
+  suggestedKeywordSeenBy: Set<string>;
+  /** 진행자가 확정해 둔 제시어. 잠겨 있는 동안 그리기 담당자는 바꿀 수 없다. */
+  lockedKeyword: string | null;
   finalRankings: FinalRanking[] | null;
   status: RoomStatus;
   roomVersion: number;

@@ -821,16 +821,81 @@ h3 {
   opacity: 0.75;
 }
 
+/* 방장·진행자는 다시 뽑기 옆에 잠금 버튼이 하나 더 붙어 한 줄이 셋으로 나뉜다. */
+.keyword-entry-panel.lockable {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.62fr) minmax(0, 1.1fr);
+}
+
+.keyword-entry-panel.lockable > button {
+  padding-inline: 0.2rem;
+  font-size: 0.8rem;
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 1.15;
+}
+
+.keyword-locked-panel .keyword-value {
+  margin-bottom: var(--space-1);
+  font-size: 1.1rem;
+}
+
+.locked-actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.locked-actions > button {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0.35rem 0.45rem;
+  font-size: 0.8rem;
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 1.15;
+}
+
 .keyword-entry-panel > label,
-.keyword-entry-panel > input {
+.keyword-entry-panel > .keyword-input-row {
   grid-column: 1 / -1;
   margin: 0;
 }
 
-.keyword-entry-panel > input {
+.keyword-input-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-1);
   min-height: 40px;
   height: 40px;
+}
+
+.keyword-input-row > input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
   padding-block: 0.4rem;
+}
+
+/* 가려진 제시어. 글자 수까지 숨기려고 길이를 고정한다. */
+.keyword-masked {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-canvas);
+  color: var(--color-text-on-light);
+  letter-spacing: 0.25em;
+}
+
+.keyword-input-row > .reveal-button {
+  flex: 0 0 auto;
+  min-width: 0;
+  padding: 0 0.5rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
 }
 
 .keyword-entry-panel > button {

@@ -20,6 +20,9 @@ const EVENT_MAX_BYTES: Record<string, number> = {
   SET_ANSWER_MODE: 1024,
   SET_DRAWER_ORDER: 1024,
   SHUFFLE_KEYWORD: 1024,
+  REVEAL_KEYWORD: 1024,
+  LOCK_KEYWORD: 1024,
+  UNLOCK_KEYWORD: 1024,
   SET_KEYWORD_AND_START: 1024,
   SUBMIT_GUESS: 1024,
   DRAW_STROKE_BATCH: 8192,
@@ -28,7 +31,6 @@ const EVENT_MAX_BYTES: Record<string, number> = {
   ASSIGN_DRAWER: 1024,
   RECLAIM_DRAWER: 1024,
   KICK_PLAYER: 1024,
-  START_NEXT_ROUND: 1024,
   RETURN_TO_WAITING: 1024,
   END_CEREMONY: 1024
 };
@@ -187,6 +189,19 @@ export class Dispatcher {
       case 'SHUFFLE_KEYWORD':
         this.gameService.shuffleKeyword(room, actorId);
         break;
+      case 'REVEAL_KEYWORD':
+        this.gameService.revealKeyword(room, actorId);
+        break;
+      case 'LOCK_KEYWORD':
+        this.gameService.lockKeyword(
+          room,
+          actorId,
+          (command.payload as ClientPayloadMap['LOCK_KEYWORD']).keyword
+        );
+        break;
+      case 'UNLOCK_KEYWORD':
+        this.gameService.unlockKeyword(room, actorId);
+        break;
       case 'SET_KEYWORD_AND_START': {
         const payload = command.payload as ClientPayloadMap['SET_KEYWORD_AND_START'];
         this.gameService.startRound(room, actorId, payload.roundId, payload.keyword);
@@ -237,13 +252,6 @@ export class Dispatcher {
           room,
           actorId,
           (command.payload as ClientPayloadMap['KICK_PLAYER']).targetPlayerId
-        );
-        break;
-      case 'START_NEXT_ROUND':
-        this.gameService.startNextRound(
-          room,
-          actorId,
-          (command.payload as ClientPayloadMap['START_NEXT_ROUND']).previousRoundId
         );
         break;
       case 'RETURN_TO_WAITING':
