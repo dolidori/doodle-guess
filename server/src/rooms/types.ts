@@ -52,8 +52,11 @@ export type RoundState = {
   expiredAt: number | null;
   lastRoundEventId: string | null;
   guessSeq: number;
-  /** 이번 라운드에 제시어를 다시 뽑은 횟수. 라운드가 바뀌면 0으로 시작한다. */
-  shuffleCount: number;
+  /**
+   * 이번 라운드에 각자 제시어를 다시 뽑은 횟수. 라운드가 바뀌면 비운다.
+   * 사람별로 세야 한 사람이 쓴 횟수가 다음 담당자 몫에서 깎이지 않는다.
+   */
+  shuffleCounts: Map<string, number>;
   guessLocked: boolean;
   drawingLocked: boolean;
   drawing: DrawingState;

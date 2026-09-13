@@ -37,7 +37,7 @@ export const allowedActionsFor = (
   if (ended && !results && isDrawer && canStartRound(room)) actions.push('SET_KEYWORD_AND_START');
   if ((preparing || (ended && !results)) && isDrawer && canStartRound(room) &&
       room.lockedKeyword === null &&
-      room.round.shuffleCount < MAX_KEYWORD_SHUFFLES) {
+      (room.round.shuffleCounts.get(player.playerId) ?? 0) < MAX_KEYWORD_SHUFFLES) {
     actions.push('SHUFFLE_KEYWORD');
   }
   // 제시어 잠금은 추측에 참여하지 않는 진행자만 쓸 수 있다.

@@ -1304,7 +1304,7 @@
       "action": "ASSIGN_DRAWER or RECLAIM_DRAWER",
       "actor": "host or moderator",
       "guard": "room.status != RESULTS",
-      "atomicEffects": "drawerId changed and drawerEpoch incremented without visiting the waiting room; suggested keyword rerolled and shuffleCount incremented only when the outgoing drawer is in suggestedKeywordSeenBy; keywordExposedPlayerIds untouched because the finished round's answer is already public"
+      "atomicEffects": "drawerId changed and drawerEpoch incremented without visiting the waiting room; suggested keyword rerolled and the OUTGOING drawer's own shuffleCounts entry incremented only when that drawer is in suggestedKeywordSeenBy; the incoming drawer keeps a full quota; keywordExposedPlayerIds untouched because the finished round's answer is already public"
     },
     {
       "from": "RESULTS",
@@ -1389,7 +1389,7 @@
     },
     {
       "action": "SHUFFLE_KEYWORD",
-      "when": "betweenRounds, actor is current drawer, canStartRound, lockedKeyword is null, shuffleCount < 5"
+      "when": "betweenRounds, actor is current drawer, canStartRound, lockedKeyword is null, shuffleCounts[actor] < 5"
     },
     {
       "action": "LOCK_KEYWORD",

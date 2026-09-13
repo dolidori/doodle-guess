@@ -258,7 +258,7 @@ payload: {}
 - 권한: 현재 drawer.
 - 허용 phase: `PREPARING_KEYWORD`, `SOLVED`, `EXPIRED`.
 - 서버가 기본 제시어 목록에서 추천 제시어를 새로 뽑는다. 직전 추천 제시어는 후보에서 제외해 같은 값이 연속으로 나오지 않게 한다.
-- **라운드당 `MAX_KEYWORD_SHUFFLES`(5)회**로 제한한다. 소진하면 액션 자체가 `allowedActions`에서 빠지고, 그래도 들어온 요청은 `SHUFFLE_LIMIT`으로 거부한다. 라운드가 바뀌면 횟수가 다시 찬다.
+- **라운드당 사람별 `MAX_KEYWORD_SHUFFLES`(5)회**로 제한한다. `shuffleCounts`는 playerId별 Map이며, 한 사람이 쓴 횟수가 다음 담당자 몫에서 깎이지 않는다. 소진하면 액션 자체가 `allowedActions`에서 빠지고, 그래도 들어온 요청은 `SHUFFLE_LIMIT`으로 거부한다. 라운드가 바뀌면 비운다.
 - 새 제시어를 뽑았으므로 **열람 기록(`suggestedKeywordSeenBy`)을 비운다**.
 - 잠긴 제시어가 있으면 `KEYWORD_LOCKED`로 거부한다.
 - 성공: `roomVersion` 증가, 방 전체 `PUBLIC_STATE`, 수신자별 `PRIVATE_STATE`.
@@ -422,7 +422,7 @@ payload: {
 - 권한: **라운드 사이**(`PREPARING_KEYWORD`, 그리고 `RESULTS`가 아닌 `SOLVED`/`EXPIRED`)에는 host 또는 moderator, **라운드 진행 중**에는 MODERATOR mode moderator만.
 - 대상: 같은 방의 연결된 일반 참여자. moderator는 대상이 될 수 없다. 라운드 진행 중에는 host도 대상에서 제외한다(추측자가 답을 보게 되므로). 라운드 사이에는 host도 지정할 수 있다.
 - 라운드가 끝난 화면에서도 바로 다음 담당자에게 넘길 수 있다. 대기실을 거칠 필요가 없다. 시상식(`RESULTS`) 중에는 막는다.
-- **추천 제시어 재추첨**: 넘겨주는 쪽(현재 drawer)이 `suggestedKeywordSeenBy`에 있으면, 그 사람이 답을 아는 채로 추측하게 되므로 추천 제시어를 새로 뽑고 `shuffleCount`를 1 올린다(상한 `MAX_KEYWORD_SHUFFLES`에서 멈춘다). 보지 않고 넘겼다면 제시어도 횟수도 그대로다. 라운드 진행 중이거나 제시어가 잠겨 있으면 재추첨하지 않는다.
+- **추천 제시어 재추첨**: 넘겨주는 쪽(현재 drawer)이 `suggestedKeywordSeenBy`에 있으면, 그 사람이 답을 아는 채로 추측하게 되므로 추천 제시어를 새로 뽑고 **넘겨주는 사람 몫**의 `shuffleCounts`를 1 올린다(상한 `MAX_KEYWORD_SHUFFLES`에서 멈춘다). 넘겨받는 사람 횟수는 그대로다. 보지 않고 넘겼다면 제시어도 횟수도 그대로다. 라운드 진행 중이거나 제시어가 잠겨 있으면 재추첨하지 않는다.
 - 성공: 기존 그림·keyword 유지, `drawerEpoch+1`, `roomVersion+1`, 방 전체 `PUBLIC_STATE`, 새 drawer와 moderator에게 keyword가 든 `PRIVATE_STATE`, 이전 drawer에게 keyword 없는 `PRIVATE_STATE`.
 - `keywordExposedPlayerIds`에는 **라운드 진행 중일 때만** 새 drawer를 넣는다. 끝난 라운드의 정답은 이미 공개되었으므로 지킬 대상이 아니고, 여기에 넣으면 다음 라운드 시작 조건(`canStartRound`)이 잘못 막힌다.
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
@@ -436,7 +436,7 @@ payload: {}
 
 - 권한과 phase: `ASSIGN_DRAWER`와 동일.
 - 성공: 요청자를 drawer로 지정, `drawerEpoch+1`, 기존 그림·keyword 유지, state events 전송.
-- 재추첨 규칙도 `ASSIGN_DRAWER`와 대칭이다. 직전 담당자가 제시어를 봤다면 회수할 때 새로 뽑고 다시 뽑기 횟수를 1회 쓴다.
+- 재추첨 규칙도 `ASSIGN_DRAWER`와 대칭이다. 직전 담당자가 제시어를 봤다면 회수할 때 새로 뽑고 **그 담당자 몫**의 다시 뽑기 횟수를 1회 쓴다.
 - 이미 자신이 drawer면 아무 일도 하지 않는다.
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `INVALID_MODE`, `INVALID_PHASE`, `RATE_LIMITED`.
@@ -585,7 +585,7 @@ payload: {
   lockedKeyword: string | null;    // 진행자가 잠가 둔 제시어
   hasSeenKeywordThisRound: boolean;
   hasAnsweredCorrectly: boolean;
-  remainingKeywordShuffles: number; // MAX_KEYWORD_SHUFFLES - shuffleCount
+  remainingKeywordShuffles: number; // 내 몫. MAX_KEYWORD_SHUFFLES - shuffleCounts[me]
   allowedActions: Array<
     | 'LEAVE_ROOM'
     | 'SET_ROUND_DURATION'
@@ -828,7 +828,7 @@ payload: {
 | `MIN_PLAYERS` | 연결 drawer+eligible guesser 조건 미충족 | true |
 | `INVALID_DURATION` | 20~180 정수·5초 배수 위반 | false |
 | `INVALID_KEYWORD` | keyword 문자열 규칙 위반 | false |
-| `SHUFFLE_LIMIT` | 라운드당 다시 뽑기 5회 초과 | false |
+| `SHUFFLE_LIMIT` | 한 사람이 라운드당 다시 뽑기 5회 초과 | false |
 | `KEYWORD_LOCKED` | 진행자가 잠근 제시어를 바꾸거나 다시 뽑으려 함 | false |
 | `INVALID_GUESS` | guess 문자열 규칙 위반 | false |
 | `GUESS_FORBIDDEN` | keyword 열람 이력/역할로 추측 불가 | false |
@@ -937,3 +937,4 @@ const estimatedServerNow =
 11. C→S 20개, S→C 14개, `allowedActions` 17개, 오류 코드 43개가 코드 상수와 일치한다(`server/src/test/protocol.test.ts`).
 12. 잠긴 제시어는 조작된 `SET_KEYWORD_AND_START` payload로 바뀌지 않는다.
 13. 제시어를 보지 않고 넘긴 인계는 추천 제시어도 다시 뽑기 횟수도 바꾸지 않는다.
+14. 제시어를 보고 넘긴 인계는 넘겨주는 사람 몫만 깎고, 넘겨받는 사람은 5회를 그대로 갖는다.

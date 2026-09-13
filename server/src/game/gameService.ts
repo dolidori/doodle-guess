@@ -71,6 +71,18 @@ export class GameService {
     this.roomService.publishState(room);
   }
 
+  private shuffleCountOf(room: RoomRuntime, playerId: string): number {
+    return room.round.shuffleCounts.get(playerId) ?? 0;
+  }
+
+  /** 다시 뽑기 횟수는 사람별로 센다. 쓴 사람 몫만 줄어야 한다. */
+  private chargeShuffle(room: RoomRuntime, playerId: string): void {
+    room.round.shuffleCounts.set(
+      playerId,
+      Math.min(MAX_KEYWORD_SHUFFLES, this.shuffleCountOf(room, playerId) + 1)
+    );
+  }
+
   shuffleKeyword(room: RoomRuntime, actorId: string): void {
     const canPrepareKeyword = room.round.status === 'PREPARING_KEYWORD' ||
       room.round.status === 'SOLVED' ||
@@ -79,11 +91,11 @@ export class GameService {
     assertProtocol(room.drawerId === actorId, 'NOT_DRAWER', '현재 그리기 담당자만 제시어를 다시 뽑을 수 있습니다.');
     assertProtocol(room.lockedKeyword === null, 'KEYWORD_LOCKED', '잠긴 제시어는 다시 뽑을 수 없습니다.');
     assertProtocol(
-      room.round.shuffleCount < MAX_KEYWORD_SHUFFLES,
+      this.shuffleCountOf(room, actorId) < MAX_KEYWORD_SHUFFLES,
       'SHUFFLE_LIMIT',
       `제시어는 라운드마다 ${MAX_KEYWORD_SHUFFLES}번까지만 다시 뽑을 수 있습니다.`
     );
-    room.round.shuffleCount += 1;
+    this.chargeShuffle(room, actorId);
     room.lastSuggestedKeyword = room.suggestedKeyword;
     room.suggestedKeyword = pickRandomKeyword(room.lastSuggestedKeyword);
     room.suggestedKeywordSeenBy.clear();
@@ -452,7 +464,7 @@ export class GameService {
   private rerollSuggestedOnHandover(room: RoomRuntime): void {
     if (room.round.status === 'DRAWING_AND_GUESSING' || room.lockedKeyword !== null) return;
     if (!room.suggestedKeywordSeenBy.has(room.drawerId)) return;
-    room.round.shuffleCount = Math.min(MAX_KEYWORD_SHUFFLES, room.round.shuffleCount + 1);
+    this.chargeShuffle(room, room.drawerId);
     room.lastSuggestedKeyword = room.suggestedKeyword;
     room.suggestedKeyword = pickRandomKeyword(room.lastSuggestedKeyword);
     room.suggestedKeywordSeenBy.clear();

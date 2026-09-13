@@ -16,7 +16,10 @@ export const buildPrivateState = (
     lockedKeyword: maySeeKeyword ? room.lockedKeyword : null,
     hasSeenKeywordThisRound: room.round.keywordExposedPlayerIds.has(player.playerId),
     hasAnsweredCorrectly: room.round.correctPlayerIds.has(player.playerId),
-    remainingKeywordShuffles: Math.max(0, MAX_KEYWORD_SHUFFLES - room.round.shuffleCount),
+    remainingKeywordShuffles: Math.max(
+      0,
+      MAX_KEYWORD_SHUFFLES - (room.round.shuffleCounts.get(player.playerId) ?? 0)
+    ),
     allowedActions: allowedActionsFor(room, player, now)
   };
 };

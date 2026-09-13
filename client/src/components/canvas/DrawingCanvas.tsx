@@ -40,6 +40,17 @@ export const DrawingCanvas = ({
   const previewRef = useRef<HTMLCanvasElement>(null);
   const eraserCursorRef = useRef<HTMLSpanElement>(null);
   const activeRef = useRef<ActiveStroke | null>(null);
+  /**
+   * 펜을 뗀 획은 서버 확정본이 올 때까지 미리보기에 남긴다. 바로 지우면 아직
+   * 왕복이 끝나지 않은 뒷부분이 사라졌다가 배치 단위로 다시 채워져, 획이 처음부터
+   * 다시 그려지는 것처럼 보인다.
+   */
+  const settlingRef = useRef<{
+    strokeId: string;
+    drawingRevision: number;
+    points: Point[];
+    settings: ToolSettings;
+  } | null>(null);
   const lastPointerRef = useRef<{ clientX: number; clientY: number } | null>(null);
   const settingsRef = useRef(settings);
   const stateRef = useRef(state);
@@ -76,19 +87,37 @@ export const DrawingCanvas = ({
 
   const redraw = useCallback((): void => {
     if (canvasRef.current) renderStrokes(canvasRef.current, stateRef.current.drawing.strokes);
+    if (!previewRef.current) return;
     const active = activeRef.current;
-    if (previewRef.current) {
-      renderPreview(
-        previewRef.current,
-        active?.preview ?? [],
-        settingsRef.current.tool,
-        settingsRef.current.tool === 'PEN' ? settingsRef.current.color : null,
-        settingsRef.current.width
-      );
-    }
+    // 그리는 중이면 진행 중인 획을, 막 뗐으면 확정 대기 중인 획을 덮어 둔다.
+    const overlay = active
+      ? { points: active.preview, settings: active.settings }
+      : settlingRef.current;
+    const settings = overlay?.settings ?? settingsRef.current;
+    renderPreview(
+      previewRef.current,
+      overlay?.points ?? [],
+      settings.tool,
+      settings.tool === 'PEN' ? settings.color : null,
+      settings.width
+    );
   }, []);
 
   useEffect(() => {
+    const settling = settlingRef.current;
+    if (settling) {
+      const confirmed = state.drawing.strokes.find(
+        (stroke) => stroke.strokeId === settling.strokeId
+      );
+      // 확정본이 도착했거나 캔버스가 갈아엎어졌으면 본 캔버스에 넘기고 미리보기를 비운다.
+      if (
+        state.drawing.drawingRevision !== settling.drawingRevision ||
+        confirmed?.finalized ||
+        confirmed?.undone
+      ) {
+        settlingRef.current = null;
+      }
+    }
     redraw();
   }, [state.drawing, redraw]);
 
@@ -129,6 +158,7 @@ export const DrawingCanvas = ({
   useEffect(() => {
     if (enabled) return;
     activeRef.current = null;
+    settlingRef.current = null;
     redraw();
   }, [enabled, redraw]);
 
@@ -146,17 +176,22 @@ export const DrawingCanvas = ({
   };
 
   const finish = (event: React.PointerEvent<HTMLDivElement>): void => {
-    if (!activeRef.current || event.pointerId !== activeRef.current.pointerId) return;
+    const active = activeRef.current;
+    if (!active || event.pointerId !== active.pointerId) return;
     addPoint(event, true);
-    if (activeRef.current.pending.length === 0 && activeRef.current.preview.length) {
-      activeRef.current.pending.push(activeRef.current.preview.at(-1)!);
+    if (active.pending.length === 0 && active.preview.length) {
+      active.pending.push(active.preview.at(-1)!);
     }
     flush(true);
     stageRef.current?.releasePointerCapture(event.pointerId);
+    settlingRef.current = {
+      strokeId: active.strokeId,
+      drawingRevision: stateRef.current.drawing.drawingRevision,
+      points: active.preview,
+      settings: active.settings
+    };
     activeRef.current = null;
-    if (previewRef.current) {
-      renderPreview(previewRef.current, [], settings.tool, settings.tool === 'PEN' ? settings.color : null, settings.width);
-    }
+    redraw();
   };
 
   return (
@@ -182,6 +217,7 @@ export const DrawingCanvas = ({
         syncEraserCursor();
         const point = normalizedPoint(event, stageRef.current);
         if (!point) return;
+        settlingRef.current = null;
         stageRef.current.setPointerCapture(event.pointerId);
         activeRef.current = {
           pointerId: event.pointerId,

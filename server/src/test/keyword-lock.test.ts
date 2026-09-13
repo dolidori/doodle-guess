@@ -151,9 +151,12 @@ describe('그리기 권한 인계', () => {
     gameService.assignDrawer(room, host.playerId, drawer.playerId);
 
     expect(room.suggestedKeyword).not.toBe(seenByHost);
-    expect(room.round.shuffleCount).toBe(1);
-    expect(buildPrivateState(room, drawer).remainingKeywordShuffles)
+    // 본 사람(방장) 몫만 깎이고 넘겨받은 사람은 그대로 5회다.
+    expect(room.round.shuffleCounts.get(host.playerId)).toBe(1);
+    expect(buildPrivateState(room, host).remainingKeywordShuffles)
       .toBe(MAX_KEYWORD_SHUFFLES - 1);
+    expect(buildPrivateState(room, drawer).remainingKeywordShuffles)
+      .toBe(MAX_KEYWORD_SHUFFLES);
     // 넘긴 방장은 새 제시어를 볼 수 없다.
     expect(buildPrivateState(room, host).suggestedKeyword).toBeNull();
   });
@@ -165,7 +168,7 @@ describe('그리기 권한 인계', () => {
     gameService.assignDrawer(room, host.playerId, drawer.playerId);
 
     expect(room.suggestedKeyword).toBe(untouched);
-    expect(room.round.shuffleCount).toBe(0);
+    expect(room.round.shuffleCounts.size).toBe(0);
     expect(buildPrivateState(room, drawer).remainingKeywordShuffles)
       .toBe(MAX_KEYWORD_SHUFFLES);
   });
@@ -178,14 +181,17 @@ describe('그리기 권한 인계', () => {
     // 담당자가 보지 않았으면 되찾아도 그대로다.
     gameService.reclaimDrawer(room, host.playerId);
     expect(room.suggestedKeyword).toBe(seenByDrawer);
-    expect(room.round.shuffleCount).toBe(0);
+    expect(room.round.shuffleCounts.size).toBe(0);
 
     // 봤다면 되찾을 때 새로 뽑힌다.
     gameService.assignDrawer(room, host.playerId, drawer.playerId);
     gameService.revealKeyword(room, drawer.playerId);
     gameService.reclaimDrawer(room, host.playerId);
     expect(room.suggestedKeyword).not.toBe(seenByDrawer);
-    expect(room.round.shuffleCount).toBe(1);
+    // 본 사람(담당자) 몫만 깎이고 되찾은 방장은 그대로다.
+    expect(room.round.shuffleCounts.get(drawer.playerId)).toBe(1);
+    expect(buildPrivateState(room, host).remainingKeywordShuffles)
+      .toBe(MAX_KEYWORD_SHUFFLES);
   });
 
   it('다시 뽑으면 열람 기록이 지워져 이어서 넘겨도 깎이지 않는다', () => {
@@ -197,7 +203,7 @@ describe('그리기 권한 인계', () => {
     gameService.assignDrawer(room, host.playerId, drawer.playerId);
 
     expect(room.suggestedKeyword).toBe(fresh);
-    expect(room.round.shuffleCount).toBe(1);
+    expect(room.round.shuffleCounts.get(host.playerId)).toBe(1);
   });
 
   it('라운드가 끝나고 대기실로 돌아가면 횟수가 다시 채워진다', () => {
@@ -205,11 +211,11 @@ describe('그리기 권한 인계', () => {
     gameService.revealKeyword(room, host.playerId);
     gameService.assignDrawer(room, host.playerId, drawer.playerId);
     gameService.startRound(room, drawer.playerId, room.round.roundId, '코끼리');
-    expect(room.round.shuffleCount).toBe(1);
+    expect(room.round.shuffleCounts.get(host.playerId)).toBe(1);
 
     gameService.returnToWaiting(room, host.playerId, room.round.roundId);
 
-    expect(room.round.shuffleCount).toBe(0);
+    expect(room.round.shuffleCounts.size).toBe(0);
     expect(room.suggestedKeywordSeenBy.size).toBe(0);
     gameService.reclaimDrawer(room, host.playerId);
     expect(buildPrivateState(room, host).remainingKeywordShuffles)
@@ -224,7 +230,7 @@ describe('그리기 권한 인계', () => {
     gameService.assignDrawer(room, moderator.playerId, drawer.playerId);
 
     expect(room.lockedKeyword).toBe('코끼리');
-    expect(room.round.shuffleCount).toBe(0);
+    expect(room.round.shuffleCounts.size).toBe(0);
     expect(buildPrivateState(room, drawer).lockedKeyword).toBe('코끼리');
   });
 

@@ -39,7 +39,7 @@ const emptyRound = (roundNumber = 1, revision = 0, drawerEpoch = 0) => ({
   expiredAt: null,
   lastRoundEventId: null,
   guessSeq: 0,
-  shuffleCount: 0,
+  shuffleCounts: new Map<string, number>(),
   guessLocked: true,
   drawingLocked: true,
   drawing: emptyDrawing(revision, drawerEpoch)

@@ -94,7 +94,7 @@ describe('제시어 다시 뽑기 횟수 제한', () => {
 
     expect(() => gameService.shuffleKeyword(room, host.playerId)).toThrow(ProtocolError);
     expect(room.suggestedKeyword).toBe(settled);
-    expect(room.round.shuffleCount).toBe(MAX_KEYWORD_SHUFFLES);
+    expect(room.round.shuffleCounts.get(host.playerId)).toBe(MAX_KEYWORD_SHUFFLES);
   });
 
   it('다음 라운드가 되면 횟수가 다시 채워진다', () => {
@@ -106,7 +106,7 @@ describe('제시어 다시 뽑기 횟수 제한', () => {
 
     registry.nextRound(room);
 
-    expect(room.round.shuffleCount).toBe(0);
+    expect(room.round.shuffleCounts.size).toBe(0);
     expect(remainingFor(room, host)).toBe(MAX_KEYWORD_SHUFFLES);
     expect(() => gameService.shuffleKeyword(room, host.playerId)).not.toThrow();
   });
@@ -117,7 +117,7 @@ describe('제시어 다시 뽑기 횟수 제한', () => {
 
     expect(() => gameService.shuffleKeyword(room, other.playerId))
       .toThrowError(expect.objectContaining({ code: 'NOT_DRAWER' }));
-    expect(room.round.shuffleCount).toBe(0);
+    expect(room.round.shuffleCounts.size).toBe(0);
   });
 });
 
