@@ -747,7 +747,8 @@ h3 {
   margin: 0 0 var(--space-2);
 }
 
-.drawer-order-panel fieldset {
+.drawer-order-panel fieldset,
+.keyword-source-panel fieldset {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-1);
@@ -756,7 +757,8 @@ h3 {
   border: 0;
 }
 
-.drawer-order-panel label {
+.drawer-order-panel label,
+.keyword-source-panel label {
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -764,13 +766,15 @@ h3 {
   margin: 0;
 }
 
-.drawer-order-panel input[type="radio"] {
+.drawer-order-panel input[type="radio"],
+.keyword-source-panel input[type="radio"] {
   width: 1.25rem;
   min-height: 1.25rem;
   accent-color: var(--color-brand-yellow);
 }
 
-.drawer-order-panel select {
+.drawer-order-panel select,
+.keyword-source-panel select {
   min-height: 40px;
   border: 2px solid #bfb5ed;
   border-radius: var(--radius-sm);

@@ -19,6 +19,7 @@ const EVENT_MAX_BYTES: Record<string, number> = {
   SET_ROUND_DURATION: 1024,
   SET_ANSWER_MODE: 1024,
   SET_DRAWER_ORDER: 1024,
+  SET_KEYWORD_SOURCE: 1024,
   SHUFFLE_KEYWORD: 1024,
   REVEAL_KEYWORD: 1024,
   LOCK_KEYWORD: 1024,
@@ -183,6 +184,16 @@ export class Dispatcher {
           actorId,
           payload.drawerOrderMode,
           payload.rotationLaps
+        );
+        break;
+      }
+      case 'SET_KEYWORD_SOURCE': {
+        const payload = command.payload as ClientPayloadMap['SET_KEYWORD_SOURCE'];
+        this.gameService.setKeywordSource(
+          room,
+          actorId,
+          payload.keywordSource,
+          payload.proverbDifficulty
         );
         break;
       }

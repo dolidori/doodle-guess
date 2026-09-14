@@ -3,7 +3,9 @@ import {
   MAX_KEYWORD_SHUFFLES,
   type AnswerMode,
   type DrawerOrderMode,
-  type GuessPublic
+  type GuessPublic,
+  type KeywordSource,
+  type ProverbDifficulty
 } from '../../../shared/src/index.js';
 import { broadcast, envelope, sendEnvelope } from '../broadcast/roomBroadcast.js';
 import { ProtocolError, assertProtocol } from '../protocol/errors.js';
@@ -83,6 +85,38 @@ export class GameService {
     );
   }
 
+  setKeywordSource(
+    room: RoomRuntime,
+    actorId: string,
+    keywordSource: KeywordSource,
+    proverbDifficulty: ProverbDifficulty
+  ): void {
+    assertPreparing(room);
+    const actor = room.players.get(actorId);
+    assertProtocol(actor && (actor.isHost || actor.isModerator), 'FORBIDDEN', '제시어 종류 설정 권한이 없습니다.');
+    assertProtocol(room.lockedKeyword === null, 'KEYWORD_LOCKED', '잠긴 제시어가 있으면 종류를 바꿀 수 없습니다.');
+    const unchanged = room.keywordSource === keywordSource &&
+      room.proverbDifficulty === proverbDifficulty;
+    room.keywordSource = keywordSource;
+    room.proverbDifficulty = proverbDifficulty;
+    // 풀이 바뀌었는데 이전 풀의 제시어가 남아 있으면 안 된다. 새로 뽑고 열람 기록도 비운다.
+    if (!unchanged) this.replaceSuggestedKeyword(room, room.suggestedKeyword);
+    room.roomVersion += 1;
+    room.eventSeq += 1;
+    this.roomService.publishState(room);
+  }
+
+  /** 방 설정에 맞는 풀에서 추천 제시어를 새로 뽑고 열람 기록을 비운다. */
+  private replaceSuggestedKeyword(room: RoomRuntime, excluded: string | null): void {
+    room.lastSuggestedKeyword = excluded;
+    room.suggestedKeyword = pickRandomKeyword(
+      excluded,
+      room.keywordSource,
+      room.proverbDifficulty
+    );
+    room.suggestedKeywordSeenBy.clear();
+  }
+
   shuffleKeyword(room: RoomRuntime, actorId: string): void {
     const canPrepareKeyword = room.round.status === 'PREPARING_KEYWORD' ||
       room.round.status === 'SOLVED' ||
@@ -96,9 +130,7 @@ export class GameService {
       `제시어는 라운드마다 ${MAX_KEYWORD_SHUFFLES}번까지만 다시 뽑을 수 있습니다.`
     );
     this.chargeShuffle(room, actorId);
-    room.lastSuggestedKeyword = room.suggestedKeyword;
-    room.suggestedKeyword = pickRandomKeyword(room.lastSuggestedKeyword);
-    room.suggestedKeywordSeenBy.clear();
+    this.replaceSuggestedKeyword(room, room.suggestedKeyword);
     room.roomVersion += 1;
     room.eventSeq += 1;
     this.roomService.publishState(room);
@@ -206,9 +238,7 @@ export class GameService {
   }
 
   private refreshSuggestedKeyword(room: RoomRuntime): void {
-    room.lastSuggestedKeyword = room.round.keyword;
-    room.suggestedKeyword = pickRandomKeyword(room.lastSuggestedKeyword);
-    room.suggestedKeywordSeenBy.clear();
+    this.replaceSuggestedKeyword(room, room.round.keyword);
   }
 
   private rankings(room: RoomRuntime): Array<{
@@ -465,9 +495,7 @@ export class GameService {
     if (room.round.status === 'DRAWING_AND_GUESSING' || room.lockedKeyword !== null) return;
     if (!room.suggestedKeywordSeenBy.has(room.drawerId)) return;
     this.chargeShuffle(room, room.drawerId);
-    room.lastSuggestedKeyword = room.suggestedKeyword;
-    room.suggestedKeyword = pickRandomKeyword(room.lastSuggestedKeyword);
-    room.suggestedKeywordSeenBy.clear();
+    this.replaceSuggestedKeyword(room, room.suggestedKeyword);
   }
 
   assignDrawer(room: RoomRuntime, actorId: string, targetPlayerId: string): void {

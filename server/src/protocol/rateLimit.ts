@@ -8,6 +8,7 @@ const RULES: Record<string, { ratePerMs: number; burst: number }> = {
   SET_ROUND_DURATION: { ratePerMs: 5 / 10_000, burst: 5 },
   SET_ANSWER_MODE: { ratePerMs: 5 / 10_000, burst: 5 },
   SET_DRAWER_ORDER: { ratePerMs: 5 / 10_000, burst: 5 },
+  SET_KEYWORD_SOURCE: { ratePerMs: 5 / 10_000, burst: 5 },
   SHUFFLE_KEYWORD: { ratePerMs: 3 / 1000, burst: 4 },
   REVEAL_KEYWORD: { ratePerMs: 3 / 1000, burst: 5 },
   LOCK_KEYWORD: { ratePerMs: 5 / 10_000, burst: 5 },

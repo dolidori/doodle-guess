@@ -8,6 +8,8 @@ const publicState = (): PublicState => ({
   mode: 'NORMAL',
   answerMode: 'FIRST_CORRECT',
   drawerOrderMode: 'FIXED',
+  keywordSource: 'WORD',
+  proverbDifficulty: 'ALL',
   keywordLocked: false,
   rotationLaps: 1,
   rotationCurrentTurn: 0,

@@ -81,6 +81,7 @@
         "SET_ROUND_DURATION",
         "SET_ANSWER_MODE",
         "SET_DRAWER_ORDER",
+        "SET_KEYWORD_SOURCE",
         "SHUFFLE_KEYWORD",
         "LOCK_KEYWORD",
         "UNLOCK_KEYWORD",
@@ -1398,6 +1399,10 @@
     {
       "action": "UNLOCK_KEYWORD",
       "when": "betweenRounds, actor is moderator, lockedKeyword is not null"
+    },
+    {
+      "action": "SET_KEYWORD_SOURCE",
+      "when": "round.status == PREPARING_KEYWORD, actor is host or moderator, lockedKeyword is null"
     },
     {
       "action": "SET_DRAWER_ORDER",

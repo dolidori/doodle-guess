@@ -91,6 +91,10 @@ export const payloadSchemas = {
     drawerOrderMode: z.enum(['FIXED', 'ROTATE']),
     rotationLaps: z.number().int().min(1).max(10)
   }).strict(),
+  SET_KEYWORD_SOURCE: z.object({
+    keywordSource: z.enum(['WORD', 'PROVERB']),
+    proverbDifficulty: z.enum(['ALL', 'EASY', 'NORMAL', 'HARD'])
+  }).strict(),
   SHUFFLE_KEYWORD: emptySchema,
   REVEAL_KEYWORD: emptySchema,
   LOCK_KEYWORD: z.object({ keyword: keywordSchema }).strict(),

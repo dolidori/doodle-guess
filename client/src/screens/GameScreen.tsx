@@ -69,7 +69,8 @@ export const GameScreen = ({
   const [durationDraft, setDurationDraft] = useState<number | null>(null);
   const [bgmControlOpen, setBgmControlOpen] = useState(false);
   const [roomCodeOpen, setRoomCodeOpen] = useState(false);
-  const [modeInfoOpen, setModeInfoOpen] = useState<'DRAWER_ORDER' | 'ANSWER_MODE' | null>(null);
+  const [modeInfoOpen, setModeInfoOpen] =
+    useState<'DRAWER_ORDER' | 'ANSWER_MODE' | 'KEYWORD_SOURCE' | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [confirmation, setConfirmation] = useState<ConfirmationKind | null>(null);
   const bgmControlRef = useRef<HTMLDivElement>(null);
@@ -166,6 +167,21 @@ export const GameScreen = ({
   const answerModeLabel = publicState.answerMode === 'FIRST_CORRECT'
     ? '선착순 종료'
     : '타이머까지 계속';
+  const PROVERB_DIFFICULTY_LABELS = {
+    ALL: '전체',
+    EASY: '하',
+    NORMAL: '중',
+    HARD: '상'
+  } as const;
+  const keywordSourceLabel = publicState.keywordSource === 'PROVERB'
+    ? `속담 · 난이도 ${PROVERB_DIFFICULTY_LABELS[publicState.proverbDifficulty]}`
+    : '단어';
+  const sendKeywordSource = (
+    keywordSource: typeof publicState.keywordSource,
+    proverbDifficulty: typeof publicState.proverbDifficulty
+  ): void => {
+    send('SET_KEYWORD_SOURCE', { keywordSource, proverbDifficulty });
+  };
 
   return (
     <main className="game-screen">
@@ -460,6 +476,71 @@ export const GameScreen = ({
                 </fieldset>
               ) : (
                 <p>{answerModeLabel}</p>
+              )}
+            </section>
+            <section className="keyword-source-panel mode-panel panel-section">
+              <button
+                type="button"
+                className="mode-info-trigger"
+                aria-expanded={modeInfoOpen === 'KEYWORD_SOURCE'}
+                aria-describedby={modeInfoOpen === 'KEYWORD_SOURCE' ? 'keyword-source-help' : undefined}
+                onClick={() => setModeInfoOpen((open) =>
+                  open === 'KEYWORD_SOURCE' ? null : 'KEYWORD_SOURCE'
+                )}
+              >
+                제시어 종류
+                <span aria-hidden="true">?</span>
+              </button>
+              {modeInfoOpen === 'KEYWORD_SOURCE' && (
+                <div id="keyword-source-help" className="mode-info-bubble" role="tooltip">
+                  단어는 기본 낱말 목록에서, 속담은 속담 목록에서 뽑습니다. 속담은 앞뒤를
+                  모두 이어서 맞혀야 정답이라 난이도를 함께 고를 수 있습니다.
+                </div>
+              )}
+              {actions.has('SET_KEYWORD_SOURCE') ? (
+                <>
+                  <fieldset>
+                    <legend className="visually-hidden">제시어 종류 선택</legend>
+                    <label>
+                      <input
+                        type="radio"
+                        name="keyword-source"
+                        checked={publicState.keywordSource === 'WORD'}
+                        onChange={() => sendKeywordSource('WORD', publicState.proverbDifficulty)}
+                      />
+                      단어
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="keyword-source"
+                        checked={publicState.keywordSource === 'PROVERB'}
+                        onChange={() => sendKeywordSource('PROVERB', publicState.proverbDifficulty)}
+                      />
+                      속담
+                    </label>
+                  </fieldset>
+                  {publicState.keywordSource === 'PROVERB' && (
+                    <label>
+                      난이도
+                      <select
+                        value={publicState.proverbDifficulty}
+                        onChange={(event) => sendKeywordSource(
+                          'PROVERB',
+                          event.target.value as typeof publicState.proverbDifficulty
+                        )}
+                      >
+                        {(['ALL', 'EASY', 'NORMAL', 'HARD'] as const).map((level) => (
+                          <option key={level} value={level}>
+                            {PROVERB_DIFFICULTY_LABELS[level]}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                </>
+              ) : (
+                <p>{keywordSourceLabel}</p>
               )}
             </section>
             {actions.has('SET_ROUND_DURATION') ? (

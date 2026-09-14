@@ -2,6 +2,8 @@ import type WebSocket from 'ws';
 import type {
   AnswerMode,
   DrawerOrderMode,
+  KeywordSource,
+  ProverbDifficulty,
   FinalRanking,
   GuessPublic,
   RoomMode,
@@ -82,6 +84,8 @@ export type RoomRuntime = {
   mode: RoomMode;
   answerMode: AnswerMode;
   drawerOrderMode: DrawerOrderMode;
+  keywordSource: KeywordSource;
+  proverbDifficulty: ProverbDifficulty;
   rotationLaps: number;
   rotationPlayerIds: string[];
   rotationTurnIndex: number;

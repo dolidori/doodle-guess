@@ -4,7 +4,13 @@ import type {
   SERVER_EVENT_TYPES
 } from './constants.js';
 import type { StrokeBatchPayload } from '../state/drawingTypes.js';
-import type { AnswerMode, DrawerOrderMode, RoomMode } from '../state/publicTypes.js';
+import type {
+  AnswerMode,
+  DrawerOrderMode,
+  KeywordSource,
+  ProverbDifficulty,
+  RoomMode
+} from '../state/publicTypes.js';
 
 export type ClientEventType = (typeof CLIENT_EVENT_TYPES)[number];
 export type ServerEventType = (typeof SERVER_EVENT_TYPES)[number];
@@ -17,6 +23,7 @@ export type ClientPayloadMap = {
   SET_ROUND_DURATION: { durationSeconds: number };
   SET_ANSWER_MODE: { answerMode: AnswerMode };
   SET_DRAWER_ORDER: { drawerOrderMode: DrawerOrderMode; rotationLaps: number };
+  SET_KEYWORD_SOURCE: { keywordSource: KeywordSource; proverbDifficulty: ProverbDifficulty };
   SHUFFLE_KEYWORD: Record<string, never>;
   REVEAL_KEYWORD: Record<string, never>;
   LOCK_KEYWORD: { keyword: string };

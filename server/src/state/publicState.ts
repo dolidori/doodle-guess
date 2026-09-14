@@ -6,6 +6,8 @@ export const buildPublicState = (room: RoomRuntime, now = Date.now()): PublicSta
   mode: room.mode,
   answerMode: room.answerMode,
   drawerOrderMode: room.drawerOrderMode,
+  keywordSource: room.keywordSource,
+  proverbDifficulty: room.proverbDifficulty,
   keywordLocked: room.lockedKeyword !== null,
   rotationLaps: room.rotationLaps,
   rotationCurrentTurn: room.rotationPlayerIds.length ? room.rotationTurnIndex + 1 : 0,

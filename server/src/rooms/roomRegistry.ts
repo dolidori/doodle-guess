@@ -69,6 +69,8 @@ export class RoomRegistry {
       mode,
       answerMode: 'UNTIL_TIMER',
       drawerOrderMode: 'FIXED',
+      keywordSource: 'WORD',
+      proverbDifficulty: 'ALL',
       rotationLaps: 1,
       rotationPlayerIds: [],
       rotationTurnIndex: 0,

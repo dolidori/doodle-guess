@@ -254,7 +254,8 @@
   }
 
   .answer-mode-panel fieldset,
-  .drawer-order-panel fieldset {
+  .drawer-order-panel fieldset,
+  .keyword-source-panel fieldset {
     display: grid;
   }
 

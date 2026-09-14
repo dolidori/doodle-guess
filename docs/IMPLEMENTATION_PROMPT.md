@@ -19,7 +19,8 @@
 
 아래 변경은 위 2026-07-24 문구와 본문의 15개 C→S·13개 allowedActions 기술보다 우선합니다. 상세 계약은 `WebSocket_이벤트_명세.md`, 규칙은 `게임_규칙_문서.md`, 배경은 `결정_기록.md` D-25~D-28을 따릅니다.
 
-- **C→S 20개, allowedActions 17개, 오류 코드 43개**다. S→C 14개는 그대로다.
+- **C→S 21개, allowedActions 18개, 오류 코드 43개**다. S→C 14개는 그대로다.
+- `SET_KEYWORD_SOURCE`로 제시어 풀을 고른다. `WORD`(기본 낱말 763개) 또는 `PROVERB`(속담 150개), 속담은 난이도(`ALL`/`EASY`/`NORMAL`/`HARD`)를 함께 정한다. **일반·진행자 모드 둘 다** 호스트/진행자가 쓴다. 속담은 앞뒤를 이은 전문이 정답이고 힌트는 없다.
 - 정답 모드 기본값은 `UNTIL_TIMER`다. 정답자는 `연결 참여자 수 - 정답 순위 + 1`점(최소 1점), 그림 담당자는 정답이 나올 때마다 +1점이다.
 - `SET_DRAWER_ORDER`로 `FIXED`/`ROTATE`와 순환 바퀴 수(1~10)를 정한다. 순환을 다 돌면 방이 `RESULTS`가 되고 `END_CEREMONY`로 끝낸다.
 - `SHUFFLE_KEYWORD`로 추천 제시어를 라운드당 5회까지 다시 뽑는다.
@@ -241,13 +242,14 @@ ROUND_ACTIVE
 | 일반 참여자 | 공개 그림 열람, 추측 제출·피드 열람 |
 | 제시어를 본 이전 drawer | 그림 열람, 해당 라운드 추측 불가 |
 
-서버가 수신자별로 계산하는 `allowedActions` enum은 정확히 다음 17개입니다.
+서버가 수신자별로 계산하는 `allowedActions` enum은 정확히 다음 18개입니다.
 
 ```text
 LEAVE_ROOM
 SET_ROUND_DURATION
 SET_ANSWER_MODE
 SET_DRAWER_ORDER
+SET_KEYWORD_SOURCE
 SHUFFLE_KEYWORD
 LOCK_KEYWORD
 UNLOCK_KEYWORD
@@ -327,7 +329,7 @@ type ServerEnvelope = {
 };
 ```
 
-### C→S 20개
+### C→S 21개
 
 ```text
 CREATE_ROOM
@@ -336,6 +338,7 @@ LEAVE_ROOM
 SET_ROUND_DURATION
 SET_ANSWER_MODE
 SET_DRAWER_ORDER
+SET_KEYWORD_SOURCE
 SHUFFLE_KEYWORD
 REVEAL_KEYWORD
 LOCK_KEYWORD

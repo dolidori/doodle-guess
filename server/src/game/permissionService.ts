@@ -31,6 +31,8 @@ export const allowedActionsFor = (
 
   if (preparing && privileged) {
     actions.push('SET_ROUND_DURATION', 'SET_ANSWER_MODE');
+    // 잠긴 제시어가 있으면 풀을 바꿔도 그 제시어로 시작하므로 설정을 닫는다.
+    if (room.lockedKeyword === null) actions.push('SET_KEYWORD_SOURCE');
     if (room.rotationPlayerIds.length === 0) actions.push('SET_DRAWER_ORDER');
   }
   if (preparing && isDrawer && canStartRound(room)) actions.push('SET_KEYWORD_AND_START');

@@ -60,6 +60,8 @@ type RoomStatus =
   | 'CLOSED';
 type AnswerMode = 'FIRST_CORRECT' | 'UNTIL_TIMER';
 type DrawerOrderMode = 'FIXED' | 'ROTATE';
+type KeywordSource = 'WORD' | 'PROVERB';
+type ProverbDifficulty = 'ALL' | 'EASY' | 'NORMAL' | 'HARD';
 type RoundStatus =
   | 'PREPARING_KEYWORD'
   | 'DRAWING_AND_GUESSING'
@@ -93,20 +95,21 @@ type StrokeTool = 'PEN' | 'ERASER';
 4. `SET_ROUND_DURATION`
 5. `SET_ANSWER_MODE`
 6. `SET_DRAWER_ORDER`
-7. `SHUFFLE_KEYWORD`
-8. `REVEAL_KEYWORD`
-9. `LOCK_KEYWORD`
-10. `UNLOCK_KEYWORD`
-11. `SET_KEYWORD_AND_START`
-12. `SUBMIT_GUESS`
-13. `DRAW_STROKE_BATCH`
-14. `UNDO_LAST_STROKE`
-15. `CLEAR_DRAWING`
-16. `ASSIGN_DRAWER`
-17. `RECLAIM_DRAWER`
-18. `KICK_PLAYER`
-19. `RETURN_TO_WAITING`
-20. `END_CEREMONY`
+7. `SET_KEYWORD_SOURCE`
+8. `SHUFFLE_KEYWORD`
+9. `REVEAL_KEYWORD`
+10. `LOCK_KEYWORD`
+11. `UNLOCK_KEYWORD`
+12. `SET_KEYWORD_AND_START`
+13. `SUBMIT_GUESS`
+14. `DRAW_STROKE_BATCH`
+15. `UNDO_LAST_STROKE`
+16. `CLEAR_DRAWING`
+17. `ASSIGN_DRAWER`
+18. `RECLAIM_DRAWER`
+19. `KICK_PLAYER`
+20. `RETURN_TO_WAITING`
+21. `END_CEREMONY`
 
 ### S→C
 
@@ -249,7 +252,27 @@ payload: {
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `INVALID_PHASE`, `INVALID_DURATION`(바퀴 수 범위 위반), `RATE_LIMITED`.
 
-### 5.7 `SHUFFLE_KEYWORD`
+### 5.7 `SET_KEYWORD_SOURCE`
+
+```ts
+payload: {
+  keywordSource: 'WORD' | 'PROVERB';
+  proverbDifficulty: 'ALL' | 'EASY' | 'NORMAL' | 'HARD';
+}
+```
+
+- 권한: host 또는 moderator. **두 모드 모두** 쓴다.
+- 허용 phase: `PREPARING_KEYWORD`만. 제한 시간·정답 모드와 같은 자리의 대기실 설정이다.
+- `WORD`는 기본 낱말 763개, `PROVERB`는 속담 150개에서 뽑는다. 속담은 `proverbDifficulty`로 풀을 좁힐 수 있다(`ALL` 150 / `EASY` 36 / `NORMAL` 78 / `HARD` 36).
+- 속담은 **앞뒤를 모두 이어 붙인 전문**이 정답이다. 앞부분 힌트는 주지 않는다. 정규화가 공백·구두점을 지우므로 띄어쓰기가 달라도 맞는 것으로 본다.
+- 설정이 **실제로 바뀌면** 추천 제시어를 새 풀에서 다시 뽑고 열람 기록(`suggestedKeywordSeenBy`)을 비운다. 이전 풀의 제시어가 남아 있으면 안 된다. 같은 값을 다시 보내면 아무것도 바꾸지 않는다.
+- 다시 뽑기 횟수는 건드리지 않는다. 방 설정 변경은 담당자가 고른 것이 아니다.
+- 잠긴 제시어가 있으면 `KEYWORD_LOCKED`로 거부한다. 풀을 바꿔도 어차피 잠긴 제시어로 시작하므로 혼선만 준다.
+- 성공: `roomVersion` 증가, 방 전체 `PUBLIC_STATE`, 수신자별 `PRIVATE_STATE`.
+- 크기/Rate: 1KiB, 10초당 5회·burst 5.
+- 오류: `FORBIDDEN`, `INVALID_PHASE`, `KEYWORD_LOCKED`, `INVALID_PAYLOAD`, `RATE_LIMITED`.
+
+### 5.8 `SHUFFLE_KEYWORD`
 
 ```ts
 payload: {}
@@ -257,7 +280,7 @@ payload: {}
 
 - 권한: 현재 drawer.
 - 허용 phase: `PREPARING_KEYWORD`, `SOLVED`, `EXPIRED`.
-- 서버가 기본 제시어 목록에서 추천 제시어를 새로 뽑는다. 직전 추천 제시어는 후보에서 제외해 같은 값이 연속으로 나오지 않게 한다.
+- 서버가 **방 설정(`keywordSource`·`proverbDifficulty`)에 맞는 풀**에서 추천 제시어를 새로 뽑는다. 직전 추천 제시어는 후보에서 제외해 같은 값이 연속으로 나오지 않게 한다.
 - **라운드당 사람별 `MAX_KEYWORD_SHUFFLES`(5)회**로 제한한다. `shuffleCounts`는 playerId별 Map이며, 한 사람이 쓴 횟수가 다음 담당자 몫에서 깎이지 않는다. 소진하면 액션 자체가 `allowedActions`에서 빠지고, 그래도 들어온 요청은 `SHUFFLE_LIMIT`으로 거부한다. 라운드가 바뀌면 비운다.
 - 새 제시어를 뽑았으므로 **열람 기록(`suggestedKeywordSeenBy`)을 비운다**.
 - 잠긴 제시어가 있으면 `KEYWORD_LOCKED`로 거부한다.
@@ -265,7 +288,7 @@ payload: {}
 - 크기/Rate: 1KiB, 초당 3회·burst 4.
 - 오류: `NOT_DRAWER`, `INVALID_PHASE`, `SHUFFLE_LIMIT`, `KEYWORD_LOCKED`, `RATE_LIMITED`.
 
-### 5.8 `REVEAL_KEYWORD`
+### 5.9 `REVEAL_KEYWORD`
 
 ```ts
 payload: {}
@@ -279,7 +302,7 @@ payload: {}
 - 크기/Rate: 1KiB, 초당 3회·burst 5.
 - 오류: `FORBIDDEN`, `RATE_LIMITED`.
 
-### 5.9 `LOCK_KEYWORD`
+### 5.10 `LOCK_KEYWORD`
 
 ```ts
 payload: {
@@ -297,7 +320,7 @@ payload: {
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `INVALID_PHASE`, `KEYWORD_LOCKED`, `INVALID_KEYWORD`, `RATE_LIMITED`.
 
-### 5.10 `UNLOCK_KEYWORD`
+### 5.11 `UNLOCK_KEYWORD`
 
 ```ts
 payload: {}
@@ -309,7 +332,7 @@ payload: {}
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `INVALID_PHASE`, `RATE_LIMITED`.
 
-### 5.11 `SET_KEYWORD_AND_START`
+### 5.12 `SET_KEYWORD_AND_START`
 
 ```ts
 payload: {
@@ -328,7 +351,7 @@ payload: {
 - 크기/Rate: 1KiB, 10초당 2회·burst 2.
 - 오류: `FORBIDDEN`, `NOT_DRAWER`, `STALE_ROUND`, `INVALID_PHASE`, `MIN_PLAYERS`, `INVALID_KEYWORD`, `RATE_LIMITED`.
 
-### 5.12 `SUBMIT_GUESS`
+### 5.13 `SUBMIT_GUESS`
 
 ```ts
 payload: {
@@ -351,7 +374,7 @@ payload: {
 - 크기/Rate: 1KiB, 초당 4회·burst 8.
 - 오류: `GUESS_FORBIDDEN`, `STALE_ROUND`, `ROUND_LOCKED`, `ROUND_EXPIRED`, `INVALID_GUESS`, `RATE_LIMITED`.
 
-### 5.13 `DRAW_STROKE_BATCH`
+### 5.14 `DRAW_STROKE_BATCH`
 
 ```ts
 payload: {
@@ -379,7 +402,7 @@ payload: {
 - 상한: batch 64점, stroke 2,048점, revision 1,000 stroke·50,000점·4MiB.
 - 오류: `NOT_DRAWER`, `INVALID_PHASE`, `ROUND_EXPIRED`, `STALE_ROUND`, `STALE_DRAWING_REVISION`, `STALE_DRAWER_EPOCH`, `INVALID_STROKE`, `STROKE_STYLE_MISMATCH`, `STROKE_SEQUENCE_GAP`, `STROKE_LIMIT`, `DRAWING_LIMIT`, `RATE_LIMITED`.
 
-### 5.14 `UNDO_LAST_STROKE`
+### 5.15 `UNDO_LAST_STROKE`
 
 ```ts
 payload: {
@@ -395,7 +418,7 @@ payload: {
 - 크기/Rate: 1KiB, 초당 3회·burst 5.
 - 오류: `NOT_DRAWER`, `INVALID_PHASE`, `ROUND_EXPIRED`, stale 계열, `NO_STROKE_TO_UNDO`, `RATE_LIMITED`.
 
-### 5.15 `CLEAR_DRAWING`
+### 5.16 `CLEAR_DRAWING`
 
 ```ts
 payload: {
@@ -411,7 +434,7 @@ payload: {
 - 크기/Rate: 1KiB, 초당 3회·burst 5.
 - 오류: `NOT_DRAWER`, `INVALID_PHASE`, `ROUND_EXPIRED`, stale 계열, `RATE_LIMITED`.
 
-### 5.16 `ASSIGN_DRAWER`
+### 5.17 `ASSIGN_DRAWER`
 
 ```ts
 payload: {
@@ -428,7 +451,7 @@ payload: {
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `INVALID_MODE`, `INVALID_PHASE`, `TARGET_NOT_FOUND`, `TARGET_DISCONNECTED`, `RATE_LIMITED`.
 
-### 5.17 `RECLAIM_DRAWER`
+### 5.18 `RECLAIM_DRAWER`
 
 ```ts
 payload: {}
@@ -441,7 +464,7 @@ payload: {}
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `INVALID_MODE`, `INVALID_PHASE`, `RATE_LIMITED`.
 
-### 5.18 `KICK_PLAYER`
+### 5.19 `KICK_PLAYER`
 
 ```ts
 payload: {
@@ -456,7 +479,7 @@ payload: {
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `TARGET_NOT_FOUND`, `CANNOT_KICK_PRIVILEGED`, `RATE_LIMITED`.
 
-### 5.19 `RETURN_TO_WAITING`
+### 5.20 `RETURN_TO_WAITING`
 
 ```ts
 payload: {
@@ -471,7 +494,7 @@ payload: {
 - 크기/Rate: 1KiB, 10초당 5회·burst 5.
 - 오류: `FORBIDDEN`, `INVALID_PHASE`, `STALE_ROUND`, `RATE_LIMITED`.
 
-### 5.20 `END_CEREMONY`
+### 5.21 `END_CEREMONY`
 
 ```ts
 payload: {}
@@ -512,6 +535,8 @@ payload: {
   mode: RoomMode;
   answerMode: 'FIRST_CORRECT' | 'UNTIL_TIMER';
   drawerOrderMode: 'FIXED' | 'ROTATE';
+  keywordSource: KeywordSource;
+  proverbDifficulty: ProverbDifficulty;
   keywordLocked: boolean;   // 진행자가 다음 제시어를 잠갔는지
   rotationLaps: number;     // 순환 바퀴 수 설정값
   rotationCurrentTurn: number;  // 순환이 돌지 않으면 0
@@ -591,6 +616,7 @@ payload: {
     | 'SET_ROUND_DURATION'
     | 'SET_ANSWER_MODE'
     | 'SET_DRAWER_ORDER'
+    | 'SET_KEYWORD_SOURCE'
     | 'SHUFFLE_KEYWORD'
     | 'LOCK_KEYWORD'
     | 'UNLOCK_KEYWORD'
@@ -610,7 +636,7 @@ payload: {
 
 `keyword`, `suggestedKeyword`, `lockedKeyword` 셋 다 **현재 drawer 또는 moderator에게만** 원문이 가고 나머지는 null이다. 이전 drawer는 null이지만 `hasSeenKeywordThisRound:true`이고 추측 권한이 없다.
 
-`allowedActions`는 17개다. `REVEAL_KEYWORD`는 상태를 바꾸지 않는 열람 신고라 여기에 넣지 않으며, 클라이언트도 이 목록으로 막지 않는다. `CREATE_ROOM`/`JOIN_ROOM`도 방 밖의 명령이라 제외한다.
+`allowedActions`는 18개다. `REVEAL_KEYWORD`는 상태를 바꾸지 않는 열람 신고라 여기에 넣지 않으며, 클라이언트도 이 목록으로 막지 않는다. `CREATE_ROOM`/`JOIN_ROOM`도 방 밖의 명령이라 제외한다.
 
 `LOCK_KEYWORD`와 `UNLOCK_KEYWORD`는 동시에 나오지 않는다. 잠겨 있으면 `UNLOCK_KEYWORD`만, 아니면 `LOCK_KEYWORD`만 담긴다. 둘 다 moderator에게만 나간다.
 
@@ -934,7 +960,8 @@ const estimatedServerNow =
 8. host disconnect 후 host 변경 이벤트와 일반 사용자 isHost 승격은 0건이다.
 9. 30명 방에 신규 JOIN은 `ROOM_FULL`, 기존 slot 복구는 성공한다.
 10. 모든 event의 문서상 크기·Rate Limit과 Zod schema 상수가 동일하다.
-11. C→S 20개, S→C 14개, `allowedActions` 17개, 오류 코드 43개가 코드 상수와 일치한다(`server/src/test/protocol.test.ts`).
+11. C→S 21개, S→C 14개, `allowedActions` 18개, 오류 코드 43개가 코드 상수와 일치한다(`server/src/test/protocol.test.ts`).
 12. 잠긴 제시어는 조작된 `SET_KEYWORD_AND_START` payload로 바뀌지 않는다.
 13. 제시어를 보지 않고 넘긴 인계는 추천 제시어도 다시 뽑기 횟수도 바꾸지 않는다.
 14. 제시어를 보고 넘긴 인계는 넘겨주는 사람 몫만 깎고, 넘겨받는 사람은 5회를 그대로 갖는다.
+15. `keywordSource`를 바꾸면 이전 풀의 추천 제시어가 남지 않는다.
