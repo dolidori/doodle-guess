@@ -17,8 +17,10 @@ export const LobbyScreen = () => {
 
   return (
     <main className="lobby-screen">
+      <h1 className="lobby-title">
+        <img src="/images/bg/lobby_title.webp" alt="Doodle Guess 두들 게스" />
+      </h1>
       <section className="lobby-card">
-        <h1 className="visually-hidden">Doodle Guess 두들 게스</h1>
         <ServerStatus />
         <div className="lobby-grid">
           <div>
