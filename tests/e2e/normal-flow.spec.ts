@@ -198,8 +198,8 @@ test('일반 모드 생성부터 그림, 정답, 잠금, 다음 라운드까지 
   await host.locator('.canvas-stage').click({ position: { x: 10, y: 10 } });
   await expect(host.getByRole('tooltip')).toBeHidden();
 
-  await host.getByLabel('선착순 종료').click();
-  await expect(host.getByLabel('선착순 종료')).toBeChecked();
+  await host.getByLabel('선착순', { exact: true }).click();
+  await expect(host.getByLabel('선착순', { exact: true })).toBeChecked();
   await host.getByLabel('제시어', { exact: true }).fill('보라색');
   await host.getByRole('button', { name: '제시어 확정 및 시작' }).click();
   await expect(host.getByText('제시어가 가려졌습니다.')).toBeVisible();

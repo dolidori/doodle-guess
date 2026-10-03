@@ -3,7 +3,7 @@ import type {
   AnswerMode,
   DrawerOrderMode,
   KeywordSource,
-  ProverbDifficulty,
+  ProverbLevel,
   FinalRanking,
   GuessPublic,
   RoomMode,
@@ -44,6 +44,8 @@ export type RoundState = {
   hasKeyword: boolean;
   keyword: string | null;
   normalizedKeyword: string | null;
+  /** 정답으로 인정하는 표현들(정규화). 속담은 같은 속담의 다른 표현까지, 그 밖에는 제시어 하나. */
+  acceptedAnswers: string[];
   keywordExposedPlayerIds: Set<string>;
   correctPlayerIds: Set<string>;
   startedAt: number | null;
@@ -85,7 +87,7 @@ export type RoomRuntime = {
   answerMode: AnswerMode;
   drawerOrderMode: DrawerOrderMode;
   keywordSource: KeywordSource;
-  proverbDifficulty: ProverbDifficulty;
+  proverbLevels: ProverbLevel[];
   rotationLaps: number;
   rotationPlayerIds: string[];
   rotationTurnIndex: number;

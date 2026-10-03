@@ -18,6 +18,9 @@ export const MAX_DRAWING_BYTES = 4 * 1024 * 1024;
 export const MAX_GUESS_FEED = 100;
 /** 한 라운드에서 제시어를 다시 뽑을 수 있는 횟수. */
 export const MAX_KEYWORD_SHUFFLES = 5;
+
+/** 속담 난이도 전체(쉬운 것부터). 새 방의 기본값이기도 하다. */
+export const PROVERB_LEVELS = ['EASY', 'NORMAL', 'HARD'] as const;
 export const QUEUE_CAPACITY = 200;
 export const SLOW_CONNECTION_BYTES = 256 * 1024;
 export const RECOVERED_CONNECTION_BYTES = 128 * 1024;

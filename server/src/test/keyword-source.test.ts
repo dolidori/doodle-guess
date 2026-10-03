@@ -4,6 +4,7 @@ import { GameService } from '../game/gameService.js';
 import {
   DEFAULT_KEYWORDS,
   DEFAULT_PROVERBS,
+  acceptedAnswersFor,
   keywordPool,
   normalizeGuess
 } from '../game/keywordService.js';
@@ -61,8 +62,8 @@ const setupRoom = (mode: 'NORMAL' | 'MODERATOR' = 'NORMAL') => {
 const proverbSet = new Set(DEFAULT_PROVERBS.map((entry) => entry.text));
 
 describe('속담 제시어 목록', () => {
-  it('150개를 중복 없이 싣고 제시어 길이 상한을 지킨다', () => {
-    expect(DEFAULT_PROVERBS).toHaveLength(150);
+  it('309개를 중복 없이 싣고 제시어 길이 상한을 지킨다', () => {
+    expect(DEFAULT_PROVERBS).toHaveLength(309);
     expect(proverbSet.size).toBe(DEFAULT_PROVERBS.length);
     for (const entry of DEFAULT_PROVERBS) {
       expect([...entry.text].length).toBeLessThanOrEqual(50);
@@ -76,17 +77,24 @@ describe('속담 제시어 목록', () => {
   });
 
   it('난이도별로 풀을 좁힌다', () => {
-    expect(keywordPool('WORD', 'ALL')).toBe(DEFAULT_KEYWORDS);
-    expect(keywordPool('PROVERB', 'ALL')).toHaveLength(150);
+    expect(keywordPool('WORD')).toBe(DEFAULT_KEYWORDS);
+    expect(keywordPool('PROVERB')).toHaveLength(309);
     for (const level of ['EASY', 'NORMAL', 'HARD'] as const) {
-      const pool = keywordPool('PROVERB', level);
+      const pool = keywordPool('PROVERB', [level]);
       expect(pool.length).toBeGreaterThan(0);
       const expected = DEFAULT_PROVERBS.filter((entry) => entry.difficulty === level);
       expect(pool).toHaveLength(expected.length);
     }
     const sizes = (['EASY', 'NORMAL', 'HARD'] as const)
-      .map((level) => keywordPool('PROVERB', level).length);
-    expect(sizes.reduce((sum, size) => sum + size, 0)).toBe(150);
+      .map((level) => keywordPool('PROVERB', [level]).length);
+    expect(sizes.reduce((sum, size) => sum + size, 0)).toBe(309);
+  });
+
+  it('여러 난이도를 고르면 그 난이도들을 합친 풀에서 뽑는다', () => {
+    const pool = keywordPool('PROVERB', ['EASY', 'HARD']);
+    const expected = DEFAULT_PROVERBS.filter((entry) => entry.difficulty !== 'NORMAL');
+    expect(pool).toHaveLength(expected.length);
+    expect(pool).not.toContain(DEFAULT_PROVERBS.find((entry) => entry.difficulty === 'NORMAL')!.text);
   });
 });
 
@@ -95,7 +103,7 @@ describe('제시어 종류 설정', () => {
     const { gameService, room, host } = setupRoom();
     expect(proverbSet.has(room.suggestedKeyword)).toBe(false);
 
-    gameService.setKeywordSource(room, host.playerId, 'PROVERB', 'ALL');
+    gameService.setKeywordSource(room, host.playerId, 'PROVERB', ['EASY', 'NORMAL', 'HARD']);
 
     expect(room.keywordSource).toBe('PROVERB');
     expect(proverbSet.has(room.suggestedKeyword)).toBe(true);
@@ -110,16 +118,16 @@ describe('제시어 종류 설정', () => {
     const { gameService, room, host } = setupRoom('MODERATOR');
     expect(allowedActionsFor(room, host)).toContain('SET_KEYWORD_SOURCE');
 
-    gameService.setKeywordSource(room, host.playerId, 'PROVERB', 'HARD');
+    gameService.setKeywordSource(room, host.playerId, 'PROVERB', ['HARD']);
 
-    const hard = new Set(keywordPool('PROVERB', 'HARD'));
+    const hard = new Set(keywordPool('PROVERB', ['HARD']));
     expect(hard.has(room.suggestedKeyword)).toBe(true);
   });
 
   it('난이도를 좁히면 그 난이도에서만 나온다', () => {
     const { gameService, room, host } = setupRoom();
-    gameService.setKeywordSource(room, host.playerId, 'PROVERB', 'EASY');
-    const easy = new Set(keywordPool('PROVERB', 'EASY'));
+    gameService.setKeywordSource(room, host.playerId, 'PROVERB', ['EASY']);
+    const easy = new Set(keywordPool('PROVERB', ['EASY']));
 
     for (let attempt = 0; attempt < 20; attempt += 1) {
       expect(easy.has(room.suggestedKeyword)).toBe(true);
@@ -130,10 +138,10 @@ describe('제시어 종류 설정', () => {
 
   it('단어로 되돌리면 다시 단어에서 나온다', () => {
     const { gameService, room, host } = setupRoom();
-    gameService.setKeywordSource(room, host.playerId, 'PROVERB', 'ALL');
+    gameService.setKeywordSource(room, host.playerId, 'PROVERB', ['EASY', 'NORMAL', 'HARD']);
     expect(proverbSet.has(room.suggestedKeyword)).toBe(true);
 
-    gameService.setKeywordSource(room, host.playerId, 'WORD', 'ALL');
+    gameService.setKeywordSource(room, host.playerId, 'WORD', ['EASY', 'NORMAL', 'HARD']);
 
     expect(proverbSet.has(room.suggestedKeyword)).toBe(false);
     expect(DEFAULT_KEYWORDS).toContain(room.suggestedKeyword);
@@ -144,7 +152,7 @@ describe('제시어 종류 설정', () => {
     gameService.revealKeyword(room, host.playerId);
     expect(room.suggestedKeywordSeenBy.size).toBe(1);
 
-    gameService.setKeywordSource(room, host.playerId, 'PROVERB', 'ALL');
+    gameService.setKeywordSource(room, host.playerId, 'PROVERB', ['EASY', 'NORMAL', 'HARD']);
 
     expect(room.suggestedKeywordSeenBy.size).toBe(0);
   });
@@ -153,7 +161,7 @@ describe('제시어 종류 설정', () => {
     const { gameService, room, host } = setupRoom();
     const before = room.suggestedKeyword;
 
-    gameService.setKeywordSource(room, host.playerId, 'WORD', 'ALL');
+    gameService.setKeywordSource(room, host.playerId, 'WORD', ['EASY', 'NORMAL', 'HARD']);
 
     expect(room.suggestedKeyword).toBe(before);
   });
@@ -161,7 +169,7 @@ describe('제시어 종류 설정', () => {
   it('일반 참여자는 바꿀 수 없다', () => {
     const { gameService, room, guesser } = setupRoom();
     expect(allowedActionsFor(room, guesser)).not.toContain('SET_KEYWORD_SOURCE');
-    expect(() => gameService.setKeywordSource(room, guesser.playerId, 'PROVERB', 'ALL'))
+    expect(() => gameService.setKeywordSource(room, guesser.playerId, 'PROVERB', ['EASY', 'NORMAL', 'HARD']))
       .toThrowError(expect.objectContaining({ code: 'FORBIDDEN' }));
     expect(room.keywordSource).toBe('WORD');
   });
@@ -171,21 +179,76 @@ describe('제시어 종류 설정', () => {
     gameService.lockKeyword(room, host.playerId, '코끼리');
 
     expect(allowedActionsFor(room, host)).not.toContain('SET_KEYWORD_SOURCE');
-    expect(() => gameService.setKeywordSource(room, host.playerId, 'PROVERB', 'ALL'))
+    expect(() => gameService.setKeywordSource(room, host.playerId, 'PROVERB', ['EASY', 'NORMAL', 'HARD']))
       .toThrowError(expect.objectContaining({ code: 'KEYWORD_LOCKED' }));
   });
 
   it('공개 상태로 방 전체에 알린다', () => {
     const { gameService, room, host } = setupRoom();
-    gameService.setKeywordSource(room, host.playerId, 'PROVERB', 'NORMAL');
+    gameService.setKeywordSource(room, host.playerId, 'PROVERB', ['HARD', 'NORMAL']);
 
     const published = buildPublicState(room);
     expect(published.keywordSource).toBe('PROVERB');
-    expect(published.proverbDifficulty).toBe('NORMAL');
+    expect(published.proverbLevels).toEqual(['NORMAL', 'HARD']); // 하·중·상 순으로 정리된다
+  });
+
+  it('난이도를 하나도 고르지 않으면 거절한다', () => {
+    const { gameService, room, host } = setupRoom();
+    expect(() => gameService.setKeywordSource(room, host.playerId, 'PROVERB', []))
+      .toThrowError(expect.objectContaining({ code: 'INVALID_PAYLOAD' }));
+    expect(room.proverbLevels).toEqual(['EASY', 'NORMAL', 'HARD']);
   });
 
   it('속담 정답은 띄어쓰기가 달라도 맞는 것으로 본다', () => {
     const proverb = DEFAULT_PROVERBS[0]!.text;
     expect(normalizeGuess(proverb)).toBe(normalizeGuess(proverb.replace(/\s/gu, '')));
+  });
+});
+
+describe('속담 정답 — 같은 속담의 다른 표현도 인정', () => {
+  const guess = (gameService: GameService, room: RoomRuntime, player: Player, text: string) =>
+    gameService.submitGuess(room, player.playerId, {
+      roundId: room.round.roundId,
+      guessId: crypto.randomUUID(),
+      text
+    }, room.connections.get(player.playerId)!);
+
+  it('다른 표현으로 맞혀도 정답이고, 정답 공개는 대표 문장 하나다', () => {
+    const { gameService, room, host, guesser } = setupRoom();
+    gameService.startRound(room, host.playerId, room.round.roundId, '개구리 올챙이 적 생각 못 한다');
+
+    guess(gameService, room, guesser, '개구리 올챙이 시절 생각 못한다');
+
+    expect(room.round.correctPlayerIds.has(guesser.playerId)).toBe(true);
+    expect(room.round.keyword).toBe('개구리 올챙이 적 생각 못 한다');
+  });
+
+  it('반쪽만 맞힌 답은 정답이 아니다', () => {
+    const { gameService, room, host, guesser } = setupRoom();
+    gameService.startRound(room, host.playerId, room.round.roundId, '떡 줄 사람은 꿈도 안 꾸는데 김칫국부터 마신다');
+
+    guess(gameService, room, guesser, '김칫국부터 마신다');
+
+    expect(room.round.correctPlayerIds.has(guesser.playerId)).toBe(false);
+  });
+
+  it('담당자가 직접 쓴 제시어는 그 글자만 정답이다', () => {
+    expect(acceptedAnswersFor('개구리 올챙이')).toEqual([normalizeGuess('개구리 올챙이')]);
+  });
+
+  it('다른 표현은 다른 속담의 정답과 겹치지 않는다', () => {
+    const owner = new Map<string, number>();
+    for (const entry of DEFAULT_PROVERBS) {
+      for (const answer of acceptedAnswersFor(entry.text)) {
+        expect(owner.get(answer) ?? entry.id).toBe(entry.id);
+        owner.set(answer, entry.id);
+      }
+    }
+  });
+
+  it('대표 문장은 늘 정답에 들어 있다', () => {
+    for (const entry of DEFAULT_PROVERBS) {
+      expect(acceptedAnswersFor(entry.text)).toContain(normalizeGuess(entry.text));
+    }
   });
 });

@@ -193,7 +193,7 @@ export class Dispatcher {
           room,
           actorId,
           payload.keywordSource,
-          payload.proverbDifficulty
+          payload.proverbLevels
         );
         break;
       }

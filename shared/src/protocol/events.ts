@@ -8,7 +8,7 @@ import type {
   AnswerMode,
   DrawerOrderMode,
   KeywordSource,
-  ProverbDifficulty,
+  ProverbLevel,
   RoomMode
 } from '../state/publicTypes.js';
 
@@ -23,7 +23,7 @@ export type ClientPayloadMap = {
   SET_ROUND_DURATION: { durationSeconds: number };
   SET_ANSWER_MODE: { answerMode: AnswerMode };
   SET_DRAWER_ORDER: { drawerOrderMode: DrawerOrderMode; rotationLaps: number };
-  SET_KEYWORD_SOURCE: { keywordSource: KeywordSource; proverbDifficulty: ProverbDifficulty };
+  SET_KEYWORD_SOURCE: { keywordSource: KeywordSource; proverbLevels: ProverbLevel[] };
   SHUFFLE_KEYWORD: Record<string, never>;
   REVEAL_KEYWORD: Record<string, never>;
   LOCK_KEYWORD: { keyword: string };

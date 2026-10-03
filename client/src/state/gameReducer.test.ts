@@ -9,7 +9,7 @@ const publicState = (): PublicState => ({
   answerMode: 'FIRST_CORRECT',
   drawerOrderMode: 'FIXED',
   keywordSource: 'WORD',
-  proverbDifficulty: 'ALL',
+  proverbLevels: ['EASY', 'NORMAL', 'HARD'],
   keywordLocked: false,
   rotationLaps: 1,
   rotationCurrentTurn: 0,

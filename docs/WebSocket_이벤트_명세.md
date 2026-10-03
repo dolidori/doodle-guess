@@ -257,13 +257,13 @@ payload: {
 ```ts
 payload: {
   keywordSource: 'WORD' | 'PROVERB';
-  proverbDifficulty: 'ALL' | 'EASY' | 'NORMAL' | 'HARD';
+  proverbLevels: ('EASY' | 'NORMAL' | 'HARD')[]; // 1~3개, 중복 없음
 }
 ```
 
 - 권한: host 또는 moderator. **두 모드 모두** 쓴다.
 - 허용 phase: `PREPARING_KEYWORD`만. 제한 시간·정답 모드와 같은 자리의 대기실 설정이다.
-- `WORD`는 기본 낱말 763개, `PROVERB`는 속담 150개에서 뽑는다. 속담은 `proverbDifficulty`로 풀을 좁힐 수 있다(`ALL` 150 / `EASY` 36 / `NORMAL` 78 / `HARD` 36).
+- `WORD`는 기본 낱말 763개, `PROVERB`는 속담 309개에서 뽑는다. 속담은 `proverbLevels`로 고른 난이도들을 합친 풀에서 뽑는다(`EASY` 127 / `NORMAL` 103 / `HARD` 79, 셋 다면 309). 하나도 안 고르면 `INVALID_PAYLOAD`. 서버는 하·중·상 순으로 정리해 저장한다.
 - 속담은 **앞뒤를 모두 이어 붙인 전문**이 정답이다. 앞부분 힌트는 주지 않는다. 정규화가 공백·구두점을 지우므로 띄어쓰기가 달라도 맞는 것으로 본다.
 - 설정이 **실제로 바뀌면** 추천 제시어를 새 풀에서 다시 뽑고 열람 기록(`suggestedKeywordSeenBy`)을 비운다. 이전 풀의 제시어가 남아 있으면 안 된다. 같은 값을 다시 보내면 아무것도 바꾸지 않는다.
 - 다시 뽑기 횟수는 건드리지 않는다. 방 설정 변경은 담당자가 고른 것이 아니다.
@@ -280,7 +280,7 @@ payload: {}
 
 - 권한: 현재 drawer.
 - 허용 phase: `PREPARING_KEYWORD`, `SOLVED`, `EXPIRED`.
-- 서버가 **방 설정(`keywordSource`·`proverbDifficulty`)에 맞는 풀**에서 추천 제시어를 새로 뽑는다. 직전 추천 제시어는 후보에서 제외해 같은 값이 연속으로 나오지 않게 한다.
+- 서버가 **방 설정(`keywordSource`·`proverbLevels`)에 맞는 풀**에서 추천 제시어를 새로 뽑는다. 직전 추천 제시어는 후보에서 제외해 같은 값이 연속으로 나오지 않게 한다.
 - **라운드당 사람별 `MAX_KEYWORD_SHUFFLES`(5)회**로 제한한다. `shuffleCounts`는 playerId별 Map이며, 한 사람이 쓴 횟수가 다음 담당자 몫에서 깎이지 않는다. 소진하면 액션 자체가 `allowedActions`에서 빠지고, 그래도 들어온 요청은 `SHUFFLE_LIMIT`으로 거부한다. 라운드가 바뀌면 비운다.
 - 새 제시어를 뽑았으므로 **열람 기록(`suggestedKeywordSeenBy`)을 비운다**.
 - 잠긴 제시어가 있으면 `KEYWORD_LOCKED`로 거부한다.
@@ -536,7 +536,7 @@ payload: {
   answerMode: 'FIRST_CORRECT' | 'UNTIL_TIMER';
   drawerOrderMode: 'FIXED' | 'ROTATE';
   keywordSource: KeywordSource;
-  proverbDifficulty: ProverbDifficulty;
+  proverbLevels: ProverbLevel[]; // 기본 ['EASY', 'NORMAL', 'HARD']
   keywordLocked: boolean;   // 진행자가 다음 제시어를 잠갔는지
   rotationLaps: number;     // 순환 바퀴 수 설정값
   rotationCurrentTurn: number;  // 순환이 돌지 않으면 0

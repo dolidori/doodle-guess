@@ -142,6 +142,27 @@ export const KeywordPanel = () => {
           {state.keywordHidden ? '보기' : '가리기'}
         </button>
       </div>
+      {/* 시작은 왼쪽, 다시 뽑기는 오른쪽 — 「보기」 바로 아래에 시작이 있으면 잘못 눌러 바로 시작했다 */}
+      <button
+        type="submit"
+        className="primary"
+        aria-label={continuing ? '다음 라운드 바로 시작' : '제시어 확정 및 시작'}
+      >
+        {continuing ? '다음 라운드 시작' : '시작'}
+      </button>
+      {mayLock && (
+        <button
+          type="button"
+          className="secondary lock-button"
+          aria-label="제시어 잠그기, 그리기 권한을 받은 참여자가 바꿀 수 없게 합니다"
+          onClick={() => {
+            if (!keyword.trim()) return;
+            send('LOCK_KEYWORD', { keyword });
+          }}
+        >
+          잠금
+        </button>
+      )}
       <button
         type="button"
         className="secondary shuffle-button"
@@ -164,26 +185,6 @@ export const KeywordPanel = () => {
         <span className="shuffle-count" aria-hidden="true">
           {remainingShuffles}／{MAX_KEYWORD_SHUFFLES}
         </span>
-      </button>
-      {mayLock && (
-        <button
-          type="button"
-          className="secondary lock-button"
-          aria-label="제시어 잠그기, 그리기 권한을 받은 참여자가 바꿀 수 없게 합니다"
-          onClick={() => {
-            if (!keyword.trim()) return;
-            send('LOCK_KEYWORD', { keyword });
-          }}
-        >
-          잠금
-        </button>
-      )}
-      <button
-        type="submit"
-        className="primary"
-        aria-label={continuing ? '다음 라운드 바로 시작' : '제시어 확정 및 시작'}
-      >
-        {continuing ? '다음 라운드 시작' : '확정 및 시작'}
       </button>
     </form>
   );

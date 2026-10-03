@@ -369,3 +369,226 @@
   }
 
 }
+
+/*
+ * 캔버스 아래 패널 한 줄 배치.
+ * 패널을 모두 같은 너비(14rem 이상)로 두면 화면이 1400px보다 좁을 때 다섯째 칸(제시어)이
+ * 둘째 줄로 밀려나 패널 영역 안에서 스크롤이 생겼다. 정보 패널은 내용이 짧으니 좁히고,
+ * 입력칸과 버튼이 많은 제시어 패널에 너비를 더 준다.
+ * 세로로 쌓는 휴대폰(640px 이하)과 가로로 눕힌 낮은 화면(높이 500px 이하)은 각자 배치가 있어 제외한다.
+ */
+@media (min-width: 641px) and (min-height: 501px) {
+  .control-panel {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  /* 너비 하한은 각 패널의 제목과 선택지가 한 줄에 드는 폭 — 이보다 줄지 않는다 */
+  .control-panel > .panel-section {
+    flex: 1 0 7.25rem;
+    min-width: 0;
+  }
+
+  .control-panel > .answer-mode-panel {
+    flex-basis: 8rem;
+  }
+
+  /* 정보 패널의 설명 문장도 낱말 중간에서 꺾지 않는다(「그리기 담당자 고/정」) */
+  .control-panel > .panel-section > p,
+  .control-panel > .panel-section small {
+    word-break: keep-all;
+  }
+
+  /*
+   * 라운드 중 제시어 패널: 「제시어」 제목과 가리기 버튼을 한 줄에 두고, 그 아래 제시어를 보여 준다.
+   * 세로로 쌓으면 긴 속담(30자 안팎)이 세 줄이 되어 버튼이 패널 밖으로 밀려났다.
+   */
+  .control-panel > .keyword-panel:not(.keyword-entry-panel):not(.keyword-locked-panel) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr);
+    align-items: start;
+    column-gap: var(--space-1);
+  }
+
+  .control-panel > .keyword-panel:not(.keyword-entry-panel):not(.keyword-locked-panel) > h3 {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: center;
+    margin: 0;
+  }
+
+  .control-panel > .keyword-panel:not(.keyword-entry-panel):not(.keyword-locked-panel) > button {
+    grid-column: 2;
+    grid-row: 1;
+    min-height: 30px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .control-panel > .keyword-panel:not(.keyword-entry-panel):not(.keyword-locked-panel) > p {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin: var(--space-1) 0 0;
+    font-size: 1rem;
+    line-height: 1.25;
+    word-break: keep-all;
+  }
+
+  /* 폭이 빠듯하면 제목·선택지 글자가 줄을 바꾸는데, 낱말 중간이 아니라 띄어쓰기에서 바꾼다 */
+  .control-panel .mode-panel label,
+  .control-panel .mode-info-trigger {
+    word-break: keep-all;
+    line-height: 1.2;
+  }
+
+  /* 난이도 선택이 붙어도 「단어·속담」이 한 줄에 있어야 높이 안에 든다 */
+  .control-panel > .keyword-source-panel {
+    flex-basis: 9rem;
+  }
+
+  .control-panel > .keyword-source-panel fieldset {
+    flex-wrap: nowrap;
+  }
+
+  .control-panel > .keyword-source-panel label {
+    gap: 0.3rem;
+  }
+
+  .control-panel > .duration-panel {
+    flex-basis: 5.5rem;
+  }
+
+  .control-panel > .keyword-panel {
+    flex: 2 1 12rem;
+    min-width: 12rem;
+  }
+
+  /* 폭이 빠듯하면 다시 뽑기의 남은 횟수는 통째로 아랫줄로 내려간다(「5／5」가 쪼개지지 않게) */
+  .control-panel > .keyword-entry-panel .shuffle-button {
+    flex-wrap: wrap;
+    column-gap: 0.4em;
+    row-gap: 0;
+    padding-inline: 0.3rem;
+    line-height: 1.1;
+  }
+
+  .control-panel > .keyword-entry-panel .shuffle-count {
+    white-space: nowrap;
+  }
+
+  /* 제시어 패널이 좁을 때는 버튼 글자를 두 줄까지 허용한다(잠금 버튼이 붙을 때와 같은 방식) */
+  .control-panel > .keyword-entry-panel > button,
+  .control-panel > .keyword-locked-panel .locked-actions > button {
+    white-space: normal;
+    word-break: keep-all;
+    line-height: 1.15;
+  }
+}
+
+/* 그래도 한 줄에 다 못 들어가는 좁은 화면에서는 제시어 패널을 맨 앞에 둬 가려지지 않게 한다 */
+@media (min-width: 641px) and (max-width: 760px) and (min-height: 501px) {
+  .control-panel > .keyword-panel {
+    order: -1;
+  }
+}
+
+/*
+ * 선택지 줄바꿈 기준을 하나로 맞춘다. 패널 폭에 맡기면 1280px에서 「그리기 순서」만 두 줄이 되는 식으로
+ * 들쭉날쭉했다. 1300px 이하는 세 패널 모두 선택지를 두 줄로, 그보다 크면 모두 한 줄로 둔다.
+ */
+@media (min-width: 1301px) and (min-height: 501px) {
+  .control-panel .mode-panel fieldset {
+    flex-wrap: nowrap;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1300px) and (min-height: 501px) {
+  .control-panel > .drawer-order-panel fieldset,
+  .control-panel > .answer-mode-panel fieldset {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+
+  /*
+   * 「단어」「속담」도 두 줄로. 속담이면 난이도(하·중·상)가 붙는데,
+   * 아래로 내리면 높이를 넘으므로 오른쪽에 세로로 둔다.
+   */
+  .control-panel > .keyword-source-panel {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-auto-rows: auto;
+    align-content: start;
+    column-gap: 0.4rem;
+  }
+
+  .control-panel > .keyword-source-panel > .mode-info-trigger,
+  .control-panel > .keyword-source-panel > p {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .control-panel > .keyword-source-panel fieldset:not(.proverb-levels) {
+    display: contents;
+  }
+
+  .control-panel > .keyword-source-panel fieldset:not(.proverb-levels) > label {
+    grid-column: 1;
+    gap: 0.3rem;
+  }
+
+  /* 하·중·상은 「단어」「속담」 오른쪽에 세로로 세운다(아래로 내리면 높이를 넘는다). 「난이도」 글자는 읽어 주기에만 남긴다 */
+  .control-panel > .keyword-source-panel > .proverb-levels {
+    grid-column: 2;
+    grid-row: 2 / span 2;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.2rem;
+  }
+
+  .control-panel > .keyword-source-panel > .proverb-levels legend {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .control-panel > .keyword-source-panel > .proverb-levels label {
+    min-height: 22px;
+    min-width: 1.9rem;
+    font-size: 0.75rem;
+  }
+}
+
+/* 제시어 패널이 빠듯한 폭에서는 버튼 글자가 두 줄이 된다. 두 줄이 버튼 높이(36px) 안에 들게 줄인다 */
+@media (min-width: 641px) and (max-width: 1100px) and (min-height: 501px) {
+
+  .control-panel .duration-note {
+    display: block;
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+
+  .control-panel .duration-note-long {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .control-panel .duration-note-short {
+    display: inline;
+  }
+
+  .control-panel > .keyword-entry-panel > button,
+  .control-panel > .keyword-entry-panel > button.primary {
+    padding-block: 0.1rem;
+    font-size: 0.85rem;
+  }
+}

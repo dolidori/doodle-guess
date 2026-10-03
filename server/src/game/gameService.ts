@@ -1,11 +1,12 @@
 import { randomUUID } from 'node:crypto';
 import {
   MAX_KEYWORD_SHUFFLES,
+  PROVERB_LEVELS,
   type AnswerMode,
   type DrawerOrderMode,
   type GuessPublic,
   type KeywordSource,
-  type ProverbDifficulty
+  type ProverbLevel
 } from '../../../shared/src/index.js';
 import { broadcast, envelope, sendEnvelope } from '../broadcast/roomBroadcast.js';
 import { ProtocolError, assertProtocol } from '../protocol/errors.js';
@@ -13,7 +14,7 @@ import { RoomRegistry } from '../rooms/roomRegistry.js';
 import { RoomService } from '../rooms/roomService.js';
 import type { ClientConnection, RoomRuntime } from '../rooms/types.js';
 import { assertPreparing, assertRound } from './gameStateMachine.js';
-import { normalizeGuess, pickRandomKeyword } from './keywordService.js';
+import { acceptedAnswersFor, normalizeGuess, pickRandomKeyword } from './keywordService.js';
 import { canStartRound } from './permissionService.js';
 import { cancelRoundTimer } from './roundTimer.js';
 
@@ -89,16 +90,19 @@ export class GameService {
     room: RoomRuntime,
     actorId: string,
     keywordSource: KeywordSource,
-    proverbDifficulty: ProverbDifficulty
+    proverbLevels: ProverbLevel[]
   ): void {
     assertPreparing(room);
     const actor = room.players.get(actorId);
     assertProtocol(actor && (actor.isHost || actor.isModerator), 'FORBIDDEN', '제시어 종류 설정 권한이 없습니다.');
     assertProtocol(room.lockedKeyword === null, 'KEYWORD_LOCKED', '잠긴 제시어가 있으면 종류를 바꿀 수 없습니다.');
+    // 순서와 중복을 정리해 둔다(하·중·상 순). 비면 안 되는 것은 프로토콜 검증이 막는다.
+    const levels = PROVERB_LEVELS.filter((level) => proverbLevels.includes(level));
+    assertProtocol(levels.length > 0, 'INVALID_PAYLOAD', '속담 난이도를 하나 이상 골라야 합니다.');
     const unchanged = room.keywordSource === keywordSource &&
-      room.proverbDifficulty === proverbDifficulty;
+      room.proverbLevels.join() === levels.join();
     room.keywordSource = keywordSource;
-    room.proverbDifficulty = proverbDifficulty;
+    room.proverbLevels = levels;
     // 풀이 바뀌었는데 이전 풀의 제시어가 남아 있으면 안 된다. 새로 뽑고 열람 기록도 비운다.
     if (!unchanged) this.replaceSuggestedKeyword(room, room.suggestedKeyword);
     room.roomVersion += 1;
@@ -112,7 +116,7 @@ export class GameService {
     room.suggestedKeyword = pickRandomKeyword(
       excluded,
       room.keywordSource,
-      room.proverbDifficulty
+      room.proverbLevels
     );
     room.suggestedKeywordSeenBy.clear();
   }
@@ -222,6 +226,7 @@ export class GameService {
     room.lockedKeyword = null;
     room.round.keyword = effectiveKeyword;
     room.round.normalizedKeyword = normalizedKeyword;
+    room.round.acceptedAnswers = acceptedAnswersFor(effectiveKeyword);
     room.round.hasKeyword = true;
     room.round.keywordExposedPlayerIds.add(room.drawerId);
     if (room.moderatorId) room.round.keywordExposedPlayerIds.add(room.moderatorId);
@@ -405,7 +410,7 @@ export class GameService {
     );
 
     room.round.guessSeq += 1;
-    const isCorrect = normalizeGuess(payload.text) === room.round.normalizedKeyword;
+    const isCorrect = room.round.acceptedAnswers.includes(normalizeGuess(payload.text));
     const guess: GuessPublic = {
       guessId: payload.guessId,
       roundId: payload.roundId,

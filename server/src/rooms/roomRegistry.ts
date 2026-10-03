@@ -1,6 +1,7 @@
 import { randomInt, randomUUID } from 'node:crypto';
 import {
   DEFAULT_DURATION_SECONDS,
+  PROVERB_LEVELS,
   ROOM_CAPACITY,
   ROOM_CODE_MAX,
   ROOM_CODE_MIN,
@@ -29,6 +30,7 @@ const emptyRound = (roundNumber = 1, revision = 0, drawerEpoch = 0) => ({
   hasKeyword: false,
   keyword: null,
   normalizedKeyword: null,
+  acceptedAnswers: [] as string[],
   keywordExposedPlayerIds: new Set<string>(),
   correctPlayerIds: new Set<string>(),
   startedAt: null,
@@ -70,7 +72,7 @@ export class RoomRegistry {
       answerMode: 'UNTIL_TIMER',
       drawerOrderMode: 'FIXED',
       keywordSource: 'WORD',
-      proverbDifficulty: 'ALL',
+      proverbLevels: [...PROVERB_LEVELS],
       rotationLaps: 1,
       rotationPlayerIds: [],
       rotationTurnIndex: 0,

@@ -93,7 +93,8 @@ export const payloadSchemas = {
   }).strict(),
   SET_KEYWORD_SOURCE: z.object({
     keywordSource: z.enum(['WORD', 'PROVERB']),
-    proverbDifficulty: z.enum(['ALL', 'EASY', 'NORMAL', 'HARD'])
+    proverbLevels: z.array(z.enum(['EASY', 'NORMAL', 'HARD'])).min(1).max(3)
+      .refine((levels) => new Set(levels).size === levels.length, '난이도가 중복되었습니다.')
   }).strict(),
   SHUFFLE_KEYWORD: emptySchema,
   REVEAL_KEYWORD: emptySchema,

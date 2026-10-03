@@ -839,6 +839,68 @@ h3 {
   accent-color: var(--color-brand-yellow);
 }
 
+/* 속담 난이도 — 여러 개를 켜고 끄는 작은 버튼(하·중·상) */
+.proverb-levels {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.proverb-levels legend {
+  float: left;
+  margin-right: var(--space-1);
+  font-size: 0.9rem;
+}
+
+.keyword-source-panel .proverb-levels label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  min-height: 30px;
+  padding: 0 0.4rem;
+  border: 2px solid #bfb5ed;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.keyword-source-panel .proverb-levels label.on {
+  border-color: var(--color-brand-yellow);
+  background: var(--color-brand-yellow);
+  color: var(--color-text-on-light);
+}
+
+/* 체크박스는 보이지 않게 두되 키보드·읽어 주기로는 그대로 쓴다 */
+.keyword-source-panel .proverb-levels input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.keyword-source-panel .proverb-levels input:disabled {
+  cursor: not-allowed;
+}
+
+.keyword-source-panel .proverb-levels label:has(input:focus-visible) {
+  outline: 2px solid var(--color-brand-yellow);
+  outline-offset: 2px;
+}
+
+.duration-note-short {
+  display: none;
+}
+
 .duration-panel output {
   display: block;
   text-align: center;

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { PROVERB_LEVELS } from '../../../shared/src/index.js';
 import { DrawingCanvas } from '../components/canvas/DrawingCanvas.js';
 import {
   DrawingToolbar,
@@ -165,22 +166,27 @@ export const GameScreen = ({
     if (action === 'RETURN_TO_WAITING') returnToWaiting();
   };
   const answerModeLabel = publicState.answerMode === 'FIRST_CORRECT'
-    ? '선착순 종료'
-    : '타이머까지 계속';
-  const PROVERB_DIFFICULTY_LABELS = {
-    ALL: '전체',
-    EASY: '하',
-    NORMAL: '중',
-    HARD: '상'
-  } as const;
+    ? '선착순'
+    : '타이머';
+  const PROVERB_LEVEL_LABELS = { EASY: '하', NORMAL: '중', HARD: '상' } as const;
+  const proverbLevels = publicState.proverbLevels;
   const keywordSourceLabel = publicState.keywordSource === 'PROVERB'
-    ? `속담 · 난이도 ${PROVERB_DIFFICULTY_LABELS[publicState.proverbDifficulty]}`
+    ? `속담 · 난이도 ${proverbLevels.length === PROVERB_LEVELS.length
+      ? '전체'
+      : proverbLevels.map((level) => PROVERB_LEVEL_LABELS[level]).join(', ')}`
     : '단어';
   const sendKeywordSource = (
     keywordSource: typeof publicState.keywordSource,
-    proverbDifficulty: typeof publicState.proverbDifficulty
+    levels: typeof publicState.proverbLevels
   ): void => {
-    send('SET_KEYWORD_SOURCE', { keywordSource, proverbDifficulty });
+    send('SET_KEYWORD_SOURCE', { keywordSource, proverbLevels: levels });
+  };
+  // 난이도는 여러 개 고를 수 있다. 마지막 하나는 끌 수 없다(풀이 비면 뽑을 속담이 없다).
+  const toggleProverbLevel = (level: (typeof PROVERB_LEVELS)[number]): void => {
+    const next = proverbLevels.includes(level)
+      ? proverbLevels.filter((item) => item !== level)
+      : PROVERB_LEVELS.filter((item) => item === level || proverbLevels.includes(item));
+    if (next.length > 0) sendKeywordSource('PROVERB', next);
   };
 
   return (
@@ -462,7 +468,7 @@ export const GameScreen = ({
                       checked={publicState.answerMode === 'UNTIL_TIMER'}
                       onChange={() => send('SET_ANSWER_MODE', { answerMode: 'UNTIL_TIMER' })}
                     />
-                    타이머까지 계속
+                    타이머
                   </label>
                   <label>
                     <input
@@ -471,7 +477,7 @@ export const GameScreen = ({
                       checked={publicState.answerMode === 'FIRST_CORRECT'}
                       onChange={() => send('SET_ANSWER_MODE', { answerMode: 'FIRST_CORRECT' })}
                     />
-                    선착순 종료
+                    선착순
                   </label>
                 </fieldset>
               ) : (
@@ -506,7 +512,7 @@ export const GameScreen = ({
                         type="radio"
                         name="keyword-source"
                         checked={publicState.keywordSource === 'WORD'}
-                        onChange={() => sendKeywordSource('WORD', publicState.proverbDifficulty)}
+                        onChange={() => sendKeywordSource('WORD', proverbLevels)}
                       />
                       단어
                     </label>
@@ -515,28 +521,29 @@ export const GameScreen = ({
                         type="radio"
                         name="keyword-source"
                         checked={publicState.keywordSource === 'PROVERB'}
-                        onChange={() => sendKeywordSource('PROVERB', publicState.proverbDifficulty)}
+                        onChange={() => sendKeywordSource('PROVERB', proverbLevels)}
                       />
                       속담
                     </label>
                   </fieldset>
                   {publicState.keywordSource === 'PROVERB' && (
-                    <label>
-                      난이도
-                      <select
-                        value={publicState.proverbDifficulty}
-                        onChange={(event) => sendKeywordSource(
-                          'PROVERB',
-                          event.target.value as typeof publicState.proverbDifficulty
-                        )}
-                      >
-                        {(['ALL', 'EASY', 'NORMAL', 'HARD'] as const).map((level) => (
-                          <option key={level} value={level}>
-                            {PROVERB_DIFFICULTY_LABELS[level]}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
+                    <fieldset className="proverb-levels">
+                      <legend>난이도</legend>
+                      {PROVERB_LEVELS.map((level) => {
+                        const on = proverbLevels.includes(level);
+                        return (
+                          <label key={level} className={on ? 'on' : undefined}>
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              disabled={on && proverbLevels.length === 1}
+                              onChange={() => toggleProverbLevel(level)}
+                            />
+                            {PROVERB_LEVEL_LABELS[level]}
+                          </label>
+                        );
+                      })}
+                    </fieldset>
                   )}
                 </>
               ) : (
@@ -573,7 +580,11 @@ export const GameScreen = ({
                 <h3>제한 시간</h3>
                 <p>{durationText(round.durationSeconds)}</p>
                 {round.status === 'DRAWING_AND_GUESSING' &&
-                  <small>라운드 진행 중에는 제한 시간을 바꿀 수 없습니다.</small>}
+                  <small className="duration-note">
+                    <span className="duration-note-long">라운드 진행 중에는 제한 시간을 바꿀 수 없습니다.</span>
+                    {/* 좁은 패널에서는 긴 문장이 넘친다. 화면에는 짧게, 읽어 주기는 긴 문장으로 */}
+                    <span className="duration-note-short" aria-hidden="true">진행 중엔 바꿀 수 없음</span>
+                  </small>}
               </section>
             )}
             <KeywordPanel />
