@@ -19,7 +19,9 @@ type ActiveStroke = {
   settings: ToolSettings;
 };
 
-const normalizedPoint = (event: React.PointerEvent, element: HTMLElement): Point | null => {
+type PointerSample = { pointerId: number; clientX: number; clientY: number; timeStamp: number };
+
+const normalizedPoint = (event: { clientX: number; clientY: number }, element: HTMLElement): Point | null => {
   const rect = element.getBoundingClientRect();
   const x = (event.clientX - rect.left) / rect.width;
   const y = (event.clientY - rect.top) / rect.height;
@@ -162,23 +164,41 @@ export const DrawingCanvas = ({
     redraw();
   }, [enabled, redraw]);
 
-  const addPoint = (event: React.PointerEvent<HTMLDivElement>, force = false): void => {
+  // 점을 하나 더한다(16ms 간격). 시각은 이벤트 시각으로 잰다 — 묶여 들어온 중간 점(getCoalescedEvents)도 제 시각으로 고른다
+  const addPoint = (event: PointerSample, force = false): boolean => {
     const active = activeRef.current;
-    if (!active || event.pointerId !== active.pointerId || !stageRef.current) return;
-    const now = performance.now();
-    if (!force && now - active.lastSampleAt < 16) return;
+    if (!active || event.pointerId !== active.pointerId || !stageRef.current) return false;
+    const now = event.timeStamp;
+    if (!force && now - active.lastSampleAt < 16) return false;
     const point = normalizedPoint(event, stageRef.current);
-    if (!point || active.preview.length >= 2048) return;
+    if (!point || active.preview.length >= 2048) return false;
     active.lastSampleAt = now;
     active.pending.push(point);
     active.preview.push(point);
-    redraw();
+    return true;
   };
+
+  // 아이패드: 펜슬로 빠르게 이어 그리면 시스템(손글씨 인식 Scribble·제스처)이 터치 시작을 먼저 가져가
+  // 획 첫머리가 늦게 들어오거나 빠진다. 그릴 수 있는 동안 캔버스 위 터치는 브라우저 기본 동작을 막아 곧바로 그림으로 받는다
+  // (touch-action: none 만으로는 Scribble 이 끼어든다)
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage || !enabled) return;
+    const keepForDrawing = (event: TouchEvent): void => {
+      if (event.cancelable) event.preventDefault();
+    };
+    stage.addEventListener('touchstart', keepForDrawing, { passive: false });
+    stage.addEventListener('touchmove', keepForDrawing, { passive: false });
+    return () => {
+      stage.removeEventListener('touchstart', keepForDrawing);
+      stage.removeEventListener('touchmove', keepForDrawing);
+    };
+  }, [enabled]);
 
   const finish = (event: React.PointerEvent<HTMLDivElement>): void => {
     const active = activeRef.current;
     if (!active || event.pointerId !== active.pointerId) return;
-    addPoint(event, true);
+    addPoint(event.nativeEvent, true);
     if (active.pending.length === 0 && active.preview.length) {
       active.pending.push(active.preview.at(-1)!);
     }
@@ -225,7 +245,7 @@ export const DrawingCanvas = ({
           batchSeq: 0,
           pending: [point],
           preview: [point],
-          lastSampleAt: performance.now(),
+          lastSampleAt: event.timeStamp,
           settings: settingsRef.current
         };
         redraw();
@@ -239,7 +259,12 @@ export const DrawingCanvas = ({
         if (shouldIgnoreTouchDrawing(event.pointerType)) return;
         lastPointerRef.current = { clientX: event.clientX, clientY: event.clientY };
         syncEraserCursor();
-        addPoint(event);
+        // 빠르게 움직이면 브라우저가 여러 점을 한 이벤트로 묶어 보낸다. 묶인 점까지 받아 획(특히 첫머리)이 끊기지 않게 한다
+        const native = event.nativeEvent;
+        const samples = typeof native.getCoalescedEvents === 'function' ? native.getCoalescedEvents() : [];
+        let added = false;
+        for (const sample of samples.length ? samples : [native]) added = addPoint(sample) || added;
+        if (added) redraw();
       }}
       onPointerLeave={() => {
         lastPointerRef.current = null;
