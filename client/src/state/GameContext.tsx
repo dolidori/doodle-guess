@@ -110,6 +110,10 @@ const roomCloseMessage = (reason: string): string => {
 // 입퇴장과 제시어 열람 신고는 allowedActions로 관리하지 않는다.
 const UNGATED_EVENTS = new Set<ClientEventType>(['CREATE_ROOM', 'JOIN_ROOM', 'REVEAL_KEYWORD']);
 
+// 화면 밖에 이만큼 넘게 있다 돌아오면 겉으로 열려 있는 연결도 새로 바꾼다(휴대폰이 다른 앱에 갔다 오면
+// 연결이 실제로는 죽었는데 '열림'으로 남아 무엇을 눌러도 반영되지 않는다)
+const STALE_AFTER_HIDDEN_MS = 15000;
+
 const actionForEvent = (type: ClientEventType): AllowedAction | null =>
   UNGATED_EVENTS.has(type) ? null : (type as AllowedAction);
 
@@ -132,6 +136,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     { requestId: string; payload: JoinPayload; attempts: number } | null
   >(null);
   const joinRetryTimerRef = useRef<number | null>(null);
+  const hiddenAtRef = useRef(0);
   useEffect(() => {
     stateRef.current = state;
     const current = drawingSequenceRef.current;
@@ -361,6 +366,18 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [clearJoinRetry, rememberSession, sendJoin, toast]);
 
+  // 지금 소켓에 묶인 진행 중 작업(입장 재시도·그림 스냅샷 조립)을 비운다
+  const resetSocketWork = useCallback(() => {
+    clearJoinRetry();
+    if (snapshotTimerRef.current !== null) {
+      clearTimeout(snapshotTimerRef.current);
+      snapshotTimerRef.current = null;
+    }
+    snapshotActiveRef.current = false;
+    assemblerRef.current.clear();
+    pendingSnapshotDeltasRef.current = [];
+  }, [clearJoinRetry]);
+
   const connectRef = useRef<() => void>(() => undefined);
   useEffect(() => {
     connectRef.current = () => {
@@ -379,18 +396,14 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
         const stored = reconnectSessionRef.current;
         if (stored) sendJoin(stored);
       });
-      socket.addEventListener('message', (message) => void handleMessage(message));
+      socket.addEventListener('message', (message) => {
+        if (socketRef.current !== socket) return; // 새 연결로 바꾼 옛 연결
+        void handleMessage(message);
+      });
       socket.addEventListener('close', () => {
         if (disposedRef.current || socketRef.current !== socket) return;
         socketRef.current = null;
-        clearJoinRetry();
-        if (snapshotTimerRef.current !== null) {
-          clearTimeout(snapshotTimerRef.current);
-          snapshotTimerRef.current = null;
-        }
-        snapshotActiveRef.current = false;
-        assemblerRef.current.clear();
-        pendingSnapshotDeltasRef.current = [];
+        resetSocketWork();
         if (stateRef.current.screen !== 'ROOM' || !reconnectSessionRef.current) {
           dispatch({ type: 'CONNECTION', status: 'FAILED' });
           return;
@@ -406,7 +419,7 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
       });
       socket.addEventListener('error', () => socket.close());
     };
-  }, [clearJoinRetry, handleMessage, sendJoin]);
+  }, [handleMessage, resetSocketWork, sendJoin]);
 
   useEffect(() => {
     disposedRef.current = false;
@@ -435,18 +448,36 @@ export const GameProvider = ({ children }: { children: ReactNode }) => {
     void synchronizeClock(3);
     const active = state.publicState?.round.status === 'DRAWING_AND_GUESSING';
     const syncTimer = active ? window.setInterval(() => void synchronizeClock(1), 15_000) : null;
-    const onVisibility = (): void => {
-      if (document.visibilityState === 'visible') {
-        if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) connectRef.current();
-        void synchronizeClock(1);
+    // 지금 연결을 버리고 새로 붙는다. 열리면 저장된 세션으로 다시 들어간다.
+    const reconnectNow = (): void => {
+      if (reconnectTimerRef.current !== null) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
       }
+      const old = socketRef.current;
+      socketRef.current = null;
+      old?.close();
+      resetSocketWork();
+      reconnectAttemptsRef.current = 0;
+      connectRef.current();
+    };
+    const onVisibility = (): void => {
+      if (document.visibilityState !== 'visible') {
+        hiddenAtRef.current = Date.now();
+        return;
+      }
+      const away = hiddenAtRef.current ? Date.now() - hiddenAtRef.current : 0;
+      hiddenAtRef.current = 0;
+      if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) connectRef.current();
+      else if (away > STALE_AFTER_HIDDEN_MS) reconnectNow();
+      void synchronizeClock(1);
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
       if (syncTimer !== null) clearInterval(syncTimer);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [state.connection.status, state.publicState?.round.status, synchronizeClock]);
+  }, [resetSocketWork, state.connection.status, state.publicState?.round.status, synchronizeClock]);
 
   const clockRoundId = state.publicState?.round.roundId;
   const clockRoundEndsAt = state.publicState?.round.roundEndsAt;
