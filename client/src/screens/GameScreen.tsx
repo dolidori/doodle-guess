@@ -7,6 +7,7 @@ import {
 } from '../components/canvas/DrawingToolbar.js';
 import { KeywordPanel } from '../components/canvas/KeywordPanel.js';
 import { GuessFeed } from '../components/game/GuessFeed.js';
+import { ModeInfoBubble } from '../components/game/ModeInfoBubble.js';
 import { GuessInput } from '../components/game/GuessInput.js';
 import { PlayerList } from '../components/game/PlayerList.js';
 import { RoundStatus } from '../components/game/RoundStatus.js';
@@ -379,10 +380,10 @@ export const GameScreen = ({
                 <span aria-hidden="true">?</span>
               </button>
               {modeInfoOpen === 'DRAWER_ORDER' && (
-                <div id="drawer-order-help" className="mode-info-bubble" role="tooltip">
+                <ModeInfoBubble id="drawer-order-help">
                   고정은 지정한 한 사람이 계속 그리고, 순서대로는 참여자가 정한 바퀴 수만큼
                   차례대로 그립니다.
-                </div>
+                </ModeInfoBubble>
               )}
               {actions.has('SET_DRAWER_ORDER') ? (
                 <>
@@ -452,11 +453,11 @@ export const GameScreen = ({
                 <span aria-hidden="true">?</span>
               </button>
               {modeInfoOpen === 'ANSWER_MODE' && (
-                <div id="answer-mode-help" className="mode-info-bubble" role="tooltip">
+                <ModeInfoBubble id="answer-mode-help">
                   타이머 모드는 시간이 끝나거나 전원이 맞힐 때까지 계속하고, 선착순 모드는
                   첫 정답에서 끝납니다. 정답 순위에 따라 점수가 줄고 그림 담당자는 정답자
                   수만큼 받습니다.
-                </div>
+                </ModeInfoBubble>
               )}
               {actions.has('SET_ANSWER_MODE') ? (
                 <fieldset>
@@ -498,10 +499,10 @@ export const GameScreen = ({
                 <span aria-hidden="true">?</span>
               </button>
               {modeInfoOpen === 'KEYWORD_SOURCE' && (
-                <div id="keyword-source-help" className="mode-info-bubble" role="tooltip">
+                <ModeInfoBubble id="keyword-source-help">
                   단어는 기본 낱말 목록에서, 속담은 속담 목록에서 뽑습니다. 속담은 앞뒤를
                   모두 이어서 맞혀야 정답이라 난이도를 함께 고를 수 있습니다.
-                </div>
+                </ModeInfoBubble>
               )}
               {actions.has('SET_KEYWORD_SOURCE') ? (
                 <>

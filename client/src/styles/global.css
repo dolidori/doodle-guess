@@ -774,6 +774,24 @@ h3 {
   content: "";
 }
 
+/* 화면 맨 위층에 띄운 말풍선(ModeInfoBubble) — 패널의 스크롤 영역에 잘리지 않는다 */
+.mode-info-bubble.floating {
+  position: fixed;
+  z-index: 1000;
+  bottom: auto;
+}
+
+.mode-info-bubble.floating::after {
+  left: var(--arrow-left, 1.25rem);
+}
+
+.mode-info-bubble.floating.below::after {
+  top: auto;
+  bottom: 100%;
+  border-top-color: transparent;
+  border-bottom-color: var(--color-brand-yellow);
+}
+
 .duration-panel input[type="range"] {
   min-height: 44px;
   padding: 0;
