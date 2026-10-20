@@ -14,7 +14,7 @@ import { RoomRegistry } from '../rooms/roomRegistry.js';
 import { RoomService } from '../rooms/roomService.js';
 import type { ClientConnection, RoomRuntime } from '../rooms/types.js';
 import { assertPreparing, assertRound } from './gameStateMachine.js';
-import { acceptedAnswersFor, normalizeGuess, pickRandomKeyword } from './keywordService.js';
+import { acceptedAnswersFor, isCorrectGuess, normalizeGuess, pickRandomKeyword } from './keywordService.js';
 import { canStartRound } from './permissionService.js';
 import { cancelRoundTimer } from './roundTimer.js';
 
@@ -410,7 +410,7 @@ export class GameService {
     );
 
     room.round.guessSeq += 1;
-    const isCorrect = room.round.acceptedAnswers.includes(normalizeGuess(payload.text));
+    const isCorrect = isCorrectGuess(room.round.keyword ?? '', room.round.acceptedAnswers, payload.text);
     const guess: GuessPublic = {
       guessId: payload.guessId,
       roundId: payload.roundId,

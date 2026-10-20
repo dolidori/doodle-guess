@@ -87,3 +87,77 @@ const PROVERB_ANSWERS = new Map(
  */
 export const acceptedAnswersFor = (keyword: string): string[] =>
   PROVERB_ANSWERS.get(keyword.trim()) ?? [normalizeGuess(keyword)];
+
+// ─── 긴 속담의 단어 채점 (2026-10-20 대표님 요청) ─────────────────────
+// 4어절 이상인 속담은 조사를 뗀 핵심 단어가 **순서대로 모두** 들어 있으면 정답이다.
+// '가지 많은 나무에 바람 잘 날 없다' → 가지·많은·나무·바람·잘·날·없다
+// 조사를 붙이거나 빼거나 띄어쓰기를 안 해도 맞는다. 끝맺음(없다/없지)은 조사가 아니라 별칭이 맡는다.
+
+/** 단어 채점을 쓰는 최소 어절 수. 짧은 속담은 단어가 적어 느슨하게 보면 엉뚱한 답도 맞는다. */
+export const WORD_JUDGING_MIN_EOJEOL = 4;
+
+/** 어절 끝에서 떼는 조사. 긴 것부터 맞춘다('에서'를 '서'보다 먼저). */
+const PARTICLES = [
+  '에서는', '에게서', '으로는', '이라도', '이나마', '까지도', '에서도',
+  '에서', '에게', '에는', '으로', '이라', '부터', '까지', '마저', '조차', '처럼', '보다', '라도', '이나', '만큼', '한테',
+  '은', '는', '이', '가', '을', '를', '에', '의', '도', '로', '와', '과', '만', '엔', '랑'
+].sort((a, b) => b.length - a.length);
+
+/** 어절 하나에서 조사를 뗀다. 다 떼어 빈 글자가 되면 원래 어절을 둔다(예: '가' 한 글자). */
+const stripParticle = (word: string): string => {
+  for (const particle of PARTICLES) {
+    if (word.length > particle.length && word.endsWith(particle)) return word.slice(0, -particle.length);
+  }
+  return word;
+};
+
+const eojeolCount = (text: string): number => text.trim().split(/\s+/).filter(Boolean).length;
+
+/** 조사를 뗀 핵심 단어 목록. */
+export const contentWords = (text: string): string[] =>
+  text
+    .trim()
+    .split(/\s+/)
+    .map(normalizeGuess)
+    .filter(Boolean)
+    .map(stripParticle);
+
+type WordSequence = { words: string[]; length: number };
+
+/** 속담 원문 → 단어 채점에 쓰는 표현들(4어절 이상인 원문·별칭만). */
+const PROVERB_WORD_SEQUENCES = new Map(
+  DEFAULT_PROVERBS.map((entry) => [
+    entry.text,
+    [entry.text, ...(entry.aliases ?? [])]
+      .filter((expression) => eojeolCount(expression) >= WORD_JUDGING_MIN_EOJEOL)
+      .map((expression): WordSequence => ({
+        words: contentWords(expression),
+        length: normalizeGuess(expression).length
+      }))
+  ])
+);
+
+const containsInOrder = (haystack: string, words: readonly string[]): boolean => {
+  let from = 0;
+  for (const word of words) {
+    const at = haystack.indexOf(word, from);
+    if (at < 0) return false;
+    from = at + word.length;
+  }
+  return true;
+};
+
+/**
+ * 추측이 정답인가. 글자가 정답·별칭과 같으면 정답이고, 긴 속담은 단어 채점도 한다.
+ * 단어만 늘어놓은 아주 긴 글로 맞히지 못하게 길이는 원래 표현의 1.5배까지만 본다.
+ */
+export const isCorrectGuess = (keyword: string, acceptedAnswers: readonly string[], guess: string): boolean => {
+  const normalized = normalizeGuess(guess);
+  if (normalized.length === 0) return false;
+  if (acceptedAnswers.includes(normalized)) return true;
+  const sequences = PROVERB_WORD_SEQUENCES.get(keyword.trim());
+  if (sequences === undefined) return false;
+  return sequences.some(
+    ({ words, length }) => normalized.length <= Math.ceil(length * 1.5) && containsInOrder(normalized, words)
+  );
+};
